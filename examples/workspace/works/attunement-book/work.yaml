@@ -1,0 +1,10 @@
+id: attunement-book
+type: book          # book | essay-series | course | talk | newsletter | manifesto | article-cluster
+registers:
+  - author-poetic-philosophical
+status: structuring  # intake | structuring | drafting | auditing | done
+scope:
+  knowledge: full
+  sources: full
+overrides:
+  voice: []          # work-local overrides of any register

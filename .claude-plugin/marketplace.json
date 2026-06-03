@@ -1,0 +1,14 @@
+{
+  "name": "tyf-marketplace",
+  "owner": {
+    "name": "TYF",
+    "url": "https://github.com/kosmopteros/tyf-authorship-apparatus"
+  },
+  "plugins": [
+    {
+      "name": "tyf",
+      "source": "./",
+      "description": "A faithful apparatus for authorship. The author is the source; TYF is the interviewer, machinist, first reader, editor, and typographer."
+    }
+  ]
+}

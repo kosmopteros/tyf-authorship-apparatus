@@ -1,0 +1,6 @@
+{
+  "name": "tyf",
+  "version": "0.1.0",
+  "description": "A faithful apparatus for authorship. Contextual authorship skills for the Gemini CLI.",
+  "contextFileName": "GEMINI.md"
+}

@@ -1,0 +1,35 @@
+# Validation
+
+## Automated checks (passing)
+
+- All 16 skills have valid YAML frontmatter with `name` and `description`.
+- `tyf check` provides a deterministic, zero-token documentation-honesty check (skill count, name-matches-directory, dead skill IDs and command names, identical context files, valid JSON, em-dash discipline). It runs automatically warn-only after every mutating `tyf` command and hard-fails (exit 1) as a standalone command. Verified: clean pack passes (exit 0); introduced drift is caught both by the warn-only hook (command still succeeds) and by standalone `tyf check` (exit 1); `TYF_NO_DOC_HOOK=1` disables the hook.
+- Count-consistency sweep: every stated skill count across the docs matches the actual number of skill directories (16). This check is itself the `keeping-documentation-honest` discipline applied to the pack.
+- Every `name` matches its directory and is within 64 characters.
+- Every `description` begins with "Use when", describes triggering conditions only, and is within 1024 characters.
+- Every discipline skill (all but the dispatcher) carries a rationalization table and a red-flag list.
+- No em-dashes in prose, headings, or frontmatter. The only retained em-dash is inside the canonical `[AUTHOR: needed — what]` sentinel token.
+- All plugin and extension manifests are valid JSON.
+- The `tyf` helper was exercised end to end in a Linux (POSIX) sandbox: init, new-work, status, open, mark-ready, audit, write (refuses without `--confirm`, exit 1), write with `--confirm`, and doctor. `doctor` was confirmed to flag a manuscript file that is not recorded in the write-log (a simulated uncontrolled write). Re-run the same sequence in your actual target environment (macOS or Windows Cowork) before relying on it; path and shell behavior can differ.
+
+- De-ceremonialized: the parallel ceremonial register is removed. Skill IDs, titles, prose, and the helper are plain and functional. Skills `offering-sources`, `conducting-sittings`, `building-the-field`, `keeping-voice-ledger`, `reading-as-first-reader`, `diagnosing-with-loupe`, `auditing-with-devils-reader`, and `operating-the-gate` were renamed; the `gate` concept became controlled writes (`tyf write`); `source-vault`/`voice-ledger`/`claims-ledger` became `sources`/`voice`/`claims`. `redactor` and `amanuensis` are kept as precise terms.- `tyf notice` is the deterministic attentive-amanuensis loop (surfaces gaps, unfinished lines, unsourced claims, style-sheet lag, unused registers; modifies nothing; zero tokens). `tyf reconcile` lists previously saved items. Verified end to end against a workspace with planted issues: all five detector kinds fired, `--save` wrote a dated digest to `.proposals/notices.md`, and a write surfaced an outstanding-count reminder without blocking the write. The semantic Learn pass in `docs/LEARN_PASS.md` is opt-in and unwired in v0.1: nothing reads the corpus or spends tokens in the background until the author enables it.
+- The attentive loop is ledger-backed (`.proposals/notice-ledger.json`), content-addressed rather than timestamp-based, so it works without git. Verified end to end: a new item surfaces once, stays quiet on an unchanged re-run, is silenced by `tyf dismiss <hash>`, and resurfaces when its surrounding context changes (a dismissed gap returned once a contradicting line was added nearby). Removed content auto-resolves. The loop never ranks which of two authored statements wins; contradictions are surfaced for the author. Per-run and per-write capture are wired; per-message capture is documented opt-in in `docs/ATTENTIVENESS.md`.
+- Apparatus memory moved to SQLite (`.tyf/ledger.db`, stdlib `sqlite3`, no new dependency): content-addressed notice ledger plus an append-only event log (init/write/mark-ready/dismiss/repair). The body of work stays in Markdown/YAML. Verified: idempotent `tyf init` (re-run is a no-op; deleting a dir or file and re-running heals exactly the missing pieces), notice dedupe within a run, dismiss, resurface-on-context-change, `tyf reconcile --export` Markdown mirror, the event spine, and `tyf doctor --repair` restoring deleted structure.
+- Product-lens review added: `tests/acceptance-and-edge-cases.md` gives acceptance criteria and 2 to 5 break/edge cases per skill (empty, adversarial, ambiguous, contradictory, missing-precondition, injection). The thinnest-guarded and highest-stakes skills (reading-sympathetically, controlling-manuscript-writes, ingesting-sources, structuring-knowledge, editing-faithfully, auditing-adversarially) gained an in-skill `Acceptance and edge cases` section. Three new RED/GREEN scenarios (source injection, offline citation index, out-of-band manuscript edit) added to `pressure-scenarios.md`. The out-of-band-edit case is already enforced deterministically by `tyf doctor` (verified).
+
+## Manual checks recommended before publishing
+
+- **Subagent pressure testing.** Run `tests/pressure-scenarios.md` in your harness: once with skills absent (RED) and once present (GREEN). Add any new rationalization that slips through to the relevant skill's table and re-run.
+- **Cowork install.** Confirm the skills load in a Cowork project, the project instructions paste cleanly, `/schedule` accepts the templates in `cowork/SCHEDULED_TASKS.md`, and the controlled write holds (no manuscript write appears without a write-log entry; `tyf doctor` catches it if one does).
+- **Manifest schemas.** Validate each harness's plugin or extension manifest against that harness's current plugin docs before publishing. See the caveat in `docs/PORTABILITY.md`.
+- **MCP citation index.** Citation verification in `auditing-adversarially` assumes an MCP citation index (Zotero or Scite) is connected. Confirm it is available, or treat verification findings as manual.
+
+## Comparison and known gaps vs superpowers
+
+`docs/COMPARISON_SUPERPOWERS.md` benchmarks TYF against `obra/superpowers`. Named gaps TYF does not yet address: (1) the RED/GREEN pressure scenarios have never been run against a subagent, so all discipline claims are unproven; (2) no execution-to-completion skill (superpowers' executing-plans); (3) no debugging/isolation skill (systematic-debugging); (4) no receiving-critique skill (receiving-code-review); (5) no update/distribution path; (6) no parallelism story. These are roadmap, not regressions.
+
+## Known scope decisions
+
+- 16 skills: 4 lifecycle, 10 editorial-apparatus, 2 cross-cutting substrates (voice registers, redactor canon).
+- The redactor (Milchin) discipline runs as a substrate and threads through the diagnosis pass, the editor, and the adversarial audit at micro, macro, and meta.
+- The three knowledge-band disciplines (thesis interrogation, argument spine, claims index) remain embedded in `interviewing-the-author`, `structuring-knowledge`, and `auditing-adversarially`; promoting them to their own cells is the v0.2 expansion.

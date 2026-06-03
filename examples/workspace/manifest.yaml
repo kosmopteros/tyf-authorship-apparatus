@@ -1,0 +1,16 @@
+# Workspace manifest: voice inheritance and hooks.
+# This is the AUTHOR'S writing workspace manifest, not the skill-pack plugin.json.
+voice_inheritance:
+  # how a work-level register override composes with the workspace base
+  # one of: replace | merge | layer | per-rule
+  default: layer
+hooks:
+  - on: save_chapter
+    run: [ai-tell-scan, register-fence-check]
+  - on: open_chapter
+    run: [load-registers, load-chapter-review]
+  - on: mark_ready
+    run: [audit-ready-unit]
+self_extension:
+  anti_pattern_growth: true   # grows when the author rejects a phrasing more than once
+  writes_to: .proposals/      # never to voice/ or skills/

@@ -1,0 +1,11 @@
+{
+  "name": "tyf",
+  "version": "0.1.0",
+  "description": "A faithful apparatus for authorship: contextual skills that elicit, structure, draft, diagnose, edit, and audit a person's knowledge into a serious body of work without becoming the writer.",
+  "author": {
+    "name": "TYF",
+    "url": "https://github.com/kosmopteros/tyf-authorship-apparatus"
+  },
+  "license": "MIT",
+  "keywords": ["authorship", "writing", "editing", "voice", "skills", "tyf"]
+}

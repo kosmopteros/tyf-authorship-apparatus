@@ -1,0 +1,8 @@
+{
+  "name": "tyf",
+  "version": "0.1.0",
+  "description": "A faithful apparatus for authorship: contextual authorship skills for Cursor Agent. The author is the source; TYF never becomes the writer.",
+  "skills_dir": "skills",
+  "context_file": "AGENTS.md",
+  "license": "MIT"
+}

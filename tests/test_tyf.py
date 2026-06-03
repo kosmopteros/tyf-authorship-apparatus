@@ -182,6 +182,40 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("ch1.md", out)
         self.assertRegex(out.lower(), r"out-of-band|out of band|modified|hash")
 
+    # ---- deeper-review holes: guards on the remaining commands ----
+
+    def test_mark_ready_requires_workspace(self):
+        rc, out = run_tyf(["mark-ready", "ghost", "u"], self.tmp)
+        self.assertNotEqual(rc, 0, "mark-ready outside a workspace must refuse")
+        self.assertFalse((self.tmp / "works").exists())
+
+    def test_mark_ready_rejects_traversal(self):
+        ws = self.ws()
+        rc, out = run_tyf(["mark-ready", "../escape", "u"], ws)
+        self.assertNotEqual(rc, 0, "traversal in mark-ready work id must be rejected")
+        self.assertFalse((ws / "escape").exists())
+        self.assertFalse((self.tmp / "escape").exists())
+
+    def test_open_rejects_traversal(self):
+        ws = self.ws()
+        rc, out = run_tyf(["open", "../escape"], ws)
+        self.assertNotEqual(rc, 0, "traversal in open work id must be rejected")
+
+    def test_status_requires_workspace(self):
+        rc, out = run_tyf(["status"], self.tmp)
+        self.assertNotEqual(rc, 0, "status outside a workspace must refuse")
+
+    def test_init_refuses_nonempty_foreign_dir(self):
+        foreign = self.tmp / "foreign"
+        foreign.mkdir()
+        (foreign / "existing.txt").write_text("hi\n", encoding="utf-8")
+        rc, out = run_tyf(["init", "."], foreign)
+        self.assertNotEqual(rc, 0, "init into a non-empty non-TYF dir must refuse without --force")
+        self.assertFalse((foreign / "WORKSPACE_STATE.yaml").exists())
+        rc2, out2 = run_tyf(["init", ".", "--force"], foreign)
+        self.assertEqual(rc2, 0, out2)
+        self.assertTrue((foreign / "WORKSPACE_STATE.yaml").is_file())
+
 
 class DocCheck(unittest.TestCase):
     def setUp(self):

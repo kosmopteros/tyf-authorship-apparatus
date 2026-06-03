@@ -684,6 +684,9 @@ def _scaffold(root, create=True):
 def cmd_init(args):
     root = os.path.abspath(args.name)
     existed = os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml"))
+    if not existed and os.path.isdir(root) and os.listdir(root) and not getattr(args, "force", False):
+        sys.exit(f"Refused: {root} is a non-empty directory and not a TYF workspace. "
+                 "Re-run with --force to scaffold a workspace here anyway.")
     created, present = _scaffold(root, create=True)
     log_event(root, "init", root, f"created {len(created)}, present {len(present)}")
     if existed:
@@ -732,6 +735,8 @@ def _set_active(work_id):
     open(path, "w", encoding="utf-8").write("\n".join(out) + "\n")
 
 def cmd_open(args):
+    _require_workspace()
+    args.work = _safe_work_id(args.work)
     _set_active(args.work)
     wy = read_state(os.path.join("works", args.work, "work.yaml"))
     regs = get(wy, "registers", default=[])
@@ -744,6 +749,7 @@ def cmd_open(args):
     print("Write zones: Compose -> drafts/  Propose/Audit -> .review/  Manuscript -> `tyf write` only")
 
 def cmd_status(args):
+    _require_workspace()
     st = read_state("WORKSPACE_STATE.yaml")
     print(f"active_work : {get(st,'active_work') or '(none)'}")
     print(f"active_band : {get(st,'active_band')}")
@@ -755,12 +761,16 @@ def cmd_status(args):
     print("write zones : Compose->drafts/  Propose/Audit->.review/  Manuscript-> `tyf write` only")
 
 def cmd_mark_ready(args):
+    _require_workspace()
+    args.work = _safe_work_id(args.work)
     path = os.path.join("works", args.work, ".review", "ready.md")
     append(path, f"- {now()} unit READY for audit: {args.unit}\n")
     log_event(".", "mark-ready", f"{args.work}/{args.unit}")
     print(f"Marked ready: {args.work} / {args.unit}. Run `auditing-adversarially` before this is done.")
 
 def cmd_audit(args):
+    _require_workspace()
+    args.work = _safe_work_id(args.work)
     print(f"Audit checklist for {args.work} / {args.unit} (read-only; write findings to .review/):")
     for item in ["frame-lock", "unsupported claims (check claims index)", "hidden assumptions",
                  "machine cadence", "register cross-talk", "citation integrity (verify via MCP)",
@@ -976,7 +986,7 @@ def _doc_hook_tail():
 def main():
     p = argparse.ArgumentParser(prog="tyf", description="TYF workspace helper")
     sub = p.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("init"); s.add_argument("name"); s.set_defaults(fn=cmd_init)
+    s = sub.add_parser("init"); s.add_argument("name"); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
     s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.set_defaults(fn=cmd_new_work)
     s = sub.add_parser("open"); s.add_argument("work"); s.set_defaults(fn=cmd_open)

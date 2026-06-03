@@ -326,5 +326,63 @@ class Installer(unittest.TestCase):
         self.assertIn("skill directories", out)
 
 
+class UpdateCheck(unittest.TestCase):
+    def test_version_tuple_compares(self):
+        self.assertTrue(tyf._version_tuple("0.10.0") > tyf._version_tuple("0.9.0"))
+        self.assertEqual(tyf._version_tuple("v0.2.0"), tyf._version_tuple("0.2.0"))
+        self.assertTrue(tyf._version_tuple("1.0.0") > tyf._version_tuple("0.99.99"))
+
+    def test_should_check_throttle(self):
+        import datetime as dt
+        now = dt.datetime(2026, 6, 3, 12, 0)
+        self.assertTrue(tyf._should_check(now, None, 24))
+        self.assertFalse(tyf._should_check(now, now - dt.timedelta(hours=1), 24))
+        self.assertTrue(tyf._should_check(now, now - dt.timedelta(hours=30), 24))
+
+    def test_update_reports_newer_version(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-upd-"))
+        try:
+            env = {**ENV, "TYF_LATEST_TAG": "v99.0.0",
+                   "TYF_UPDATE_CACHE": str(tmp / "cache.json")}
+            p = subprocess.run([sys.executable, str(TYF), "update", "--force"],
+                               cwd=str(REPO), capture_output=True, text=True, env=env)
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            self.assertIn("99.0.0", out)
+            self.assertRegex(out.lower(), r"available|update")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_update_reports_up_to_date(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-upd-"))
+        try:
+            installed = tyf._installed_version()
+            env = {**ENV, "TYF_LATEST_TAG": installed,
+                   "TYF_UPDATE_CACHE": str(tmp / "cache.json")}
+            p = subprocess.run([sys.executable, str(TYF), "update", "--force"],
+                               cwd=str(REPO), capture_output=True, text=True, env=env)
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            self.assertRegex(out.lower(), r"up to date|current|latest")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_update_never_writes_to_the_pack(self):
+        # notify-only: a check must not modify any tracked pack file
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-upd-"))
+        try:
+            env = {**ENV, "TYF_LATEST_TAG": "v99.0.0",
+                   "TYF_UPDATE_CACHE": str(tmp / "cache.json")}
+            before = subprocess.run(["git", "status", "--porcelain"], cwd=str(REPO),
+                                    capture_output=True, text=True).stdout
+            subprocess.run([sys.executable, str(TYF), "update", "--force"],
+                           cwd=str(REPO), capture_output=True, text=True, env=env)
+            after = subprocess.run(["git", "status", "--porcelain"], cwd=str(REPO),
+                                   capture_output=True, text=True).stdout
+            self.assertEqual(before, after, "tyf update must not modify the pack")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -20,6 +20,7 @@ Commands:
                                           ledger-backed; never modifies
   tyf dismiss <hash>                      quiet a surfaced item; resurfaces on context change
   tyf reconcile [--export]                show the ledger; --export mirrors it to Markdown
+  tyf update [--force]                    notify-only check for a newer release; never modifies
 
 Apparatus memory (SQLite, stdlib)
   The body of work stays in Markdown and YAML, owned by and legible to the
@@ -972,6 +973,116 @@ def cmd_reconcile(args):
     print("  or `tyf dismiss <hash>` to quiet it. Any change to the work still goes")
     print("  through `tyf write`; reconcile never modifies anything.")
 
+# ---------- update notifier (notify-only; never modifies the pack) ----------
+#
+# Mirrors `tyf notice`: it surfaces that a newer release exists and hands the
+# decision back. It never pulls, never runs remote code, never edits the pack.
+# The actual update is the harness's job (`/plugin update tyf`, etc.). Throttled
+# to once a day so it can be scheduled without hammering GitHub. The reference
+# pack (obra/superpowers) updates the same way: native plugin-update + tags.
+
+import urllib.request
+
+_REPO_SLUG = "kosmopteros/tyf-authorship-apparatus"
+
+def _version_tuple(s):
+    """Loose semver tuple. Tolerant of a leading 'v' and stray text."""
+    s = (s or "").strip().lstrip("vV")
+    parts = []
+    for p in s.split("."):
+        digits = "".join(ch for ch in p if ch.isdigit())
+        parts.append(int(digits) if digits else 0)
+    return tuple(parts) or (0,)
+
+def _installed_version():
+    import json
+    try:
+        p = os.path.join(_pack_root(), ".claude-plugin", "plugin.json")
+        return json.load(open(p, encoding="utf-8")).get("version", "0.0.0")
+    except Exception:
+        return "0.0.0"
+
+def _latest_release_tag():
+    """Latest release tag from GitHub, or None on any failure. TYF_LATEST_TAG
+    overrides the network call (a test seam and an offline escape hatch)."""
+    override = os.environ.get("TYF_LATEST_TAG")
+    if override:
+        return override.strip()
+    import json
+    try:
+        url = f"https://api.github.com/repos/{_REPO_SLUG}/releases/latest"
+        req = urllib.request.Request(url, headers={
+            "Accept": "application/vnd.github+json", "User-Agent": "tyf-update-check"})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            return json.load(r).get("tag_name")
+    except Exception:
+        return None
+
+def _should_check(now_dt, last_dt, hours=24):
+    if last_dt is None:
+        return True
+    return (now_dt - last_dt) >= datetime.timedelta(hours=hours)
+
+def _update_cache_path():
+    return os.environ.get("TYF_UPDATE_CACHE") or \
+        os.path.join(os.path.expanduser("~"), ".tyf", "update-check.json")
+
+def _read_update_cache():
+    import json
+    try:
+        return json.load(open(_update_cache_path(), encoding="utf-8"))
+    except Exception:
+        return {}
+
+def _write_update_cache(data):
+    import json
+    p = _update_cache_path()
+    try:
+        os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except Exception:
+        pass  # the cache is best-effort and must never break a check
+
+def _harness_update_hints():
+    print("  Update through your harness (it owns the install):")
+    print("    Claude Code : /plugin update tyf")
+    print("    Gemini CLI  : gemini extensions update tyf")
+    print("    others      : see UPDATING.md")
+
+def cmd_update(args):
+    installed = _installed_version()
+    cache = _read_update_cache()
+    last = None
+    if cache.get("last_check"):
+        try:
+            last = datetime.datetime.strptime(cache["last_check"], "%Y-%m-%d %H:%M")
+        except Exception:
+            last = None
+    if not getattr(args, "force", False) and not _should_check(datetime.datetime.now(), last):
+        latest = cache.get("latest")
+        print("tyf update (checked within the last day; --force to re-check)")
+        if latest and _version_tuple(latest) > _version_tuple(installed):
+            print(f"  TYF {latest} is available; you have {installed}.")
+            _harness_update_hints()
+        else:
+            print(f"  TYF {installed} (no newer version recorded).")
+        return
+    latest = _latest_release_tag()
+    if latest is None:
+        print("tyf update (notify-only)")
+        print("  Could not reach GitHub to check for a newer release.")
+        print("  Update through your harness when ready; see UPDATING.md.")
+        return
+    cache.update({"last_check": now(), "latest": latest})
+    _write_update_cache(cache)
+    print("tyf update (notify-only; never modifies the pack)")
+    if _version_tuple(latest) > _version_tuple(installed):
+        print(f"  TYF {latest} is available; you have {installed}.")
+        _harness_update_hints()
+    else:
+        print(f"  TYF is up to date ({installed}).")
+
 def _doc_hook_tail():
     """Warn-only documentation-honesty check, run after a mutating command.
 
@@ -1022,6 +1133,9 @@ def main():
     s = sub.add_parser("reconcile", help="show the ledger of surfaced items")
     s.add_argument("--export", action="store_true", help="mirror the ledger to .proposals/ledger-mirror.md")
     s.set_defaults(fn=cmd_reconcile)
+    s = sub.add_parser("update", help="check GitHub for a newer release; notify only, never modifies")
+    s.add_argument("--force", action="store_true", help="ignore the once-a-day throttle and check now")
+    s.set_defaults(fn=cmd_update)
     args = p.parse_args()
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.

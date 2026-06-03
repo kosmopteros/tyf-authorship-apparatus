@@ -22,5 +22,8 @@ Every template below observes and reports. None of them edits a manuscript. That
 ## Daily: the attentive amanuensis (deterministic, zero tokens)
 > In my TYF workspace at <PATH>, run `tyf notice --save`. This surfaces gaps I left to fill, lines that trail off unfinished, claims with no source, a style sheet lagging its manuscript, and unused registers, then appends a dated digest to `.proposals/notices.md`. Do not modify anything; just hand me the list. If `tyf reconcile` shows old open items, include a one-line reminder of how many are still open.
 
+## Daily: check for a newer TYF release (notify-only, zero tokens)
+> Run `tyf update`. It reports whether a newer TYF release is out and the one-line command to update through this harness. It pulls nothing and changes nothing. If a new version is available, tell me the version and how to update; otherwise say nothing needs doing.
+
 ## Optional, opt-in: the semantic Learn pass (spends tokens; off by default)
 > Only if I have explicitly enabled it (see docs/LEARN_PASS.md). Read only the manuscript units changed since your last run. For each, ask the four semantic questions in docs/LEARN_PASS.md: contradiction with a logged claim or another passage, argument moved past the outline, register drift, or tacit knowledge not yet recorded. Append any findings to `.proposals/notices.md` as questions for me. Modify nothing. If no unit changed, do nothing and spend no tokens.

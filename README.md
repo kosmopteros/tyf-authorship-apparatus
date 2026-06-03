@@ -88,6 +88,7 @@ tyf check                # documentation-honesty check (zero tokens, determinist
 tyf notice [--save] [--all] [--peek]   # attentive amanuensis: surface new/forgotten/stale items
 tyf dismiss <hash>       # quiet an item; resurfaces if its context changes
 tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
+tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
 `tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed ledger (`.tyf/ledger.db`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.

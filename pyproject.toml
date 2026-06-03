@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tyf-authorship-apparatus"
+version = "0.1.0"
+description = "TYF: a faithful apparatus for authorship. The author is the source; TYF never becomes the writer."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+keywords = ["authorship", "writing", "editing", "voice", "skills"]
+
+# Installs the zero-dependency helper as the `tyf` command:
+#   pipx install .        # or: pip install .
+# Workspace commands (init, new-work, write, doctor, notice, ...) are
+# CWD-relative and work anywhere once installed. `tyf check` inspects the pack
+# itself, so run it from a repo clone or set TYF_PACK_ROOT to one.
+[project.scripts]
+tyf = "tyf:main"
+
+[tool.setuptools]
+py-modules = ["tyf"]
+
+[tool.setuptools.package-dir]
+"" = "scripts"

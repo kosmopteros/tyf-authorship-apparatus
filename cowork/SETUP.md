@@ -10,7 +10,7 @@ You have two paths.
 
 **A. As a plugin (recommended for sharing).** Package this repository as a Claude plugin and install it from the plugin marketplace, the same way other Cowork plugins are installed. The plugin bundles all sixteen skills.
 
-**B. Manual drop-in.** Copy `skills/*` into the skills location Cowork reads, and copy `scripts/tyf.py` somewhere on your PATH (or into the workspace). The skill files load directly.
+**B. Manual drop-in.** Copy `skills/*` into the skills location Cowork reads. For the helper, put this repo's `bin/` on your PATH or symlink `bin/tyf` into a PATH directory (`scripts/install.sh` does this for you). Do not copy `scripts/tyf.py` to a bare location on PATH: it locates the pack from its own path, so a loose copy breaks `tyf check`. If you must copy it, set `TYF_PACK_ROOT` to this repo. The skill files load directly.
 
 ```
 bash scripts/install.sh claude     # or an explicit Cowork skills path

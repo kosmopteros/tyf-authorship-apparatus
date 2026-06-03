@@ -115,6 +115,32 @@ def mkdirs(*paths):
     for p in paths:
         os.makedirs(p, exist_ok=True)
 
+
+def _require_workspace():
+    """Refuse any mutating command run outside a TYF workspace root."""
+    if not os.path.isfile("WORKSPACE_STATE.yaml"):
+        sys.exit("Not in a TYF workspace (no WORKSPACE_STATE.yaml). "
+                 "Run `tyf init <name>`, or cd into the workspace root.")
+
+
+def _safe_work_id(work_id):
+    """A work id is a simple slug, never a path. Reject separators, traversal,
+    and absolute or home paths so a write can never escape works/."""
+    if (not work_id or work_id in (".", "..")
+            or os.path.isabs(work_id)
+            or "/" in work_id or "\\" in work_id
+            or work_id.startswith("~")):
+        sys.exit(f"Refused: unsafe work id {work_id!r}. Use a simple name "
+                 "(letters, digits, '-' or '_'); no slashes, '..', or absolute paths.")
+    return work_id
+
+
+def _within(base, target):
+    """True if target resolves to inside base (real paths; symlink-safe)."""
+    base = os.path.realpath(base)
+    target = os.path.realpath(target)
+    return target == base or target.startswith(base + os.sep)
+
 # ---------- documentation-honesty check (deterministic, zero-token) ----------
 
 # Number words this check understands, for catching stale spelled-out counts.
@@ -134,8 +160,13 @@ _DEAD_SKILL_IDS = [
 _DEAD_COMMANDS = ["tyf gate", "--apply <draft>", "fire-devils-reader"]
 
 def _pack_root():
-    """The installed pack root, found from this script's location."""
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    """The pack root. Honors TYF_PACK_ROOT (set this when the helper is installed
+    or copied outside the repo); otherwise resolves from this script's real
+    location (realpath, so a symlinked `tyf` on PATH still finds the repo)."""
+    env = os.environ.get("TYF_PACK_ROOT")
+    if env:
+        return os.path.realpath(env)
+    return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 def _iter_files(root, exts):
     for r, dirs, fs in os.walk(root):
@@ -230,6 +261,30 @@ def run_doc_check(root=None):
             if "\u2014" in line and "AUTHOR: needed" not in line:
                 problems.append(f"{rel}:{i}: em-dash in prose")
 
+    # 7. stale apparatus-memory path: the notice ledger is .tyf/ledger.db now,
+    #    not the old .proposals/notice-ledger.json. (Exempt: VALIDATION.md
+    #    changelog and this script, which name the old path as a search target.)
+    for p in _iter_files(root, (".md", ".json", ".sh")):
+        rel = os.path.relpath(p, root)
+        if rel in _dead_ref_exempt:
+            continue
+        for i, line in enumerate(open(p, encoding="utf-8"), 1):
+            if "notice-ledger.json" in line:
+                problems.append(f"{rel}:{i}: stale ledger path 'notice-ledger.json' (now .tyf/ledger.db)")
+
+    # 8. stale role terminology from an earlier draft. The canon role list is
+    #    "interviewer, amanuensis, first reader, faithful editor, redactor".
+    #    'machinist' is the reliable canary for the stale list; 'typographer'
+    #    is NOT flagged because it is a legitimate craft term across the pack
+    #    (the Milchin typographer canon, the five-scale framework).
+    for p in _iter_files(root, (".md", ".json")):
+        rel = os.path.relpath(p, root)
+        if rel in _dead_ref_exempt:
+            continue
+        for i, line in enumerate(open(p, encoding="utf-8"), 1):
+            if "machinist" in line.lower():
+                problems.append(f"{rel}:{i}: stale role terminology 'machinist' (canon role: amanuensis)")
+
     return problems, notes
 
 def _print_check(problems, notes, quiet=False):
@@ -255,8 +310,8 @@ def _print_check(problems, notes, quiet=False):
 #
 # Memory without git: each notice carries a content hash (a fingerprint of the
 # text the notice is ABOUT) and a context hash (the surrounding situation). The
-# ledger in .proposals/notice-ledger.json remembers what was surfaced and what
-# the author dismissed, keyed on those hashes, not on timestamps. mtime is used
+# ledger in .tyf/ledger.db remembers what was surfaced and what the author
+# dismissed, keyed on those hashes, not on timestamps. mtime is used
 # only as a cheap hint, never as a source of truth, because sync tools and file
 # copies lie about it. The system never ranks which of two authored statements
 # wins; a contradiction is surfaced for the author to adjudicate.
@@ -644,6 +699,8 @@ def cmd_init(args):
         print("Next: run intake with `ingesting-sources` and `interviewing-the-author`, then `tyf new-work`.")
 
 def cmd_new_work(args):
+    _require_workspace()
+    args.id = _safe_work_id(args.id)
     base = os.path.join("works", args.id)
     if os.path.exists(base):
         sys.exit(f"work already exists: {base}")
@@ -713,21 +770,46 @@ def cmd_audit(args):
     print("Verdict PASSED only when every finding is answered: fixed, or accepted with reason.")
 
 def cmd_write(args):
+    _require_workspace()
+    work = _safe_work_id(args.work)
     if not args.confirm:
         sys.exit("Refused. Writing to the manuscript requires explicit author acceptance: pass --confirm.")
     src = args.src
     if not src or not os.path.isfile(src):
         sys.exit(f"draft not found: {src}")
-    man = os.path.join("works", args.work, "manuscript")
+    drafts = os.path.join("works", work, "drafts")
+    if not os.path.isdir(drafts):
+        sys.exit(f"Refused: work {work!r} has no drafts/; the controlled write only promotes this work's own drafts.")
+    if not _within(drafts, src):
+        sys.exit(f"Refused: source must live under {drafts}{os.sep} (only this work's drafts may enter its manuscript). Got: {src}")
+    man = os.path.join("works", work, "manuscript")
     mkdirs(man)
     dest = os.path.join(man, os.path.basename(src))
+    if os.path.isfile(dest) and not getattr(args, "force", False):
+        sys.exit(f"Refused: {dest} already exists. Re-writing manuscript text needs explicit --force (the prior version stays in the write log).")
     with open(src, encoding="utf-8") as f:
         content = f.read()
+    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
     write(dest, content)
-    log = os.path.join("works", args.work, ".review", "write-log.md")
-    append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- Decision: accepted (--confirm)\n")
-    log_event(".", "write", f"{args.work}/{os.path.basename(src)}", f"{src} -> {dest}")
-    print(f"Write: applied {src} into {dest}. Logged in {log}.")
+    log = os.path.join("works", work, ".review", "write-log.md")
+    forced = " --force" if getattr(args, "force", False) else ""
+    append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(src)}\n- sha256: {digest}\n- Decision: accepted (--confirm{forced})\n")
+    log_event(".", "write", f"{work}/{os.path.basename(src)}", f"{src} -> {dest} sha256={digest[:12]}")
+    print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
+
+def _logged_hashes(log_text):
+    """Map manuscript filename -> last recorded sha256 from a write-log."""
+    latest, cur = {}, None
+    for line in log_text.splitlines():
+        s = line.strip()
+        m = re.match(r"-\s*File:\s*(.+)$", s)
+        if m:
+            cur = m.group(1).strip(); continue
+        m = re.match(r"-\s*sha256:\s*([0-9a-fA-F]+)", s)
+        if m and cur:
+            latest[cur] = m.group(1).strip()
+    return latest
+
 
 def cmd_doctor(args):
     problems, notes = [], []
@@ -764,12 +846,23 @@ def cmd_doctor(args):
             if man_files and not os.path.isfile(gl):
                 problems.append(f"{w}: manuscript has files but no write-log; uncontrolled write")
             else:
-                uncontrolled = [f for f in man_files if f not in log_text]
-                for f in uncontrolled:
-                    problems.append(f"{w}: manuscript file not recorded in write-log; possible uncontrolled write: {f}")
-                recorded = len(man_files) - len(uncontrolled)
-                if recorded:
-                    notes.append(f"{w}: {recorded} controlled manuscript file(s)")
+                logged = _logged_hashes(log_text)
+                controlled = 0
+                for f in man_files:
+                    if f not in log_text:
+                        problems.append(f"{w}: manuscript file not recorded in write-log; possible uncontrolled write: {f}")
+                        continue
+                    rec = logged.get(f)
+                    if rec is None:
+                        problems.append(f"{w}: {f} recorded without a content hash (legacy write); integrity cannot be verified")
+                        continue
+                    cur = hashlib.sha256(_read(os.path.join(man, f)).encode("utf-8")).hexdigest()
+                    if cur != rec:
+                        problems.append(f"{w}: out-of-band edit detected in {f}; manuscript changed since the logged write (reconcile before the next write)")
+                    else:
+                        controlled += 1
+                if controlled:
+                    notes.append(f"{w}: {controlled} controlled manuscript file(s)")
     print("tyf doctor (read-only)")
     if problems:
         print("PROBLEMS:")
@@ -889,7 +982,7 @@ def main():
     s = sub.add_parser("open"); s.add_argument("work"); s.set_defaults(fn=cmd_open)
     s = sub.add_parser("mark-ready"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_mark_ready)
     s = sub.add_parser("audit"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_audit)
-    s = sub.add_parser("write"); s.add_argument("work"); s.add_argument("--from", dest="src", required=True); s.add_argument("--confirm", action="store_true"); s.set_defaults(fn=cmd_write)
+    s = sub.add_parser("write"); s.add_argument("work"); s.add_argument("--from", dest="src", required=True); s.add_argument("--confirm", action="store_true"); s.add_argument("--force", action="store_true", help="allow re-writing an existing manuscript file"); s.set_defaults(fn=cmd_write)
     s = sub.add_parser("doctor"); s.add_argument("--repair", action="store_true", help="create any missing required structure"); s.set_defaults(fn=cmd_doctor)
     s = sub.add_parser("check")
     s.add_argument("--quiet", action="store_true", help="print only problems")

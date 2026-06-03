@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# TYF helper launcher.
+#
+# Put this directory on your PATH, or symlink this file into a PATH dir
+# (e.g. ln -s "$PWD/bin/tyf" ~/.local/bin/tyf). Symlinks are resolved below so
+# the launcher always finds the pack it lives in. If you COPY the helper
+# somewhere unrelated instead of symlinking, set TYF_PACK_ROOT to the repo so
+# `tyf check` can find skills/ (workspace commands are CWD-relative and need no
+# pack root).
+set -euo pipefail
+
+src="${BASH_SOURCE[0]}"
+while [ -h "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  [[ "$src" != /* ]] && src="$dir/$src"
+done
+root="$(cd -P "$(dirname "$src")/.." && pwd)"
+
+py="$(command -v python3 || command -v python || true)"
+if [ -z "$py" ]; then
+  echo "tyf: no python interpreter found on PATH (need python3 or python)" >&2
+  exit 1
+fi
+exec "$py" "$root/scripts/tyf.py" "$@"

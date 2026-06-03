@@ -61,7 +61,7 @@ The moment a task touches source material, voice, claims, or a manuscript, the a
 init → ingest → interview → structure → voice + redactor → compose → read / diagnose → edit → audit → controlled write → schedule
 ```
 
-Each step has a skill. Voice and Redactor are not steps; they are substrates every pass consults. The discipline is not to skip upstream when the work is still source, knowledge, voice, structure, or audit.
+Each step has a skill. Voice and Redactor are not steps; they are substrates every pass consults. The discipline is not to skip upstream when the work is still source, knowledge, voice, structure, or audit. Audit shows once in the line, but it also runs again after the controlled write, because the write itself can introduce issues; see `controlling-manuscript-writes`.
 
 ## Install
 
@@ -77,7 +77,7 @@ Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) w
 
 ## The helper
 
-`tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`.
+`tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Put it on your PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
 
 ```
 tyf init <name>          tyf new-work <id> --type book --register <r>
@@ -90,7 +90,7 @@ tyf dismiss <hash>       # quiet an item; resurfaces if its context changes
 tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 ```
 
-`tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed ledger (`.proposals/notice-ledger.json`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.
+`tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed ledger (`.tyf/ledger.db`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.
 
 `tyf check` verifies the pack's own consistency: skill count, names, dead references, command drift, identical context files, valid JSON, no stray em-dashes. It runs automatically warn-only after every mutating command (so doc drift surfaces the moment structure changes, with no reliance on git or memory) and hard-fails as a standalone command for CI. This is the deterministic, zero-token half of the `keeping-documentation-honest` discipline; semantic drift still needs a reading pass.
 

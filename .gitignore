@@ -4,3 +4,8 @@ node_modules/
 Thumbs.db
 .env
 .env.local
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

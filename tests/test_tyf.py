@@ -40,6 +40,20 @@ def run_tyf(args, cwd):
     return p.returncode, (p.stdout + p.stderr)
 
 
+def _can_symlink(tmp):
+    """True if this platform/user can create directory symlinks."""
+    try:
+        target = tmp / "_symtgt"
+        target.mkdir()
+        link = tmp / "_symlnk"
+        os.symlink(target, link, target_is_directory=True)
+        link.unlink()
+        target.rmdir()
+        return True
+    except (OSError, NotImplementedError, AttributeError):
+        return False
+
+
 class CLIBehaviour(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="tyf-test-"))
@@ -215,6 +229,18 @@ class CLIBehaviour(unittest.TestCase):
         rc2, out2 = run_tyf(["init", ".", "--force"], foreign)
         self.assertEqual(rc2, 0, out2)
         self.assertTrue((foreign / "WORKSPACE_STATE.yaml").is_file())
+
+    def test_write_refuses_symlinked_work_escape(self):
+        ws = self.ws()
+        if not _can_symlink(self.tmp):
+            self.skipTest("platform/user cannot create symlinks")
+        outside = self.tmp / "outside"
+        (outside / "drafts").mkdir(parents=True)
+        (outside / "drafts" / "c.md").write_text("x\n", encoding="utf-8")
+        os.symlink(outside, ws / "works" / "evil", target_is_directory=True)
+        rc, out = run_tyf(["write", "evil", "--from", "works/evil/drafts/c.md", "--confirm"], ws)
+        self.assertNotEqual(rc, 0, "a write into a symlinked work escaping works/ must be refused")
+        self.assertFalse((outside / "manuscript").exists())
 
 
 class DocCheck(unittest.TestCase):

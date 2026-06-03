@@ -27,10 +27,11 @@
 
 ## Comparison and known gaps vs superpowers
 
-`docs/COMPARISON_SUPERPOWERS.md` benchmarks TYF against `obra/superpowers`. Named gaps TYF does not yet address: (1) the RED/GREEN pressure scenarios have never been run against a subagent, so all discipline claims are unproven; (2) no execution-to-completion skill (superpowers' executing-plans); (3) no debugging/isolation skill (systematic-debugging); (4) no receiving-critique skill (receiving-code-review); (5) no update/distribution path; (6) no parallelism story. These are roadmap, not regressions.
+`docs/COMPARISON_SUPERPOWERS.md` benchmarks TYF against `obra/superpowers`. Named gaps TYF does not yet address: (1) the RED/GREEN pressure scenarios have now had a first subagent run (`tests/PRESSURE_RESULTS.md`): GREEN passed 11 of 11, though the RED baseline is weak on a strong base model, so the proof is partial; (2) no execution-to-completion skill (superpowers' executing-plans); (3) no debugging/isolation skill (systematic-debugging); (4) no receiving-critique skill (receiving-code-review); (5) no update/distribution path; (6) no parallelism story. These are roadmap, not regressions.
 
 ## Known scope decisions
 
+- Concurrent manuscript writes are detected after the fact, not locked. `tyf write` records a content hash and `tyf doctor` flags a later out-of-band change, but two simultaneous writers are not serialized; single-author use is the working assumption.
 - 16 skills: 4 lifecycle, 10 editorial-apparatus, 2 cross-cutting substrates (voice registers, redactor canon).
 - The redactor (Milchin) discipline runs as a substrate and threads through the diagnosis pass, the editor, and the adversarial audit at micro, macro, and meta.
 - The three knowledge-band disciplines (thesis interrogation, argument spine, claims index) remain embedded in `interviewing-the-author`, `structuring-knowledge`, and `auditing-adversarially`; promoting them to their own cells is the v0.2 expansion.

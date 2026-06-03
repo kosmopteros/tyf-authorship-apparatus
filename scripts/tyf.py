@@ -141,6 +141,15 @@ def _within(base, target):
     target = os.path.realpath(target)
     return target == base or target.startswith(base + os.sep)
 
+
+def _confine_work(work):
+    """Refuse a work whose path resolves outside works/ (e.g. a symlinked
+    works/<id> or a mount). Defense in depth beyond the slug check."""
+    base = os.path.realpath("works")
+    target = os.path.realpath(os.path.join("works", work))
+    if not (target == base or target.startswith(base + os.sep)):
+        sys.exit(f"Refused: work {work!r} resolves outside works/ (symlink or mount escape).")
+
 # ---------- documentation-honesty check (deterministic, zero-token) ----------
 
 # Number words this check understands, for catching stale spelled-out counts.
@@ -704,6 +713,7 @@ def cmd_init(args):
 def cmd_new_work(args):
     _require_workspace()
     args.id = _safe_work_id(args.id)
+    _confine_work(args.id)
     base = os.path.join("works", args.id)
     if os.path.exists(base):
         sys.exit(f"work already exists: {base}")
@@ -737,6 +747,7 @@ def _set_active(work_id):
 def cmd_open(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
+    _confine_work(args.work)
     _set_active(args.work)
     wy = read_state(os.path.join("works", args.work, "work.yaml"))
     regs = get(wy, "registers", default=[])
@@ -763,6 +774,7 @@ def cmd_status(args):
 def cmd_mark_ready(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
+    _confine_work(args.work)
     path = os.path.join("works", args.work, ".review", "ready.md")
     append(path, f"- {now()} unit READY for audit: {args.unit}\n")
     log_event(".", "mark-ready", f"{args.work}/{args.unit}")
@@ -782,6 +794,7 @@ def cmd_audit(args):
 def cmd_write(args):
     _require_workspace()
     work = _safe_work_id(args.work)
+    _confine_work(work)
     if not args.confirm:
         sys.exit("Refused. Writing to the manuscript requires explicit author acceptance: pass --confirm.")
     src = args.src

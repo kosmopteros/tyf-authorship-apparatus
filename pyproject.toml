@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tyf-authorship-apparatus"
-version = "0.2.0"
+version = "0.2.1"
 description = "TYF: a faithful apparatus for authorship. The author is the source; TYF never becomes the writer."
 readme = "README.md"
 license = { text = "MIT" }

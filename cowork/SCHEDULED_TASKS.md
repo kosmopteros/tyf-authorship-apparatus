@@ -11,7 +11,7 @@ Every template below observes and reports. None of them edits a manuscript. That
 > In my TYF workspace at <PATH>, find chapters in any `works/*/drafts/` or `works/*/manuscript/` changed in the last hour. Load `managing-voice` and run an AI-tell scan and a register-fence check on each. Write findings to that work's `.review/`. Propose nothing into the manuscript.
 
 ## Weekly: re-audit units marked ready
-> In my TYF workspace at <PATH>, read each `works/*/.review/ready.md`. For every unit marked ready since the last run, load `auditing-adversarially` and run the full adversarial audit, including the redactor integrity checks against the running style sheet. Write findings to `.review/`. Mark no unit done; that is the author's call.
+> In my TYF workspace at <PATH>, read each `works/*/.review/ready.md`. For every unit marked ready since the last run, load `auditing-adversarially` and run the full adversarial audit, including the redactor integrity checks against the running style sheet. Write findings to the relevant `works/<id>/.review/`. Mark no unit done; that is the author's call.
 
 ## Weekly: voice-drift scan
 > In my TYF workspace at <PATH>, load `managing-voice` and compare recent manuscript prose in each work against that work's declared registers and exemplar passages. Report drift to that work's `.review/voice-drift.md`. Change nothing.

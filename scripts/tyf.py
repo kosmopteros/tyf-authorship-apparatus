@@ -125,14 +125,13 @@ def _require_workspace():
 
 
 def _safe_work_id(work_id):
-    """A work id is a simple slug, never a path. Reject separators, traversal,
-    and absolute or home paths so a write can never escape works/."""
+    """A work id is a simple slug, never a path. Enforce a strict charset so a
+    write can never escape works/ and the rule matches the error message."""
     if (not work_id or work_id in (".", "..")
-            or os.path.isabs(work_id)
-            or "/" in work_id or "\\" in work_id
-            or work_id.startswith("~")):
-        sys.exit(f"Refused: unsafe work id {work_id!r}. Use a simple name "
-                 "(letters, digits, '-' or '_'); no slashes, '..', or absolute paths.")
+            or os.path.isabs(work_id) or work_id.startswith("~")
+            or not re.fullmatch(r"[A-Za-z0-9._-]+", work_id)):
+        sys.exit(f"Refused: unsafe work id {work_id!r}. Use letters, digits, "
+                 "'.', '-' or '_' only; no spaces, slashes, '..', or absolute paths.")
     return work_id
 
 
@@ -150,6 +149,12 @@ def _confine_work(work):
     target = os.path.realpath(os.path.join("works", work))
     if not (target == base or target.startswith(base + os.sep)):
         sys.exit(f"Refused: work {work!r} resolves outside works/ (symlink or mount escape).")
+
+
+def _require_work(work):
+    """Refuse a command that operates on a work that does not exist."""
+    if not os.path.isfile(os.path.join("works", work, "work.yaml")):
+        sys.exit(f"Refused: no work {work!r} (works/{work}/work.yaml not found). Create it with `tyf new-work`.")
 
 # ---------- documentation-honesty check (deterministic, zero-token) ----------
 
@@ -749,6 +754,7 @@ def cmd_open(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
     _confine_work(args.work)
+    _require_work(args.work)
     _set_active(args.work)
     wy = read_state(os.path.join("works", args.work, "work.yaml"))
     regs = get(wy, "registers", default=[])
@@ -776,6 +782,7 @@ def cmd_mark_ready(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
     _confine_work(args.work)
+    _require_work(args.work)
     path = os.path.join("works", args.work, ".review", "ready.md")
     append(path, f"- {now()} unit READY for audit: {args.unit}\n")
     log_event(".", "mark-ready", f"{args.work}/{args.unit}")
@@ -784,6 +791,8 @@ def cmd_mark_ready(args):
 def cmd_audit(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
+    _confine_work(args.work)
+    _require_work(args.work)
     print(f"Audit checklist for {args.work} / {args.unit} (read-only; write findings to .review/):")
     for item in ["frame-lock", "unsupported claims (check claims index)", "hidden assumptions",
                  "machine cadence", "register cross-talk", "citation integrity (verify via MCP)",
@@ -796,6 +805,7 @@ def cmd_write(args):
     _require_workspace()
     work = _safe_work_id(args.work)
     _confine_work(work)
+    _require_work(work)
     if not args.confirm:
         sys.exit("Refused. Writing to the manuscript requires explicit author acceptance: pass --confirm.")
     src = args.src
@@ -809,8 +819,13 @@ def cmd_write(args):
     man = os.path.join("works", work, "manuscript")
     mkdirs(man)
     dest = os.path.join(man, os.path.basename(src))
-    if os.path.isfile(dest) and not getattr(args, "force", False):
-        sys.exit(f"Refused: {dest} already exists. Re-writing manuscript text needs explicit --force (the prior version stays in the write log).")
+    if os.path.isfile(dest):
+        gl = os.path.join("works", work, ".review", "write-log.md")
+        rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
+        if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
+            sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
+        if not getattr(args, "force", False):
+            sys.exit(f"Refused: {dest} already exists. Re-writing the last controlled version needs explicit --force.")
     with open(src, encoding="utf-8") as f:
         content = f.read()
     digest = hashlib.sha256(content.encode("utf-8")).hexdigest()

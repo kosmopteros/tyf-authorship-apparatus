@@ -64,6 +64,7 @@ echo "  $count skills installed."
 # 2. The tyf helper, linked (not copied) onto PATH. A symlink keeps `tyf check`
 #    able to resolve the pack root; a loose copy could not.
 echo
+chmod +x "$ROOT/bin/tyf" 2>/dev/null || true   # a ZIP download can drop the exec bit
 if mkdir -p "$BIN_DIR" 2>/dev/null && ln -sf "$ROOT/bin/tyf" "$BIN_DIR/tyf" 2>/dev/null; then
   echo "Linked helper: $BIN_DIR/tyf -> $ROOT/bin/tyf"
   case ":${PATH:-}:" in

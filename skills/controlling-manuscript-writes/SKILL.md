@@ -21,6 +21,8 @@ Nothing crosses into `manuscript/` on its own. For every change:
 4. **Log** what changed in the work's record.
 5. **Preserve** rejected material only if the author asks.
 
+The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then run the write, so every manuscript change has one inspectable source. A rewrite of an existing manuscript file needs `--force`, and even then the write is refused if the file changed out of band since the last logged write (reconcile first).
+
 ## Rationalization table
 
 | What you will tell yourself | The reality | Do instead |

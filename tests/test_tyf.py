@@ -242,6 +242,55 @@ class CLIBehaviour(unittest.TestCase):
         self.assertNotEqual(rc, 0, "a write into a symlinked work escaping works/ must be refused")
         self.assertFalse((outside / "manuscript").exists())
 
+    # ---- third review: --force must not clobber an out-of-band edit ----
+
+    def test_write_force_refuses_out_of_band_edit(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="ch.md", text="orig\n")
+        self.assertEqual(run_tyf(["write", "demo", "--from", src, "--confirm"], ws)[0], 0)
+        man = ws / "works/demo/manuscript/ch.md"
+        man.write_text(man.read_text(encoding="utf-8") + "MANUAL\n", encoding="utf-8")
+        (ws / "works/demo/drafts/ch.md").write_text("v2\n", encoding="utf-8")
+        rc, out = run_tyf(["write", "demo", "--from", src, "--confirm", "--force"], ws)
+        self.assertNotEqual(rc, 0, "--force must refuse to clobber an out-of-band edit")
+        self.assertIn("MANUAL", man.read_text(encoding="utf-8"))
+
+    def test_write_force_allows_clean_rewrite(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="ch.md", text="orig\n")
+        self.assertEqual(run_tyf(["write", "demo", "--from", src, "--confirm"], ws)[0], 0)
+        (ws / "works/demo/drafts/ch.md").write_text("v2\n", encoding="utf-8")  # manuscript untouched
+        rc, out = run_tyf(["write", "demo", "--from", src, "--confirm", "--force"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual((ws / "works/demo/manuscript/ch.md").read_text(encoding="utf-8"), "v2\n")
+
+    # ---- third review: commands must require the work to exist ----
+
+    def test_mark_ready_requires_existing_work(self):
+        ws = self.ws()
+        rc, out = run_tyf(["mark-ready", "missing", "unit"], ws)
+        self.assertNotEqual(rc, 0, "mark-ready on a nonexistent work must refuse")
+        self.assertFalse((ws / "works/missing").exists())
+
+    def test_open_requires_existing_work(self):
+        ws = self.ws()
+        rc, out = run_tyf(["open", "missing"], ws)
+        self.assertNotEqual(rc, 0, "open on a nonexistent work must refuse")
+        self.assertNotIn("active_work: missing",
+                         (ws / "WORKSPACE_STATE.yaml").read_text(encoding="utf-8"))
+
+    def test_audit_requires_existing_work(self):
+        ws = self.ws()
+        rc, out = run_tyf(["audit", "missing", "unit"], ws)
+        self.assertNotEqual(rc, 0, "audit on a nonexistent work must refuse")
+
+    def test_new_work_rejects_spaces_in_id(self):
+        ws = self.ws()
+        rc, out = run_tyf(["new-work", "a b"], ws)
+        self.assertNotEqual(rc, 0, "a work id with a space must be rejected")
+
 
 class DocCheck(unittest.TestCase):
     def setUp(self):

@@ -2,7 +2,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper happy path supports first writing session
-    When Run "python tests/test_tyf.py -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_plain_language_front_door_for_new_book CLIBehaviour.test_write_with_decision_copies_and_logs -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
@@ -10,14 +10,19 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py helper"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper enforces proposal audit decision write gate
+    When Run "python tests/test_solo_oracles.py gate"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper refuses unsafe or out-of-workspace writes
-    When Run "python tests/test_tyf.py -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_without_decision CLIBehaviour.test_new_work_refuses_symlinked_works_root_escape CLIBehaviour.test_propose_refuses_symlinked_manuscript_escape CLIBehaviour.test_snapshot_scopes_commit_to_workspace_inside_parent_repo -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper keeps first-day setup source-first and recoverable
-    When Run "python tests/test_tyf.py -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_plain_language_front_door_for_new_book CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
     Then Exit code is 0
 
   @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli

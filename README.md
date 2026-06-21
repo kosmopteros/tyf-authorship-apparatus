@@ -2,6 +2,8 @@
 
 *The Yours Faithfully. A faithful apparatus for authorship.*
 
+**v0.3.0 "Gate hardening".**
+
 TYF is not a writing assistant. TYF is not a productivity system. TYF is not a knowledge-management tool.
 
 TYF is a faithful apparatus for authorship. Its job is to preserve source, elicit knowledge, protect register, propose edits, and enforce the controlled write. The author is the source. TYF is the interviewer, the amanuensis, the first reader, the faithful editor, and the redactor. It never becomes the writer.
@@ -94,7 +96,10 @@ tyf init <name>          tyf start "<working title>" [--id <id>]
 tyf begin <id> --title <t> --register <r>
 tyf capture <work> --kind source|voice|claim|question --text <text>
 tyf status               tyf open <work>          tyf mark-ready <work> <unit>
-tyf audit <work> <unit>  tyf write <work> --from <draft> --confirm
+tyf propose <work> --from <draft> [--dest <file>]
+tyf audit <work> <unit> --record --proposal <id> --verdict pass --findings-answered
+tyf accept <work> <proposal-id> --evidence "<author accepted this>"
+tyf write <work> --decision <decision-id>
 tyf doctor [--repair]    # workspace integrity check; --repair heals missing structure
 tyf reflexes             # show TYF's visible hooks and recovery behavior
 tyf snapshot -m <msg>    # explicit git recovery commit for the workspace
@@ -105,7 +110,9 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It creates the work from a human title, opens it as active, and adds a source/interview packet in `drafts/`, a seed outline in `outline/`, and a first-session runway in `.review/`. `tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. None of these commands write to `manuscript/`; that remains behind `tyf write --confirm`.
+`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It creates the work from a human title, opens it as active, and adds a source/interview packet in `drafts/`, a seed outline in `outline/`, and a first-session runway in `.review/`. `tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. None of these commands write to `manuscript/`; that remains behind the Gate chain: `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision`.
+
+The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash and the current manuscript base hash. An audit record must pass with findings answered. A decision record names the proposal the author accepted and records acceptance evidence. `tyf write --decision <id>` verifies that the draft and manuscript base have not changed, refuses symlink escapes, writes atomically, and logs the proposal, decision, audit, and content hash. Naked `--confirm` is refused.
 
 `tyf reflexes` shows the apparatus behavior that would otherwise be easy to forget: the documentation-honesty tail hook, the attentive-amanuensis notice hook after controlled writes, the doctor integrity check, and the git recovery path. If a workspace is also a git repository, mutating commands surface changed-path counts and point to `tyf snapshot`. `tyf snapshot --message "..."` stages and commits the current workspace as an explicit recovery point. TYF never commits silently.
 
@@ -119,7 +126,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.1. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.3.0 alpha. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 

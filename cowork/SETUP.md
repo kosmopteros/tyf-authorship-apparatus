@@ -26,7 +26,7 @@ Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace 
 
 ## Make the controlled write hold in Cowork
 
-- The helper is the only writer into `manuscript/`. Read-only passes and Compose never write there. `tyf write` requires `--confirm`, which stands for explicit author acceptance.
+- The helper is the only writer into `manuscript/`. Read-only passes and Compose never write there. Manuscript writes require a proposal record, passing audit record, author decision record with `--evidence`, and `tyf write --decision <id>`. A bare `--confirm` is refused.
 - The project instructions repeat the write-zone table so every fresh task and every scheduled session reloads it.
 - Run `tyf doctor` on a daily schedule to catch any manuscript file that appeared without a write-log entry.
 
@@ -36,4 +36,4 @@ Use scheduled tasks for the ongoing-work hooks. See `cowork/SCHEDULED_TASKS.md` 
 
 ## Verify
 
-In a new task, ask Claude to list its TYF skills and to state the write zones. It should return all sixteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write`.
+In a new task, ask Claude to list its TYF skills and to state the write zones. It should return all sixteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write --decision`.

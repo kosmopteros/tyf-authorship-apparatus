@@ -18,15 +18,34 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 def check_helper() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
-    required = {"start", "begin", "capture", "reflexes", "snapshot", "write", "doctor", "check"}
+    required = {
+        "start", "begin", "capture", "reflexes", "snapshot", "propose",
+        "audit", "accept", "write", "doctor", "check",
+    }
     missing = sorted(
         command for command in required
         if f'add_parser("{command}"' not in source
     )
     assert not missing, f"missing TYF commands: {missing}"
-    for handler in ("cmd_start", "cmd_begin", "cmd_capture", "cmd_reflexes", "cmd_snapshot"):
+    for handler in ("cmd_start", "cmd_begin", "cmd_capture", "cmd_reflexes",
+                    "cmd_snapshot", "cmd_propose", "cmd_accept"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
+
+
+def check_gate() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    controlling = (ROOT / "skills" / "controlling-manuscript-writes" / "SKILL.md").read_text(encoding="utf-8")
+
+    for token in ("cmd_propose", "cmd_accept", "--decision", "base_sha256",
+                  "src_sha256", "acceptance_evidence", "_passing_audit_for", "atomic_write"):
+        assert token in source, f"Gate runtime missing {token}"
+    assert "naked --confirm is retired" in source
+    assert "test_write_refuses_without_decision" in tests
+    assert "test_write_decision_refuses_out_of_band_edit_after_acceptance" in tests
+    assert "proposal record" in controlling.lower()
+    assert "decision record" in controlling.lower()
 
 
 def check_plugin() -> None:
@@ -69,7 +88,7 @@ def check_onboarding_entry() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("oracle", choices=("helper", "plugin", "onboarding", "onboarding-entry"))
+    parser.add_argument("oracle", choices=("helper", "plugin", "onboarding", "onboarding-entry", "gate"))
     args = parser.parse_args(argv)
     if args.oracle == "helper":
         check_helper()
@@ -77,8 +96,10 @@ def main(argv: list[str] | None = None) -> int:
         check_plugin()
     elif args.oracle == "onboarding":
         check_onboarding()
-    else:
+    elif args.oracle == "onboarding-entry":
         check_onboarding_entry()
+    else:
+        check_gate()
     return 0
 
 

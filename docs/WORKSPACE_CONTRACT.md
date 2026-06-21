@@ -40,7 +40,7 @@ workspace/
 
 ## Read-only enforcement
 
-Elicit, Read (sympathetic read), Diagnose, and Audit (adversarial audit) get no write access to any work's `manuscript/`. Propose writes only to `.review/`. Compose writes only to `drafts/`. Revise writes to `manuscript/`, and only through the controlled write. In Claude Code this is real tool scoping on the subagent. In Desktop it is enforced by routing every edit through `controlling-manuscript-writes`.
+Elicit, Read (sympathetic read), Diagnose, and Audit (adversarial audit) get no write access to any work's `manuscript/`. Propose writes only to `.review/`. Compose writes only to `drafts/`. Revise writes to `manuscript/`, and only through the controlled write: `tyf propose`, `tyf audit --record`, `tyf accept --evidence`, then `tyf write --decision`. In Claude Code this is real tool scoping on the subagent. In Desktop it is enforced by routing every edit through `controlling-manuscript-writes`.
 
 `tyf start "Working Title"` is the public first-session shortcut. It creates a normal work from the title, marks it active, and adds `drafts/00-start-here.md`, `outline/seed.md`, and `.review/today.md`. Those files are prompts and records for the author; they are not manuscript. `tyf begin <id>` is the lower-level form when an agent already needs a stable work id. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material to `sources/notes/`, `voice/exemplar-passages/`, `knowledge-base/claims/`, or `knowledge-base/open-questions/` respectively. It binds each capture to an existing work and never writes to `works/<id>/manuscript/`.
 

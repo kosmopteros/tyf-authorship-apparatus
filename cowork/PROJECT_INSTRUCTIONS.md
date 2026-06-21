@@ -26,7 +26,7 @@ Two substrates are read at every band, micro, macro, and meta: the voice registe
 
 - Compose writes to `works/<id>/drafts/` only.
 - Propose and Audit write to `works/<id>/.review/` only.
-- The manuscript at `works/<id>/manuscript/` is written only by `tyf write --confirm`.
+- The manuscript at `works/<id>/manuscript/` is written only by `tyf write --decision <id>` after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`.
 - Read, Diagnose, and Audit write nothing to any manuscript.
 
 If a pass has no write access to a target, you are in the wrong pass. Route the result, or go through the controlled write.

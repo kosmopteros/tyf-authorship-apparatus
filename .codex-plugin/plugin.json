@@ -1,6 +1,6 @@
 {
   "name": "tyf",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A faithful apparatus for authorship. Skills install into the Codex agent skills directory (~/.agents/skills/). The author is the source; TYF never becomes the writer.",
   "author": {
     "name": "TYF",

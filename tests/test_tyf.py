@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 import shutil
 import unittest
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -35,7 +36,8 @@ def run_tyf(args, cwd):
     """Invoke the real CLI. Returns (returncode, combined_output)."""
     p = subprocess.run(
         [sys.executable, str(TYF), *args],
-        cwd=str(cwd), capture_output=True, text=True, env=ENV,
+        cwd=str(cwd), capture_output=True, text=True, encoding="utf-8",
+        errors="replace", env=ENV,
     )
     return p.returncode, (p.stdout + p.stderr)
 
@@ -73,6 +75,24 @@ class CLIBehaviour(unittest.TestCase):
         (d / name).write_text(text, encoding="utf-8")
         return f"works/{work}/drafts/{name}"
 
+    def gate_decision(self, ws, work="demo", src=None, unit="ch1.md"):
+        """Create a proposal, passing audit record, and author decision."""
+        src = src or self.make_draft(ws, work=work, name=unit)
+        rc, out = run_tyf(["propose", work, "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        m = re.search(r"Proposal:\s+(\S+)", out)
+        self.assertIsNotNone(m, out)
+        proposal = m.group(1)
+        rc, out = run_tyf(
+            ["audit", work, unit, "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["accept", work, proposal, "--evidence", "author accepted this proposal"], ws)
+        self.assertEqual(rc, 0, out)
+        m = re.search(r"Decision:\s+(\S+)", out)
+        self.assertIsNotNone(m, out)
+        return m.group(1)
+
     # ---- existing behaviour that must keep working (regression guards) ----
 
     def test_init_creates_and_is_idempotent(self):
@@ -85,23 +105,39 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual((ws / "ASSUMPTIONS.md").read_text(encoding="utf-8"),
                          "CUSTOM CONTENT\n")
 
-    def test_write_refuses_without_confirm(self):
+    def test_write_refuses_without_decision(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
         src = self.make_draft(ws)
         rc, out = run_tyf(["write", "demo", "--from", src], ws)
-        self.assertNotEqual(rc, 0, "write without --confirm must refuse")
+        self.assertNotEqual(rc, 0, "write without a decision record must refuse")
+        rc, out = run_tyf(["write", "demo", "--from", src, "--confirm"], ws)
+        self.assertNotEqual(rc, 0, "naked --confirm must not be a manuscript gate")
         self.assertFalse((ws / "works/demo/manuscript/ch1.md").exists())
 
-    def test_write_with_confirm_copies_and_logs(self):
+    def test_accept_requires_author_acceptance_evidence(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
         src = self.make_draft(ws)
-        rc, out = run_tyf(["write", "demo", "--from", src, "--confirm"], ws)
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["accept", "demo", proposal], ws)
+        self.assertNotEqual(rc, 0, "acceptance without recorded author evidence must refuse")
+        rc, out = run_tyf(["accept", "demo", proposal, "--evidence", "Alexander: accept this file"], ws)
+        self.assertEqual(rc, 0, out)
+
+    def test_write_with_decision_copies_and_logs(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        decision = self.gate_decision(ws, src=src)
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
         self.assertEqual(rc, 0, out)
         self.assertTrue((ws / "works/demo/manuscript/ch1.md").is_file())
         log = (ws / "works/demo/.review/write-log.md").read_text(encoding="utf-8")
         self.assertIn("ch1.md", log)
+        self.assertIn(decision, log)
 
     def test_doctor_flags_unlogged_manuscript_file(self):
         ws = self.ws()
@@ -170,16 +206,15 @@ class CLIBehaviour(unittest.TestCase):
         self.assertNotEqual(rc, 0, "source outside the work's drafts/ must be rejected")
         self.assertFalse((ws / "works/demo/manuscript/evil.md").exists())
 
-    def test_write_refuses_silent_overwrite(self):
+    def test_write_refuses_replaying_same_decision(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
         src = self.make_draft(ws)
-        rc, _ = run_tyf(["write", "demo", "--from", src, "--confirm"], ws)
+        decision = self.gate_decision(ws, src=src)
+        rc, _ = run_tyf(["write", "demo", "--decision", decision], ws)
         self.assertEqual(rc, 0)
-        rc2, out2 = run_tyf(["write", "demo", "--from", src, "--confirm"], ws)
-        self.assertNotEqual(rc2, 0, "overwriting an existing manuscript file needs --force")
-        rc3, out3 = run_tyf(["write", "demo", "--from", src, "--confirm", "--force"], ws)
-        self.assertEqual(rc3, 0, out3)
+        rc2, out2 = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc2, 0, "a decision must not be replayable after the base changes")
 
     # ---- P0 #6: doctor must detect out-of-band edits after a logged write ----
 
@@ -187,12 +222,14 @@ class CLIBehaviour(unittest.TestCase):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
         src = self.make_draft(ws)
-        rc, _ = run_tyf(["write", "demo", "--from", src, "--confirm"], ws)
+        decision = self.gate_decision(ws, src=src)
+        rc, _ = run_tyf(["write", "demo", "--decision", decision], ws)
         self.assertEqual(rc, 0)
         man_file = ws / "works/demo/manuscript/ch1.md"
         man_file.write_text(man_file.read_text(encoding="utf-8") + "SNUCK IN\n",
                             encoding="utf-8")
         rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0)
         self.assertIn("ch1.md", out)
         self.assertRegex(out.lower(), r"out-of-band|out of band|modified|hash")
 
@@ -242,27 +279,57 @@ class CLIBehaviour(unittest.TestCase):
         self.assertNotEqual(rc, 0, "a write into a symlinked work escaping works/ must be refused")
         self.assertFalse((outside / "manuscript").exists())
 
+    def test_new_work_refuses_symlinked_works_root_escape(self):
+        ws = self.ws()
+        if not _can_symlink(self.tmp):
+            self.skipTest("platform/user cannot create symlinks")
+        shutil.rmtree(ws / "works")
+        outside = self.tmp / "outside-works"
+        outside.mkdir()
+        os.symlink(outside, ws / "works", target_is_directory=True)
+        rc, out = run_tyf(["new-work", "escape"], ws)
+        self.assertNotEqual(rc, 0, "a symlinked works/ root must not relocate the workspace jail")
+        self.assertFalse((outside / "escape").exists())
+
+    def test_propose_refuses_symlinked_manuscript_escape(self):
+        ws = self.ws()
+        if not _can_symlink(self.tmp):
+            self.skipTest("platform/user cannot create symlinks")
+        run_tyf(["new-work", "demo"], ws)
+        outside = self.tmp / "outside-manuscript"
+        outside.mkdir()
+        shutil.rmtree(ws / "works" / "demo" / "manuscript")
+        os.symlink(outside, ws / "works" / "demo" / "manuscript", target_is_directory=True)
+        src = self.make_draft(ws)
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertNotEqual(rc, 0, "a symlinked manuscript/ must not receive a proposal or write")
+        self.assertFalse((outside / "ch1.md").exists())
+
     # ---- third review: --force must not clobber an out-of-band edit ----
 
-    def test_write_force_refuses_out_of_band_edit(self):
+    def test_write_decision_refuses_out_of_band_edit_after_acceptance(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
         src = self.make_draft(ws, name="ch.md", text="orig\n")
-        self.assertEqual(run_tyf(["write", "demo", "--from", src, "--confirm"], ws)[0], 0)
+        first = self.gate_decision(ws, src=src, unit="ch.md")
+        self.assertEqual(run_tyf(["write", "demo", "--decision", first], ws)[0], 0)
+        (ws / "works/demo/drafts/ch.md").write_text("v2\n", encoding="utf-8")
+        decision = self.gate_decision(ws, src=src, unit="ch.md")
         man = ws / "works/demo/manuscript/ch.md"
         man.write_text(man.read_text(encoding="utf-8") + "MANUAL\n", encoding="utf-8")
-        (ws / "works/demo/drafts/ch.md").write_text("v2\n", encoding="utf-8")
-        rc, out = run_tyf(["write", "demo", "--from", src, "--confirm", "--force"], ws)
-        self.assertNotEqual(rc, 0, "--force must refuse to clobber an out-of-band edit")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "a decision bound to an older base must refuse manual edits")
         self.assertIn("MANUAL", man.read_text(encoding="utf-8"))
 
-    def test_write_force_allows_clean_rewrite(self):
+    def test_write_decision_allows_clean_rewrite_against_recorded_base(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
         src = self.make_draft(ws, name="ch.md", text="orig\n")
-        self.assertEqual(run_tyf(["write", "demo", "--from", src, "--confirm"], ws)[0], 0)
+        first = self.gate_decision(ws, src=src, unit="ch.md")
+        self.assertEqual(run_tyf(["write", "demo", "--decision", first], ws)[0], 0)
         (ws / "works/demo/drafts/ch.md").write_text("v2\n", encoding="utf-8")  # manuscript untouched
-        rc, out = run_tyf(["write", "demo", "--from", src, "--confirm", "--force"], ws)
+        decision = self.gate_decision(ws, src=src, unit="ch.md")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
         self.assertEqual(rc, 0, out)
         self.assertEqual((ws / "works/demo/manuscript/ch.md").read_text(encoding="utf-8"), "v2\n")
 
@@ -368,6 +435,44 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["start", "Strange / Title?", "--id", "book-one"], ws)
         self.assertNotEqual(rc, 0, "start must not clobber an existing work")
 
+    def test_start_accepts_non_latin_title_with_stable_generated_id(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "Русская книга"], ws)
+        self.assertEqual(rc, 0, out)
+        m = re.search(r"Work id:\s+(\S+)", out)
+        self.assertIsNotNone(m, out)
+        work_id = m.group(1)
+        self.assertRegex(work_id, r"^work-[0-9a-f]{12}$")
+        self.assertTrue((ws / "works" / work_id / "work.yaml").is_file())
+
+    def test_user_yaml_values_are_safely_quoted(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["new-work", "yaml-demo", "--type", "book: essay",
+             "--register", "voice: one"], ws)
+        self.assertEqual(rc, 0, out)
+        raw = (ws / "works" / "yaml-demo" / "work.yaml").read_text(encoding="utf-8")
+        self.assertIn('type: "book: essay"', raw)
+        self.assertIn('- "voice: one"', raw)
+        parsed = tyf.read_state(str(ws / "works" / "yaml-demo" / "work.yaml"))
+        self.assertEqual(parsed["type"], "book: essay")
+        self.assertEqual(parsed["registers"], ["voice: one"])
+
+    def test_init_creates_workspace_context_contracts(self):
+        ws = self.ws()
+        for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
+            text = (ws / name).read_text(encoding="utf-8")
+            self.assertIn("TYF workspace", text)
+            self.assertIn("tyf start", text)
+
+    def test_new_work_adds_event_log_entry(self):
+        ws = self.ws()
+        before = tyf.ledger_summary(str(ws))[1]
+        rc, out = run_tyf(["new-work", "event-demo"], ws)
+        self.assertEqual(rc, 0, out)
+        after = tyf.ledger_summary(str(ws))[1]
+        self.assertGreater(after, before)
+
     # ---- transparent reflexes and explicit git recovery points ----
 
     def test_reflexes_explains_hooks_and_snapshot(self):
@@ -406,6 +511,73 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["snapshot", "--message", "no repo"], ws)
         self.assertNotEqual(rc, 0, "snapshot needs an explicit git workspace")
         self.assertIn("git", out.lower())
+
+    @unittest.skipUnless(shutil.which("git"), "git not available")
+    def test_snapshot_scopes_commit_to_workspace_inside_parent_repo(self):
+        parent = self.tmp / "parent"
+        parent.mkdir()
+        subprocess.run(["git", "init"], cwd=str(parent), check=True,
+                       capture_output=True, text=True)
+        subprocess.run(["git", "config", "user.email", "tyf@example.test"],
+                       cwd=str(parent), check=True)
+        subprocess.run(["git", "config", "user.name", "TYF Test"],
+                       cwd=str(parent), check=True)
+        rc, out = run_tyf(["init", "book"], parent)
+        self.assertEqual(rc, 0, out)
+        ws = parent / "book"
+        (parent / "app-secret.txt").write_text("outside\n", encoding="utf-8")
+        rc, out = run_tyf(["start", "Book"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["snapshot", "--message", "book checkpoint"], ws)
+        self.assertEqual(rc, 0, out)
+        committed = subprocess.run(
+            ["git", "show", "--name-only", "--format=", "HEAD"], cwd=str(parent),
+            capture_output=True, text=True, check=True).stdout.splitlines()
+        self.assertTrue(any(p.startswith("book/") for p in committed), committed)
+        self.assertNotIn("app-secret.txt", committed)
+        self.assertNotIn("book/.tyf/ledger.db", committed)
+        status = subprocess.run(
+            ["git", "status", "--short"], cwd=str(parent),
+            capture_output=True, text=True, check=True).stdout
+        self.assertIn("?? app-secret.txt", status)
+
+    def test_notice_peek_does_not_create_ledger_database(self):
+        ws = self.ws()
+        db = ws / ".tyf" / "ledger.db"
+        db.unlink()
+        (ws / "works").mkdir(exist_ok=True)
+        rc, out = run_tyf(["notice", "--peek"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(db.exists(), "--peek must not initialize apparatus memory")
+
+    def test_resolved_notice_reopens_when_same_gap_returns(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        gap = ws / "works" / "demo" / "drafts" / "gap.md"
+        gap.write_text("[AUTHOR: needed - cite this]\n", encoding="utf-8")
+        rc, out = run_tyf(["notice"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("new (", out)
+        gap.write_text("filled\n", encoding="utf-8")
+        self.assertEqual(run_tyf(["notice"], ws)[0], 0)
+        gap.write_text("[AUTHOR: needed - cite this]\n", encoding="utf-8")
+        rc, out = run_tyf(["notice"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertRegex(out.lower(), r"new|resurfaced")
+        items, _events = tyf.ledger_summary(str(ws))
+        self.assertTrue(any(r["status"] == "open" for r in items.values()), items)
+
+    def test_identical_gaps_in_different_locations_have_distinct_notice_ids(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        a = ws / "works" / "demo" / "drafts" / "a.md"
+        b = ws / "works" / "demo" / "drafts" / "b.md"
+        a.write_text("[AUTHOR: needed - citation]\n", encoding="utf-8")
+        b.write_text("[AUTHOR: needed - citation]\n", encoding="utf-8")
+        notices = [n for n in tyf.gather_notices(str(ws)) if n["kind"] == "gap"]
+        hashes = {n["content_hash"] for n in notices}
+        self.assertEqual(len(notices), 2)
+        self.assertEqual(len(hashes), 2, notices)
 
 
 class DocCheck(unittest.TestCase):

@@ -47,7 +47,7 @@ workspace/
 
 Before writing anything, name the pass you are in and check the table. If the pass has no write access to the target directory, you are in the wrong pass. Route the result to where that pass may write, or stop and go through the controlled write.
 
-The only path into `manuscript/` is `tyf write`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
+The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
 
 For a first writing session, `tyf start "Working Title"` creates a normal work plus a safe source/interview packet in `drafts/`, a seed outline, and a `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate. These commands are elicitation and setup paths; none writes to `manuscript/`.
 
@@ -55,14 +55,14 @@ For a first writing session, `tyf start "Working Title"` creates a normal work p
 
 | What you will tell yourself | The reality | Do instead |
 |---|---|---|
-| "It is one small fix, I will edit the manuscript directly." | One uncontrolled write is the whole contract broken. | Route through `tyf write` with author acceptance. |
+| "It is one small fix, I will edit the manuscript directly." | One uncontrolled write is the whole contract broken. | Route through proposal, audit, decision, and `tyf write --decision`. |
 | "Drafts and manuscript are basically the same." | Drafts are candidates; the manuscript is the work. | Compose writes to `drafts/` only. |
 | "I will tidy the sources while I am here." | The sources is the source of truth and is read-mostly. | Add derived structure to the knowledge base, leave the raw intact. |
 | "I am not sure which pass I am in, I will just write." | Unsure-which-pass is exactly when the contract leaks. | Name the pass first; consult the table. |
 
 ## Red flags: stop if you catch yourself
 
-- Writing to `manuscript/` outside `tyf write`.
+- Writing to `manuscript/` outside `tyf write --decision`.
 - Composing into `manuscript/` instead of `drafts/`.
 - Editing the raw sources.
 - Writing without naming the current pass.
@@ -77,7 +77,10 @@ tyf capture <work>     # append author source, voice, claim, or question materia
 tyf doctor            # read-only integrity check, including stray manuscript writes
 tyf reflexes          # show visible hooks and git recovery behavior
 tyf snapshot -m <msg> # explicit git recovery commit; never automatic
-tyf write <work>       # the only writer into manuscript/
+tyf propose <work> --from <draft>
+tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered
+tyf accept <work> <proposal-id> --evidence "<author acceptance>"
+tyf write <work> --decision <decision-id>
 ```
 
 ## Next

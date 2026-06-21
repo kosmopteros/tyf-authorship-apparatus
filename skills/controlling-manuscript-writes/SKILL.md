@@ -16,12 +16,13 @@ In Claude Code this is real tool scoping: read-only passes get no write access t
 Nothing crosses into `manuscript/` on its own. For every change:
 
 1. **Identify** the candidate or proposal precisely.
-2. **Confirm** explicit author acceptance. Silence is not acceptance. "Sounds good" on a batch is not line-by-line acceptance unless the author says so.
-3. **Apply** only what was accepted, as a reviewable diff or track-changes.
-4. **Log** what changed in the work's record.
-5. **Preserve** rejected material only if the author asks.
+2. **Create** a proposal record from the draft: `tyf propose <work> --from <draft>`.
+3. **Record** an adversarial audit: `tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered`.
+4. **Record** explicit author acceptance: `tyf accept <work> <proposal-id> --evidence "<verbatim acceptance or stable reference>"`.
+5. **Write** only through the decision: `tyf write <work> --decision <decision-id>`.
+6. **Preserve** rejected material only if the author asks.
 
-The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then run the write, so every manuscript change has one inspectable source. A rewrite of an existing manuscript file needs `--force`, and even then the write is refused if the file changed out of band since the last logged write (reconcile first).
+The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, and acceptance evidence. If either file hash changes before the write, the write is refused and the change must be re-proposed. Naked `--confirm` and `--force` are refused.
 
 ## Rationalization table
 
@@ -44,22 +45,25 @@ The controlled write promotes a file under the work's `drafts/` only. To apply a
 
 ```markdown
 ## Write record: <work>
-Candidate / proposal:
-Decision: accepted | rejected | partially accepted
-Applied changes (diff / track-changes):
-Rejected changes:
-Remaining decisions:
+Proposal:
+Decision:
+Acceptance evidence:
+Audit:
+Applied file:
+Source sha256:
+Manuscript base sha256:
+Rejected or deferred changes:
 ```
 
 ## Acceptance and edge cases
 
 This is the highest-stakes skill: the only door into the work. Hold these beyond the happy path:
 
-- **Partial acceptance** ("take 1 and 3, not 2"): apply exactly the accepted subset, never all-or-nothing.
-- **No prior acceptance at all:** the request to write is not itself approval. Require explicit confirmation (the `--confirm` contract); silence is never consent.
-- **The draft changed or vanished between proposal and write:** verify the source still exists and is current before applying; never write stale or empty content.
+- **Partial acceptance** ("take 1 and 3, not 2"): apply exactly the accepted subset. If the helper only supports whole-file acceptance for that change, split the accepted subset into its own draft before proposing.
+- **No prior acceptance at all:** the request to write is not itself approval. Require a decision record bound to a proposal; silence is never consent.
+- **The draft changed or vanished between proposal and write:** the source hash must still match the proposal and decision; never write stale or empty content.
 - **Concurrent writes** (a scheduled task and a manual write touch one file): every write is logged; `tyf doctor` surfaces a manuscript file whose log is inconsistent, rather than letting last-write-wins clobber silently.
-- **The author hand-edited the manuscript outside the gate:** detect the out-of-band change (a manuscript file with no matching write-log entry) and reconcile with the author; do not assume the apparatus owns the file and overwrite their work.
+- **The author hand-edited the manuscript outside the gate:** detect the out-of-band change or base-hash mismatch and reconcile with the author; do not assume the apparatus owns the file and overwrite their work.
 
 ## Next
 

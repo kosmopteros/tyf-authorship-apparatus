@@ -17,8 +17,10 @@ Commands:
                                           append author source/voice/claim/question notes
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
-  tyf audit <work-id> <unit>              print the audit checklist (no fix)
-  tyf write <work-id> --from <draft> --confirm   ONLY writer into manuscript/
+  tyf propose <work-id> --from <draft>    create a manuscript proposal record
+  tyf audit <work-id> <unit>              print or record the audit checklist
+  tyf accept <work-id> <proposal-id>      create an author decision record
+  tyf write <work-id> --decision <id>     ONLY writer into manuscript/
   tyf doctor [--repair]                   workspace integrity check; --repair creates
                                           any missing required structure
   tyf reflexes                            show transparent hooks and reflexes
@@ -40,7 +42,7 @@ Apparatus memory (SQLite, stdlib)
   `tyf reconcile --export`. See docs/ATTENTIVENESS.md.
 
 Documentation-honesty hook
-  Every mutating command (init, new-work, start, begin, capture, write, mark-ready) runs `check` as a
+  Every mutating command (init, new-work, start, begin, capture, propose, audit --record, accept, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -55,8 +57,27 @@ import sys
 import re
 import argparse
 import datetime
+import json
+import unicodedata
+from pathlib import Path
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except AttributeError:
+    pass  # degradation: ok: older Python streams may not support reconfigure; keep host defaults
 
 # ---------- tiny tolerant reader for the flat YAML we generate ----------
+
+def _yaml_load_scalar(value):
+    value = value.strip()
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value[1:-1]
+    return value
+
 
 def read_state(path):
     # Minimal reader for the simple YAML this tool generates: top-level
@@ -77,7 +98,7 @@ def read_state(path):
                 if container is not None:
                     if not isinstance(data.get(container), list):
                         data[container] = []
-                    data[container].append(s[2:].strip())
+                    data[container].append(_yaml_load_scalar(s[2:].strip()))
                 continue
             if ":" not in s:
                 continue
@@ -88,12 +109,12 @@ def read_state(path):
                     data[k] = {}
                     container = k
                 else:
-                    data[k] = v
+                    data[k] = _yaml_load_scalar(v)
                     container = None
             elif container is not None:
                 if not isinstance(data.get(container), dict):
                     data[container] = {}
-                data[container][k] = v
+                data[container][k] = _yaml_load_scalar(v)
     return data
 
 
@@ -115,6 +136,24 @@ def write(path, text):
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
 
+
+def atomic_write(path, text):
+    parent = os.path.dirname(path) or "."
+    os.makedirs(parent, exist_ok=True)
+    tmp = os.path.join(parent, f".{os.path.basename(path)}.tmp-{os.getpid()}")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    finally:
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass  # degradation: ok: temp cleanup failure should not mask the original write result
+
 def append(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
@@ -131,11 +170,18 @@ def _one_line(value, fallback=""):
     return text or fallback
 
 
+def _yaml_scalar(value):
+    return json.dumps(_one_line(value), ensure_ascii=False)
+
+
 def _require_workspace():
     """Refuse any mutating command run outside a TYF workspace root."""
     if not os.path.isfile("WORKSPACE_STATE.yaml"):
         sys.exit("Not in a TYF workspace (no WORKSPACE_STATE.yaml). "
                  "Run `tyf init <name>`, or cd into the workspace root.")
+    real = os.path.realpath(".")
+    if os.path.abspath(".") != real:
+        os.chdir(real)
 
 
 def _safe_work_id(work_id):
@@ -156,11 +202,42 @@ def _within(base, target):
     return target == base or target.startswith(base + os.sep)
 
 
+def _reject_symlink_components(path, label="path"):
+    """Reject symlinks at any existing component of a protected path."""
+    abs_path = os.path.abspath(path)
+    parts = Path(abs_path).parts
+    if not parts:
+        return
+    cur = parts[0]
+    for part in parts[1:]:
+        cur = os.path.join(cur, part)
+        if os.path.islink(cur):
+            sys.exit(f"Refused: {label} crosses a symlink: {cur}")
+
+
+def _ensure_real_dir(path, label="directory"):
+    _reject_symlink_components(path, label)
+    if os.path.exists(path) and not os.path.isdir(path):
+        sys.exit(f"Refused: {label} is not a directory: {path}")
+    os.makedirs(path, exist_ok=True)
+    _reject_symlink_components(path, label)
+
+
 def _confine_work(work):
     """Refuse a work whose path resolves outside works/ (e.g. a symlinked
     works/<id> or a mount). Defense in depth beyond the slug check."""
-    base = os.path.realpath("works")
-    target = os.path.realpath(os.path.join("works", work))
+    root = os.path.realpath(".")
+    works_logical = os.path.abspath("works")
+    if os.path.islink(works_logical):
+        sys.exit("Refused: works/ is a symlink; protected workspace roots must be real directories.")
+    _reject_symlink_components("works", "works/")
+    base = os.path.realpath(works_logical)
+    target_logical = os.path.abspath(os.path.join("works", work))
+    if os.path.islink(target_logical):
+        sys.exit(f"Refused: work {work!r} is a symlink; protected works must be real directories.")
+    target = os.path.realpath(target_logical)
+    if not _within(root, base):
+        sys.exit("Refused: works/ resolves outside the workspace.")
     if not (target == base or target.startswith(base + os.sep)):
         sys.exit(f"Refused: work {work!r} resolves outside works/ (symlink or mount escape).")
 
@@ -367,7 +444,8 @@ def _mtime(path):
 
 def _read(path):
     try:
-        return open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as f:
+            return f.read()
     except OSError:  # degradation: ok: missing/unreadable text contributes no notice content
         return ""
 
@@ -390,7 +468,7 @@ def gather_notices(root="."):
     def add(kind, where, message, content, context=""):
         notices.append({
             "kind": kind, "where": where, "message": message,
-            "content_hash": _h(kind, content),
+            "content_hash": _h(kind, where, content),
             "context_hash": _h(context) if context else "",
         })
 
@@ -494,8 +572,11 @@ def _tyf_dir(root):
 def _db_path(root):
     return os.path.join(_tyf_dir(root), "ledger.db")
 
-def _db(root):
-    os.makedirs(_tyf_dir(root), exist_ok=True)
+def _db(root, create=True):
+    if create:
+        os.makedirs(_tyf_dir(root), exist_ok=True)
+    elif not os.path.isfile(_db_path(root)):
+        return None
     conn = sqlite3.connect(_db_path(root))
     conn.execute("""CREATE TABLE IF NOT EXISTS notices (
         content_hash TEXT PRIMARY KEY,
@@ -533,15 +614,8 @@ def reconcile_notices(root, notices, update=True):
       - seen, status 'dismissed', same context_hash -> stays silent
       - seen, status 'dismissed', DIFFERENT context_hash -> resurfaced
     """
-    conn = _db(root)
-    cur = conn.cursor()
-    rows = {r[0]: r for r in cur.execute(
-        "SELECT content_hash, kind, where_ref, message, context_hash, status FROM notices")}
-    new, still_open, resurfaced = [], [], []
-    seen_now = set()
-
-    # Dedupe within this run: the same content can appear in more than one place
-    # (a gap in both a draft and its manuscript copy). Keep the first occurrence.
+    # Dedupe within this run by notice identity. Location is part of the hash,
+    # so identical gaps in distinct places stay distinct epistemic objects.
     deduped = []
     seen_hashes = set()
     for n in notices:
@@ -549,6 +623,15 @@ def reconcile_notices(root, notices, update=True):
             continue
         seen_hashes.add(n["content_hash"])
         deduped.append(n)
+
+    conn = _db(root, create=update)
+    if conn is None:
+        return deduped, [], []
+    cur = conn.cursor()
+    rows = {r[0]: r for r in cur.execute(
+        "SELECT content_hash, kind, where_ref, message, context_hash, status FROM notices")}
+    new, still_open, resurfaced = [], [], []
+    seen_now = set()
 
     for n in deduped:
         ch = n["content_hash"]
@@ -576,6 +659,12 @@ def reconcile_notices(root, notices, update=True):
                                        changed_at=? WHERE content_hash=?""",
                                     (n["context_hash"], now(), ch))
                 # else dismissed in same context -> stay silent
+            elif status == "resolved":
+                resurfaced.append(n)
+                if update:
+                    cur.execute("""UPDATE notices SET status='open', context_hash=?,
+                                   message=?, changed_at=? WHERE content_hash=?""",
+                                (n["context_hash"], n["message"], now(), ch))
             else:
                 still_open.append(n)
 
@@ -674,12 +763,25 @@ def _required_structure(root):
         "voice/registers", "voice/exemplar-passages",
         "redactor-canon", "works", ".proposals", ".hooks", ".tyf",
     ]
+    context_contract = """# TYF Workspace Instructions
+
+This is an author-owned TYF workspace.
+
+- If the author says "start my book" or gives a title, use `tyf start "<working title>"`.
+- Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `works/*/drafts/`.
+- Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
+- Missing knowledge stays visible as `[AUTHOR: needed - what]`.
+- Use `tyf notice --peek` for read-only inspection and `tyf snapshot --message "..."` only when the author wants an explicit git recovery point.
+"""
     files = {
         "WORKSPACE_STATE.yaml":
             "active_work: \nactive_band: section\nwrite_control:\n  compose: locked\n  revise: locked\nstatus: intake\n",
         "manifest.yaml":
             "voice_inheritance:\n  default: layer\nhooks:\n  - on: save_chapter\n    run: [ai-tell-scan, register-fence-check]\n  - on: open_chapter\n    run: [load-registers, load-style-sheet, load-chapter-review]\n  - on: mark_ready\n    run: [audit-ready-unit]\nself_extension:\n  anti_pattern_growth: true\n  writes_to: .proposals/\n",
         "ASSUMPTIONS.md": "# Assumptions\n\nUpdated as the author corrects them.\n\n- (none yet)\n",
+        "AGENTS.md": context_contract,
+        "CLAUDE.md": context_contract,
+        "GEMINI.md": context_contract,
         "sources/links.md": "# Links\n",
         "knowledge-base/claims.md":
             "# Claims index\n\n| Claim id | Statement | Support | Source | Status |\n|---|---|---|---|---|\n",
@@ -690,7 +792,7 @@ def _required_structure(root):
         "redactor-canon/logic.md": "# Logic rules\n\n- Every load-bearing claim resolves; no contradiction; assumptions stated.\n",
         "redactor-canon/apparatus.md": "# Apparatus\n\n- Citation style:\n- Cross-reference format:\n- Notes convention:\n",
         "redactor-canon/finish.md": "# Typographic finish\n\n- Em-dash discipline: none in prose; colon, semicolon, or comma.\n",
-        ".tyf/.gitignore": "# Apparatus memory: regenerable derived state.\n# Track it or not, your choice; it is not the body of work.\n",
+        ".tyf/.gitignore": "# Apparatus memory: regenerable derived state.\nledger.db\n*.db-journal\n*.db-wal\n*.db-shm\n",
     }
     return dirs, files
 
@@ -702,6 +804,9 @@ def _scaffold(root, create=True):
     created, present = [], []
     for d in dirs:
         full = os.path.join(root, d)
+        if os.path.islink(full):
+            created.append(d + "/")
+            continue
         if os.path.isdir(full):
             present.append(d + "/")
         else:
@@ -747,6 +852,7 @@ def cmd_new_work(args):
     args.id = _safe_work_id(args.id)
     _confine_work(args.id)
     base, _reg = _create_work(args.id, args.type, args.register, activate_if_none=True)
+    log_event(".", "new-work", args.id, f"type={args.type}")
     print(f"Created work: {base} (type={args.type})")
 
 def _create_work(work_id, work_type="book", register=None, title=None,
@@ -754,14 +860,18 @@ def _create_work(work_id, work_type="book", register=None, title=None,
     base = os.path.join("works", work_id)
     if os.path.exists(base):
         sys.exit(f"work already exists: {base}")
-    mkdirs(os.path.join(base, "outline"), os.path.join(base, "drafts"),
-           os.path.join(base, "manuscript"), os.path.join(base, ".review"))
+    _ensure_real_dir("works", "works/")
+    _reject_symlink_components("works", "works/")
+    _ensure_real_dir(os.path.join(base, "outline"), "outline/")
+    _ensure_real_dir(os.path.join(base, "drafts"), "drafts/")
+    _ensure_real_dir(os.path.join(base, "manuscript"), "manuscript/")
+    _ensure_real_dir(os.path.join(base, ".review"), ".review/")
     reg = _one_line(register, "(elicit at least one register before composing)")
     work_type = _one_line(work_type, "book")
     title = _one_line(title)
-    title_line = f"title: {title}\n" if title else ""
+    title_line = f"title: {_yaml_scalar(title)}\n" if title else ""
     write(os.path.join(base, "work.yaml"),
-          f"id: {work_id}\ntype: {work_type}\n{title_line}registers:\n  - {reg}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
+          f"id: {work_id}\ntype: {_yaml_scalar(work_type)}\n{title_line}registers:\n  - {_yaml_scalar(reg)}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
     write(os.path.join(base, "style-sheet.md"),
           f"# Running style sheet: {work_id}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
     write(os.path.join(base, ".review", "write-log.md"), f"# Write log: {work_id}\n\nThe only record of writes into manuscript/.\n")
@@ -771,10 +881,11 @@ def _create_work(work_id, work_type="book", register=None, title=None,
     return base, reg
 
 def _slugify_title(title):
-    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    ascii_title = unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_title.lower()).strip("-")
     slug = re.sub(r"-+", "-", slug)
     if not slug:
-        sys.exit("Refused: start needs a title with at least one letter or number.")
+        return "work-" + hashlib.sha256(title.encode("utf-8")).hexdigest()[:12]
     return slug[:64].strip("-")
 
 def _write_begin_packet(work_id, title=None):
@@ -838,7 +949,7 @@ Active work: `{work_id}`
 4. Use `structuring-knowledge` to turn captured material into claims, gaps, and possible shape.
 5. Draft candidates only in `works/{work_id}/drafts/`.
 6. Run `tyf audit {work_id} <unit>` before treating a unit as ready.
-7. Move text into `manuscript/` only with `tyf write {work_id} --from <draft> --confirm`.
+7. Move text into `manuscript/` only after `tyf propose`, `tyf audit --record`, `tyf accept`, and `tyf write --decision`.
 
 ## Guardrails
 
@@ -862,7 +973,7 @@ def cmd_begin(args):
     print(f"  seed outline         : {seed}")
     print(f"  review runway        : {runway}")
     print("Next: fill the packet, use `tyf capture` for short source notes,")
-    print("then draft candidates in drafts/ only. Manuscript writes still require `tyf write --confirm`.")
+    print("then draft candidates in drafts/ only. Manuscript writes require proposal, audit, decision, and `tyf write --decision`.")
 
 def cmd_start(args):
     _require_workspace()
@@ -924,8 +1035,11 @@ def _git_root():
         return None
     return p.stdout.strip()
 
-def _git_status_lines():
-    p = _git(["status", "--short"])
+def _git_status_lines(scoped=False):
+    args = ["status", "--short"]
+    if scoped:
+        args += ["--", "."]
+    p = _git(args)
     if p.returncode != 0:
         return None, (p.stderr or p.stdout).strip()
     return [ln for ln in p.stdout.splitlines() if ln.strip()], ""
@@ -962,17 +1076,17 @@ def cmd_snapshot(args):
     message = _one_line(args.message)
     if not message:
         sys.exit("Refused: snapshot needs --message.")
-    status, err = _git_status_lines()
+    status, err = _git_status_lines(scoped=True)
     if status is None:
         sys.exit(f"Refused: git status failed: {err}")
     if not status:
         print("tyf snapshot: no git changes to commit.")
         return
     log_event(".", "snapshot", message, f"git recovery point at {root}")
-    status, err = _git_status_lines()
+    status, err = _git_status_lines(scoped=True)
     if status is None:
         sys.exit(f"Refused: git status failed after event log update: {err}")
-    add = _git(["add", "-A"])
+    add = _git(["add", "-A", "--", "."])
     if add.returncode != 0:
         sys.exit((add.stderr or add.stdout or "git add failed").strip())
     commit = _git(["commit", "-m", message])
@@ -1038,11 +1152,190 @@ def cmd_mark_ready(args):
     log_event(".", "mark-ready", f"{args.work}/{args.unit}")
     print(f"Marked ready: {args.work} / {args.unit}. Run `auditing-adversarially` before this is done.")
 
+def _file_sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _canonical_hash(obj):
+    payload = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _record_id(prefix, *parts):
+    stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    digest = hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:8]
+    return f"{prefix}-{stamp}-{digest}"
+
+
+def _safe_record_id(record_id, prefix):
+    if not record_id or not record_id.startswith(prefix + "-") or not re.fullmatch(r"[A-Za-z0-9._-]+", record_id):
+        sys.exit(f"Refused: unsafe {prefix} id {record_id!r}.")
+    return record_id
+
+
+def _review_path(work, folder, record_id):
+    _safe_work_id(work)
+    _confine_work(work)
+    _require_work(work)
+    return os.path.join("works", work, ".review", folder, record_id + ".json")
+
+
+def _write_json(path, data):
+    _reject_symlink_components(os.path.dirname(path), "review record directory")
+    atomic_write(path, json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+
+
+def _read_json(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError:
+        sys.exit(f"Refused: missing record {path}.")
+    except json.JSONDecodeError as e:
+        sys.exit(f"Refused: invalid record {path}: {e}")
+
+
+def _workspace_rel(path, label):
+    if not path:
+        sys.exit(f"Refused: missing {label}.")
+    _reject_symlink_components(path, label)
+    root = os.path.realpath(".")
+    real = os.path.realpath(path)
+    if not _within(root, real):
+        sys.exit(f"Refused: {label} resolves outside the workspace: {path}")
+    return os.path.relpath(real, root)
+
+
+def _require_draft_source(work, src):
+    drafts = os.path.join("works", work, "drafts")
+    _reject_symlink_components(drafts, "drafts/")
+    if not os.path.isdir(drafts):
+        sys.exit(f"Refused: work {work!r} has no drafts/; proposals must start from this work's drafts.")
+    rel = _workspace_rel(src, "draft source")
+    real = os.path.realpath(rel)
+    if not os.path.isfile(real):
+        sys.exit(f"draft not found: {src}")
+    if os.path.islink(os.path.abspath(src)):
+        sys.exit(f"Refused: draft source is a symlink: {src}")
+    if not _within(drafts, real):
+        sys.exit(f"Refused: source must live under {drafts}{os.sep}. Got: {src}")
+    return rel
+
+
+def _dest_base_hash(dest):
+    if not os.path.exists(dest):
+        return None
+    if os.path.islink(os.path.abspath(dest)):
+        sys.exit(f"Refused: manuscript destination is a symlink: {dest}")
+    if not os.path.isfile(dest):
+        sys.exit(f"Refused: manuscript destination is not a file: {dest}")
+    return _file_sha256(dest)
+
+
+def _load_proposal(work, proposal_id):
+    proposal_id = _safe_record_id(proposal_id, "proposal")
+    path = _review_path(work, "proposals", proposal_id)
+    proposal = _read_json(path)
+    if proposal.get("id") != proposal_id or proposal.get("work") != work:
+        sys.exit(f"Refused: proposal {proposal_id} does not belong to work {work}.")
+    return proposal
+
+
+def _load_decision(work, decision_id):
+    decision_id = _safe_record_id(decision_id, "decision")
+    path = _review_path(work, "decisions", decision_id)
+    decision = _read_json(path)
+    if decision.get("id") != decision_id or decision.get("work") != work:
+        sys.exit(f"Refused: decision {decision_id} does not belong to work {work}.")
+    return decision
+
+
+def _passing_audit_for(work, proposal_id, proposal_hash):
+    audit_dir = os.path.join("works", work, ".review", "audits")
+    if not os.path.isdir(audit_dir):
+        return None
+    for name in sorted(os.listdir(audit_dir), reverse=True):
+        if not name.endswith(".json"):
+            continue
+        audit = _read_json(os.path.join(audit_dir, name))
+        if (audit.get("proposal_id") == proposal_id
+                and audit.get("proposal_hash") == proposal_hash
+                and audit.get("verdict") == "pass"
+                and audit.get("findings_answered") is True):
+            return audit
+    return None
+
+
+def cmd_propose(args):
+    _require_workspace()
+    work = _safe_work_id(args.work)
+    _confine_work(work)
+    _require_work(work)
+    src = _require_draft_source(work, args.src)
+    dest_name = args.dest or os.path.basename(src)
+    if os.path.basename(dest_name) != dest_name or dest_name in ("", ".", ".."):
+        sys.exit("Refused: proposal destination must be a manuscript filename, not a path.")
+    man = os.path.join("works", work, "manuscript")
+    _ensure_real_dir(man, "manuscript/")
+    dest = os.path.join(man, dest_name)
+    proposal_id = _record_id("proposal", work, src, _file_sha256(src))
+    proposal = {
+        "id": proposal_id,
+        "work": work,
+        "src": src.replace(os.sep, "/"),
+        "dest": dest.replace(os.sep, "/"),
+        "unit": dest_name,
+        "src_sha256": _file_sha256(src),
+        "base_sha256": _dest_base_hash(dest),
+        "created_at": now(),
+        "accepted_scope": "whole-file",
+    }
+    path = _review_path(work, "proposals", proposal_id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    _write_json(path, proposal)
+    log_event(".", "propose", f"{work}/{proposal_id}", src)
+    print(f"Proposal: {proposal_id}")
+    print(f"  source: {proposal['src']}")
+    print(f"  destination: {proposal['dest']}")
+    print("Next: record an audit and author decision before writing.")
+
+
 def cmd_audit(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
     _confine_work(args.work)
     _require_work(args.work)
+    if getattr(args, "record", False):
+        if not args.proposal:
+            sys.exit("Refused: audit --record requires --proposal <proposal-id>.")
+        if args.verdict == "pass" and not getattr(args, "findings_answered", False):
+            sys.exit("Refused: a passing audit record requires --findings-answered.")
+        proposal = _load_proposal(args.work, args.proposal)
+        proposal_hash = _canonical_hash(proposal)
+        if _file_sha256(proposal["src"]) != proposal.get("src_sha256"):
+            sys.exit("Refused: proposal source changed before audit.")
+        audit_id = _record_id("audit", args.work, args.proposal, args.verdict)
+        audit = {
+            "id": audit_id,
+            "work": args.work,
+            "unit": args.unit,
+            "proposal_id": args.proposal,
+            "proposal_hash": proposal_hash,
+            "verdict": args.verdict,
+            "findings_answered": bool(getattr(args, "findings_answered", False)),
+            "recorded_at": now(),
+        }
+        path = _review_path(args.work, "audits", audit_id)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        _write_json(path, audit)
+        log_event(".", "audit", f"{args.work}/{audit_id}", f"proposal={args.proposal} verdict={args.verdict}")
+        print(f"Audit: {audit_id}")
+        print(f"  verdict: {args.verdict}")
+        return
     print(f"Audit checklist for {args.work} / {args.unit} (read-only; write findings to .review/):")
     for item in ["frame-lock", "unsupported claims (check claims index)", "hidden assumptions",
                  "machine cadence", "register cross-talk", "citation integrity (verify via MCP)",
@@ -1051,39 +1344,87 @@ def cmd_audit(args):
         print(f"  [ ] {item}")
     print("Verdict PASSED only when every finding is answered: fixed, or accepted with reason.")
 
+def cmd_accept(args):
+    _require_workspace()
+    work = _safe_work_id(args.work)
+    _confine_work(work)
+    _require_work(work)
+    proposal = _load_proposal(work, args.proposal)
+    evidence = _one_line(args.evidence)
+    if not evidence:
+        sys.exit("Refused: accept requires --evidence with the author's explicit acceptance text or reference.")
+    src = proposal["src"]
+    if _file_sha256(src) != proposal.get("src_sha256"):
+        sys.exit("Refused: proposal source changed before acceptance.")
+    decision_id = _record_id("decision", work, args.proposal, proposal["src_sha256"])
+    decision = {
+        "id": decision_id,
+        "work": work,
+        "proposal_id": args.proposal,
+        "proposal_hash": _canonical_hash(proposal),
+        "src": proposal["src"],
+        "dest": proposal["dest"],
+        "src_sha256": proposal["src_sha256"],
+        "base_sha256": proposal.get("base_sha256"),
+        "accepted_scope": "whole-file",
+        "accepted_by": _one_line(args.accepted_by, "author"),
+        "acceptance_evidence": evidence,
+        "decided_at": now(),
+    }
+    path = _review_path(work, "decisions", decision_id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    _write_json(path, decision)
+    log_event(".", "accept", f"{work}/{decision_id}", f"proposal={args.proposal}")
+    print(f"Decision: {decision_id}")
+    print(f"  proposal: {args.proposal}")
+    print("Next: `tyf write <work> --decision <decision-id>` after a passing audit.")
+
 def cmd_write(args):
     _require_workspace()
     work = _safe_work_id(args.work)
     _confine_work(work)
     _require_work(work)
-    if not args.confirm:
-        sys.exit("Refused. Writing to the manuscript requires explicit author acceptance: pass --confirm.")
-    src = args.src
-    if not src or not os.path.isfile(src):
-        sys.exit(f"draft not found: {src}")
-    drafts = os.path.join("works", work, "drafts")
-    if not os.path.isdir(drafts):
-        sys.exit(f"Refused: work {work!r} has no drafts/; the controlled write only promotes this work's own drafts.")
-    if not _within(drafts, src):
-        sys.exit(f"Refused: source must live under {drafts}{os.sep} (only this work's drafts may enter its manuscript). Got: {src}")
+    if getattr(args, "confirm", False):
+        sys.exit("Refused: naked --confirm is retired. Use `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision <id>`.")
+    if not args.decision:
+        sys.exit("Refused: manuscript writes require an author decision record. Run `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision <id>`.")
+    if getattr(args, "force", False):
+        sys.exit("Refused: --force is retired. Create a new proposal against the current manuscript base.")
+    decision = _load_decision(work, args.decision)
+    proposal = _load_proposal(work, decision["proposal_id"])
+    proposal_hash = _canonical_hash(proposal)
+    if decision.get("proposal_hash") != proposal_hash:
+        sys.exit("Refused: decision no longer matches the proposal record.")
+    src = decision["src"]
+    if args.src and os.path.normpath(args.src) != os.path.normpath(src):
+        sys.exit("Refused: --from does not match the accepted proposal source.")
+    src = _require_draft_source(work, src)
+    if _file_sha256(src) != decision.get("src_sha256"):
+        sys.exit("Refused: accepted source changed after the author decision.")
+    audit = _passing_audit_for(work, decision["proposal_id"], proposal_hash)
+    if audit is None:
+        sys.exit("Refused: no passing audit record with answered findings for this proposal.")
     man = os.path.join("works", work, "manuscript")
-    mkdirs(man)
-    dest = os.path.join(man, os.path.basename(src))
+    _ensure_real_dir(man, "manuscript/")
+    dest = decision["dest"].replace("/", os.sep)
+    _reject_symlink_components(dest, "manuscript destination")
+    if not _within(man, dest):
+        sys.exit(f"Refused: destination resolves outside manuscript/: {dest}")
+    current_base = _dest_base_hash(dest)
+    if current_base != decision.get("base_sha256"):
+        sys.exit(f"Refused: manuscript base changed since acceptance for {dest}. Re-propose from the current file.")
     if os.path.isfile(dest):
         gl = os.path.join("works", work, ".review", "write-log.md")
         rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
         if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
             sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
-        if not getattr(args, "force", False):
-            sys.exit(f"Refused: {dest} already exists. Re-writing the last controlled version needs explicit --force.")
     with open(src, encoding="utf-8") as f:
         content = f.read()
     digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    write(dest, content)
+    atomic_write(dest, content)
     log = os.path.join("works", work, ".review", "write-log.md")
-    forced = " --force" if getattr(args, "force", False) else ""
-    append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(src)}\n- sha256: {digest}\n- Decision: accepted (--confirm{forced})\n")
-    log_event(".", "write", f"{work}/{os.path.basename(src)}", f"{src} -> {dest} sha256={digest[:12]}")
+    append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(dest)}\n- sha256: {digest}\n- Proposal: {decision['proposal_id']}\n- Decision: {decision['id']}\n- Audit: {audit['id']}\n")
+    log_event(".", "write", f"{work}/{os.path.basename(dest)}", f"{src} -> {dest} decision={decision['id']} sha256={digest[:12]}")
     print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
 
 def _logged_hashes(log_text):
@@ -1161,6 +1502,8 @@ def cmd_doctor(args):
         print("  no problems found")
     for n in notes:
         print(f"  note: {n}")
+    if problems:
+        sys.exit(1)
 
 def cmd_check(args):
     problems, notes = run_doc_check()
@@ -1414,8 +1757,32 @@ def main():
     s.set_defaults(fn=cmd_capture)
     s = sub.add_parser("open"); s.add_argument("work"); s.set_defaults(fn=cmd_open)
     s = sub.add_parser("mark-ready"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_mark_ready)
-    s = sub.add_parser("audit"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_audit)
-    s = sub.add_parser("write"); s.add_argument("work"); s.add_argument("--from", dest="src", required=True); s.add_argument("--confirm", action="store_true"); s.add_argument("--force", action="store_true", help="allow re-writing an existing manuscript file"); s.set_defaults(fn=cmd_write)
+    s = sub.add_parser("propose", help="create a manuscript proposal from a draft")
+    s.add_argument("work")
+    s.add_argument("--from", dest="src", required=True)
+    s.add_argument("--dest", default=None, help="optional manuscript filename; defaults to source basename")
+    s.set_defaults(fn=cmd_propose)
+    s = sub.add_parser("audit")
+    s.add_argument("work")
+    s.add_argument("unit")
+    s.add_argument("--record", action="store_true", help="write a durable audit record instead of only printing the checklist")
+    s.add_argument("--proposal", default=None, help="proposal id to bind this audit record to")
+    s.add_argument("--verdict", choices=("pass", "fail"), default="fail")
+    s.add_argument("--findings-answered", action="store_true", help="all blocking findings are fixed or explicitly dispositioned")
+    s.set_defaults(fn=cmd_audit)
+    s = sub.add_parser("accept", help="create an author decision record for a proposal")
+    s.add_argument("work")
+    s.add_argument("proposal")
+    s.add_argument("--accepted-by", default="author")
+    s.add_argument("--evidence", default=None, help="verbatim author acceptance text or a stable reference to it")
+    s.set_defaults(fn=cmd_accept)
+    s = sub.add_parser("write")
+    s.add_argument("work")
+    s.add_argument("--decision", default=None)
+    s.add_argument("--from", dest="src", default=None, help="legacy cross-check; source is taken from the decision record")
+    s.add_argument("--confirm", action="store_true", help="retired; naked confirmation is refused")
+    s.add_argument("--force", action="store_true", help="retired; create a new proposal against the current base")
+    s.set_defaults(fn=cmd_write)
     s = sub.add_parser("doctor"); s.add_argument("--repair", action="store_true", help="create any missing required structure"); s.set_defaults(fn=cmd_doctor)
     s = sub.add_parser("reflexes", help="show TYF's transparent hooks and reflexes")
     s.set_defaults(fn=cmd_reflexes)
@@ -1443,7 +1810,7 @@ def main():
     args = p.parse_args()
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "capture", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "capture", "propose", "audit", "accept", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

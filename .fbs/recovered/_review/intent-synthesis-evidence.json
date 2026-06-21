@@ -1,0 +1,15 @@
+[
+  {
+    "stage": "intent-synthesis",
+    "surface": "subagent",
+    "prompt_hash": "42bcb9a9e65d847eac5614dfe6fc2891d84370384c92279da0991e4b9f6d868a",
+    "prompt_chars": 38214,
+    "response_hash": "98d05d0c6792bffb12e94789fe47e9199f6c13852320b1bc916ced755888f4bf",
+    "response_kind": "candidate-requirements",
+    "request_id": "4dee6ec69df24d0f9ccb96ba8d1703be",
+    "tokens_in": null,
+    "tokens_out": null,
+    "status": "ok",
+    "detail": ""
+  }
+]

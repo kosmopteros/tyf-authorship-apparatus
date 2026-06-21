@@ -291,6 +291,122 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["new-work", "a b"], ws)
         self.assertNotEqual(rc, 0, "a work id with a space must be rejected")
 
+    # ---- first-day authorship lane: source first, manuscript by consent only ----
+
+    def test_begin_creates_first_session_packet_without_manuscript_text(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["begin", "new-book", "--title", "The New Book",
+             "--register", "author-poetic-philosophical"], ws)
+        self.assertEqual(rc, 0, out)
+        base = ws / "works" / "new-book"
+        self.assertTrue((base / "drafts" / "00-start-here.md").is_file())
+        self.assertTrue((base / "outline" / "seed.md").is_file())
+        self.assertTrue((base / ".review" / "today.md").is_file())
+        self.assertEqual(list((base / "manuscript").iterdir()), [],
+                         "begin must not create manuscript text")
+        self.assertIn("active_work: new-book",
+                      (ws / "WORKSPACE_STATE.yaml").read_text(encoding="utf-8"))
+        starter = (base / "drafts" / "00-start-here.md").read_text(encoding="utf-8")
+        self.assertIn("author-owned", starter)
+        self.assertIn("do not invent", starter.lower())
+        self.assertIn("tyf capture", out)
+        self.assertIn("tyf write", out)
+
+    def test_begin_rejects_existing_work_without_overwriting_packet(self):
+        ws = self.ws()
+        rc, out = run_tyf(["begin", "new-book"], ws)
+        self.assertEqual(rc, 0, out)
+        starter = ws / "works" / "new-book" / "drafts" / "00-start-here.md"
+        starter.write_text("AUTHOR SEED\n", encoding="utf-8")
+        rc, out = run_tyf(["begin", "new-book"], ws)
+        self.assertNotEqual(rc, 0, "begin must not clobber an existing work")
+        self.assertEqual(starter.read_text(encoding="utf-8"), "AUTHOR SEED\n")
+
+    def test_capture_records_author_source_without_touching_manuscript(self):
+        ws = self.ws()
+        run_tyf(["begin", "new-book"], ws)
+        rc, out = run_tyf(
+            ["capture", "new-book", "--kind", "source", "--title", "opening pressure",
+             "--text", "The book begins from a pressure I can feel but not name yet."], ws)
+        self.assertEqual(rc, 0, out)
+        note = ws / "sources" / "notes" / "new-book.md"
+        self.assertTrue(note.is_file())
+        text = note.read_text(encoding="utf-8")
+        self.assertIn("opening pressure", text)
+        self.assertIn("pressure I can feel", text)
+        self.assertEqual(list((ws / "works" / "new-book" / "manuscript").iterdir()), [])
+
+    def test_capture_requires_existing_work(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["capture", "missing", "--kind", "source", "--text", "not yet"], ws)
+        self.assertNotEqual(rc, 0, "capture must bind source to an existing work")
+        self.assertFalse((ws / "sources" / "notes" / "missing.md").exists())
+
+    def test_start_is_plain_language_front_door_for_new_book(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "The New Book"], ws)
+        self.assertEqual(rc, 0, out)
+        base = ws / "works" / "the-new-book"
+        self.assertTrue((base / "drafts" / "00-start-here.md").is_file())
+        self.assertTrue((base / "outline" / "seed.md").is_file())
+        self.assertTrue((base / ".review" / "today.md").is_file())
+        self.assertEqual(list((base / "manuscript").iterdir()), [])
+        self.assertIn("active_work: the-new-book",
+                      (ws / "WORKSPACE_STATE.yaml").read_text(encoding="utf-8"))
+        self.assertIn("I created the TYF workspace packet", out)
+        self.assertIn("Next, ask the author", out)
+        self.assertIn("No manuscript text was written", out)
+        self.assertNotIn("tyf capture", out, "public start should not hand users a command list")
+
+    def test_start_accepts_explicit_id_without_clobbering(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "Strange / Title?", "--id", "book-one"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertTrue((ws / "works" / "book-one" / "work.yaml").is_file())
+        rc, out = run_tyf(["start", "Strange / Title?", "--id", "book-one"], ws)
+        self.assertNotEqual(rc, 0, "start must not clobber an existing work")
+
+    # ---- transparent reflexes and explicit git recovery points ----
+
+    def test_reflexes_explains_hooks_and_snapshot(self):
+        ws = self.ws()
+        rc, out = run_tyf(["reflexes"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("documentation honesty", out.lower())
+        self.assertIn("attentive amanuensis", out.lower())
+        self.assertIn("tyf snapshot", out)
+        self.assertIn("never commits silently", out.lower())
+
+    @unittest.skipUnless(shutil.which("git"), "git not available")
+    def test_snapshot_commits_workspace_changes_when_git_repo(self):
+        ws = self.ws()
+        subprocess.run(["git", "init"], cwd=str(ws), check=True,
+                       capture_output=True, text=True)
+        subprocess.run(["git", "config", "user.email", "tyf@example.test"],
+                       cwd=str(ws), check=True)
+        subprocess.run(["git", "config", "user.name", "TYF Test"],
+                       cwd=str(ws), check=True)
+        rc, out = run_tyf(["begin", "new-book"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["snapshot", "--message", "first session"], ws)
+        self.assertEqual(rc, 0, out)
+        subject = subprocess.run(
+            ["git", "log", "-1", "--format=%s"], cwd=str(ws),
+            capture_output=True, text=True, check=True).stdout.strip()
+        self.assertEqual(subject, "first session")
+        status = subprocess.run(
+            ["git", "status", "--short"], cwd=str(ws),
+            capture_output=True, text=True, check=True).stdout.strip()
+        self.assertEqual(status, "")
+
+    def test_snapshot_refuses_outside_git(self):
+        ws = self.ws()
+        rc, out = run_tyf(["snapshot", "--message", "no repo"], ws)
+        self.assertNotEqual(rc, 0, "snapshot needs an explicit git workspace")
+        self.assertIn("git", out.lower())
+
 
 class DocCheck(unittest.TestCase):
     def setUp(self):
@@ -315,6 +431,20 @@ class DocCheck(unittest.TestCase):
 
     def test_min_pack_is_clean(self):
         problems, _ = tyf.run_doc_check(str(self.min_pack()))
+        self.assertEqual(problems, [], problems)
+
+    def test_check_ignores_solo_generated_control_dirs(self):
+        root = self.min_pack()
+        (root / ".fbs" / "recovered").mkdir(parents=True)
+        (root / ".claude" / "commands").mkdir(parents=True)
+        dead_command = "tyf " + "gate"
+        (root / ".fbs" / "recovered" / "note.md").write_text(
+            f"Generated SOLO evidence with an em dash — and {dead_command}.\n",
+            encoding="utf-8")
+        (root / ".claude" / "commands" / "fbs-formulate.md").write_text(
+            "Generated command docs with an em dash — not TYF pack law.\n",
+            encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
         self.assertEqual(problems, [], problems)
 
     def test_repo_pack_is_clean(self):

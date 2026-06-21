@@ -1,6 +1,6 @@
 ---
 name: working-the-workspace
-description: Use whenever operating on the workspace files or repo: reading or writing sources, knowledge-base, voice, works, drafts, or manuscript; deciding where a pass may write; or when unsure which directory a result belongs in
+description: "Use whenever operating on the workspace files or repo: reading or writing sources, knowledge-base, voice, works, drafts, or manuscript; deciding where a pass may write; or when unsure which directory a result belongs in"
 ---
 
 # Working the workspace
@@ -49,6 +49,8 @@ Before writing anything, name the pass you are in and check the table. If the pa
 
 The only path into `manuscript/` is `tyf write`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
 
+For a first writing session, `tyf start "Working Title"` creates a normal work plus a safe source/interview packet in `drafts/`, a seed outline, and a `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate. These commands are elicitation and setup paths; none writes to `manuscript/`.
+
 ## Rationalization table
 
 | What you will tell yourself | The reality | Do instead |
@@ -69,7 +71,12 @@ The only path into `manuscript/` is `tyf write`. A read-only pass that "just fix
 
 ```
 tyf status            # active work, band, open gates, write-zone reminder
+tyf start "Title"     # public first-session flow, no manuscript text
+tyf begin <work>       # lower-level first-session packet with explicit id
+tyf capture <work>     # append author source, voice, claim, or question material
 tyf doctor            # read-only integrity check, including stray manuscript writes
+tyf reflexes          # show visible hooks and git recovery behavior
+tyf snapshot -m <msg> # explicit git recovery commit; never automatic
 tyf write <work>       # the only writer into manuscript/
 ```
 

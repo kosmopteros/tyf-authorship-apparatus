@@ -9,12 +9,20 @@ Commands:
                                           only missing structure, never clobbers)
   tyf status                              active work, band, write control, write zones
   tyf new-work <id> [--type T] [--register R]
+  tyf start "Working Title" [--id work-id]
+                                          writer-facing first book/session entrypoint
+  tyf begin <id> [--title T] [--register R]
+                                          create a first-session packet for a book
+  tyf capture <work-id> --kind K --text TEXT
+                                          append author source/voice/claim/question notes
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
   tyf audit <work-id> <unit>              print the audit checklist (no fix)
   tyf write <work-id> --from <draft> --confirm   ONLY writer into manuscript/
   tyf doctor [--repair]                   workspace integrity check; --repair creates
                                           any missing required structure
+  tyf reflexes                            show transparent hooks and reflexes
+  tyf snapshot --message M                explicit git recovery commit for a workspace
   tyf check [--strict] [--quiet]          documentation-honesty check on the pack
   tyf notice [--save] [--all] [--peek]    surface forgotten/unfinished/stale items;
                                           ledger-backed; never modifies
@@ -26,13 +34,13 @@ Apparatus memory (SQLite, stdlib)
   The body of work stays in Markdown and YAML, owned by and legible to the
   author. Only machine bookkeeping lives in .tyf/ledger.db: the content-addressed
   notice ledger (statuses, dismissals, real timestamps) and an append-only event
-  log (a git-like spine of init/write/mark-ready/dismiss/repair actions). It uses
+  log (a git-like spine of apparatus actions). It uses
   the stdlib sqlite3 module: no third-party dependencies. It is disposable derived
   state, rebuildable by re-scanning content, and mirrorable to Markdown with
   `tyf reconcile --export`. See docs/ATTENTIVENESS.md.
 
 Documentation-honesty hook
-  Every mutating command (init, new-work, write, mark-ready) runs `check` as a
+  Every mutating command (init, new-work, start, begin, capture, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -117,6 +125,12 @@ def mkdirs(*paths):
         os.makedirs(p, exist_ok=True)
 
 
+def _one_line(value, fallback=""):
+    """Collapse user labels for simple YAML/frontmatter lines."""
+    text = (value or fallback or "").replace("\r", " ").replace("\n", " ").strip()
+    return text or fallback
+
+
 def _require_workspace():
     """Refuse any mutating command run outside a TYF workspace root."""
     if not os.path.isfile("WORKSPACE_STATE.yaml"):
@@ -184,11 +198,21 @@ def _pack_root():
     return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 def _iter_files(root, exts):
+    skip_dirs = {"__pycache__", ".git", ".fbs", ".claude", ".pytest_cache"}
     for r, dirs, fs in os.walk(root):
-        dirs[:] = [d for d in dirs if d != "__pycache__" and not d.startswith(".git")]
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
         for f in fs:
             if f.endswith(exts):
                 yield os.path.join(r, f)
+
+def _read_pack_file(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+def _iter_pack_lines(path):
+    with open(path, encoding="utf-8") as f:
+        for i, line in enumerate(f, 1):
+            yield i, line
 
 def run_doc_check(root=None):
     """Return (problems, notes). Pure file/string inspection; no LLM, no deps."""
@@ -209,19 +233,20 @@ def run_doc_check(root=None):
         p = os.path.join(skills_dir, s, "SKILL.md")
         if not os.path.isfile(p):
             problems.append(f"{s}: missing SKILL.md"); continue
-        t = open(p, encoding="utf-8").read()
+        t = _read_pack_file(p)
         m = re.search(r"^name:\s*(.+)$", t, re.M)
         d = re.search(r"^description:\s*(.+)$", t, re.M)
         if not m or m.group(1).strip() != s:
             problems.append(f"{s}: frontmatter name does not match directory")
-        if not d or not d.group(1).strip().lower().startswith("use when"):
+        desc = d.group(1).strip().strip("\"'") if d else ""
+        if not desc.lower().startswith("use when"):
             problems.append(f"{s}: description should start with 'Use when'")
 
     # 2. spelled-out and numeric skill counts across docs must equal n
     wrong_words = [w for i, w in enumerate(_NUMBER_WORDS, start=11) if i != n]
     for p in _iter_files(root, (".md", ".sh")):
         rel = os.path.relpath(p, root)
-        for i, line in enumerate(open(p, encoding="utf-8"), 1):
+        for i, line in _iter_pack_lines(p):
             low = line.lower()
             for w in wrong_words:
                 if re.search(rf"\ball {w}\b", low) or re.search(rf"\b{w}\b skills?\b", low):
@@ -238,7 +263,7 @@ def run_doc_check(root=None):
         rel = os.path.relpath(p, root)
         if rel in _dead_ref_exempt:
             continue
-        txt = open(p, encoding="utf-8").read()
+        txt = _read_pack_file(p)
         for dead in _DEAD_SKILL_IDS:
             if dead in txt:
                 problems.append(f"{rel}: dead skill id reference '{dead}'")
@@ -250,7 +275,7 @@ def run_doc_check(root=None):
     ctx = [os.path.join(root, f) for f in ("CLAUDE.md", "AGENTS.md", "GEMINI.md")]
     present = [c for c in ctx if os.path.isfile(c)]
     if len(present) == 3:
-        bodies = {open(c, encoding="utf-8").read() for c in present}
+        bodies = {_read_pack_file(c) for c in present}
         if len(bodies) != 1:
             problems.append("CLAUDE.md / AGENTS.md / GEMINI.md have drifted apart")
         else:
@@ -265,14 +290,15 @@ def run_doc_check(root=None):
         p = os.path.join(root, j)
         if os.path.isfile(p):
             try:
-                _json.load(open(p, encoding="utf-8"))
+                with open(p, encoding="utf-8") as f:
+                    _json.load(f)
             except Exception as e:
                 problems.append(f"{j}: invalid JSON ({e})")
 
     # 6. no em-dash in prose except the canonical [AUTHOR: needed — what] token
     for p in _iter_files(root, (".md",)):
         rel = os.path.relpath(p, root)
-        for i, line in enumerate(open(p, encoding="utf-8"), 1):
+        for i, line in _iter_pack_lines(p):
             if "\u2014" in line and "AUTHOR: needed" not in line:
                 problems.append(f"{rel}:{i}: em-dash in prose")
 
@@ -283,7 +309,7 @@ def run_doc_check(root=None):
         rel = os.path.relpath(p, root)
         if rel in _dead_ref_exempt:
             continue
-        for i, line in enumerate(open(p, encoding="utf-8"), 1):
+        for i, line in _iter_pack_lines(p):
             if "notice-ledger.json" in line:
                 problems.append(f"{rel}:{i}: stale ledger path 'notice-ledger.json' (now .tyf/ledger.db)")
 
@@ -296,7 +322,7 @@ def run_doc_check(root=None):
         rel = os.path.relpath(p, root)
         if rel in _dead_ref_exempt:
             continue
-        for i, line in enumerate(open(p, encoding="utf-8"), 1):
+        for i, line in _iter_pack_lines(p):
             if "machinist" in line.lower():
                 problems.append(f"{rel}:{i}: stale role terminology 'machinist' (canon role: amanuensis)")
 
@@ -336,20 +362,20 @@ import hashlib
 def _mtime(path):
     try:
         return os.path.getmtime(path)
-    except OSError:
+    except OSError:  # degradation: ok: missing/unreadable files are treated as unchanged for notice scanning
         return 0
 
 def _read(path):
     try:
         return open(path, encoding="utf-8").read()
-    except OSError:
+    except OSError:  # degradation: ok: missing/unreadable text contributes no notice content
         return ""
 
 def _h(*parts):
     """Stable short hash of normalized content. Whitespace-insensitive so a
     reflow does not read as new content."""
     norm = " ".join(" ".join(p.split()) for p in parts if p)
-    return hashlib.sha1(norm.encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha256(norm.encode("utf-8")).hexdigest()[:12]
 
 def gather_notices(root="."):
     """Return notice dicts the author may want to revisit.
@@ -494,7 +520,7 @@ def log_event(root, kind, ref="", detail=""):
                      (now(), kind, ref, detail))
         conn.commit()
         conn.close()
-    except Exception:
+    except Exception:  # noqa: BLE001  # degradation: ok: apparatus memory must never break a real action
         pass  # apparatus memory must never break a real action
 
 def reconcile_notices(root, notices, update=True):
@@ -720,22 +746,246 @@ def cmd_new_work(args):
     _require_workspace()
     args.id = _safe_work_id(args.id)
     _confine_work(args.id)
-    base = os.path.join("works", args.id)
+    base, _reg = _create_work(args.id, args.type, args.register, activate_if_none=True)
+    print(f"Created work: {base} (type={args.type})")
+
+def _create_work(work_id, work_type="book", register=None, title=None,
+                 activate_if_none=False, activate=False):
+    base = os.path.join("works", work_id)
     if os.path.exists(base):
         sys.exit(f"work already exists: {base}")
     mkdirs(os.path.join(base, "outline"), os.path.join(base, "drafts"),
            os.path.join(base, "manuscript"), os.path.join(base, ".review"))
-    reg = args.register or "(elicit at least one register before composing)"
+    reg = _one_line(register, "(elicit at least one register before composing)")
+    work_type = _one_line(work_type, "book")
+    title = _one_line(title)
+    title_line = f"title: {title}\n" if title else ""
     write(os.path.join(base, "work.yaml"),
-          f"id: {args.id}\ntype: {args.type}\nregisters:\n  - {reg}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
+          f"id: {work_id}\ntype: {work_type}\n{title_line}registers:\n  - {reg}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
     write(os.path.join(base, "style-sheet.md"),
-          f"# Running style sheet: {args.id}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
-    write(os.path.join(base, ".review", "write-log.md"), f"# Write log: {args.id}\n\nThe only record of writes into manuscript/.\n")
-    # set active work if none
+          f"# Running style sheet: {work_id}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
+    write(os.path.join(base, ".review", "write-log.md"), f"# Write log: {work_id}\n\nThe only record of writes into manuscript/.\n")
     st = read_state("WORKSPACE_STATE.yaml")
-    if not get(st, "active_work"):
-        _set_active(args.id)
-    print(f"Created work: {base} (type={args.type})")
+    if activate or (activate_if_none and not get(st, "active_work")):
+        _set_active(work_id)
+    return base, reg
+
+def _slugify_title(title):
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    slug = re.sub(r"-+", "-", slug)
+    if not slug:
+        sys.exit("Refused: start needs a title with at least one letter or number.")
+    return slug[:64].strip("-")
+
+def _write_begin_packet(work_id, title=None):
+    label = _one_line(title, work_id)
+    base = os.path.join("works", work_id)
+    starter = os.path.join(base, "drafts", "00-start-here.md")
+    seed = os.path.join(base, "outline", "seed.md")
+    runway = os.path.join(base, ".review", "today.md")
+    write(starter, f"""# Start here: {label}
+
+This is an author-owned first-session packet. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
+
+## What is already true
+
+- [AUTHOR: needed - name the lived pressure, question, or image that makes this book necessary]
+
+## Source fragments
+
+- [AUTHOR: needed - paste notes, memories, observations, phrases, or cited material]
+
+## Voice samples
+
+- [AUTHOR: needed - lines that sound like the book, even if they are rough]
+
+## Open questions
+
+- [AUTHOR: needed - what must be elicited before drafting]
+
+## Candidate draft target
+
+- No manuscript text here yet. Candidate prose may be drafted later in `drafts/` only after source, register, and structure are present.
+""")
+    write(seed, f"""# Seed outline: {label}
+
+## Working promise
+
+- [AUTHOR: needed - what this book is trying to make thinkable or feelable]
+
+## Central pressure
+
+- [AUTHOR: needed - the tension, contradiction, wound, demand, or question]
+
+## Source inventory
+
+- [AUTHOR: needed - sources already available]
+- [AUTHOR: needed - sources still missing]
+
+## Possible first unit
+
+- [AUTHOR: needed - scene, argument, vignette, letter, chapter, or fragment]
+""")
+    write(runway, f"""# First-session runway: {label}
+
+Active work: `{work_id}`
+
+## Today's loop
+
+1. Fill `works/{work_id}/drafts/00-start-here.md` with the author's material.
+2. Capture short source, voice, claim, or question notes with `tyf capture`.
+3. Use `interviewing-the-author` to elicit what is still tacit.
+4. Use `structuring-knowledge` to turn captured material into claims, gaps, and possible shape.
+5. Draft candidates only in `works/{work_id}/drafts/`.
+6. Run `tyf audit {work_id} <unit>` before treating a unit as ready.
+7. Move text into `manuscript/` only with `tyf write {work_id} --from <draft> --confirm`.
+
+## Guardrails
+
+- Beginning is source elicitation, not book generation.
+- No silence counts as consent.
+- Missing knowledge gets an `[AUTHOR: needed - what]` marker.
+- The manuscript stays empty until an explicit controlled write.
+""")
+    return starter, seed, runway
+
+def cmd_begin(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.id)
+    _confine_work(work_id)
+    base, _reg = _create_work(work_id, args.type, args.register,
+                              title=args.title, activate=True)
+    starter, seed, runway = _write_begin_packet(work_id, args.title)
+    log_event(".", "begin", work_id, f"starter={starter}")
+    print(f"Begin: active work {work_id} at {base}")
+    print(f"  first-session packet: {starter}")
+    print(f"  seed outline         : {seed}")
+    print(f"  review runway        : {runway}")
+    print("Next: fill the packet, use `tyf capture` for short source notes,")
+    print("then draft candidates in drafts/ only. Manuscript writes still require `tyf write --confirm`.")
+
+def cmd_start(args):
+    _require_workspace()
+    title = _one_line(args.title)
+    if not title:
+        sys.exit("Refused: start needs the working title or plain name of the book.")
+    work_id = _safe_work_id(args.id or _slugify_title(title))
+    _confine_work(work_id)
+    base, _reg = _create_work(work_id, args.type, args.register,
+                              title=title, activate=True)
+    starter, seed, runway = _write_begin_packet(work_id, title)
+    log_event(".", "start", work_id, f"starter={starter}")
+    print(f"I created the TYF workspace packet for {title!r}.")
+    print(f"  Work id: {work_id}")
+    print(f"  Start here: {starter}")
+    print(f"  Seed outline: {seed}")
+    print(f"  Session runway: {runway}")
+    print("No manuscript text was written.")
+    print("Next, ask the author:")
+    print("  1. What pressure, question, image, or wound makes this book necessary?")
+    print("  2. What source material should we preserve before drafting?")
+    print("  3. What lines or writers sound close to the desired voice?")
+    print("Keep answers in the packet and drafts. Move text to manuscript only after explicit author acceptance.")
+
+_CAPTURE_TARGETS = {
+    "source": ("sources", "notes"),
+    "voice": ("voice", "exemplar-passages"),
+    "claim": ("knowledge-base", "claims"),
+    "question": ("knowledge-base", "open-questions"),
+}
+
+def _capture_path(work_id, kind):
+    return os.path.join(*_CAPTURE_TARGETS[kind], f"{work_id}.md")
+
+def cmd_capture(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work)
+    _confine_work(work_id)
+    _require_work(work_id)
+    text = (args.text or "").strip()
+    if not text:
+        sys.exit("Refused: capture needs --text with the author's material.")
+    path = _capture_path(work_id, args.kind)
+    if not os.path.isfile(path):
+        write(path, f"# {args.kind.title()} captures: {work_id}\n\n")
+    title = _one_line(args.title, args.kind)
+    append(path, f"## {now()} - {title}\n\nWork: `{work_id}`\nKind: `{args.kind}`\n\n{text}\n\n")
+    log_event(".", "capture", f"{work_id}/{args.kind}", path)
+    print(f"Captured {args.kind} for {work_id}: {path}")
+    print("Next: preserve source, structure knowledge, and keep candidates in drafts/.")
+
+def _git(args):
+    import subprocess
+    return subprocess.run(["git", *args], capture_output=True, text=True)  # process-owner: reviewed: bounded git command list, no shell, interactive-free
+
+def _git_root():
+    p = _git(["rev-parse", "--show-toplevel"])
+    if p.returncode != 0:
+        return None
+    return p.stdout.strip()
+
+def _git_status_lines():
+    p = _git(["status", "--short"])
+    if p.returncode != 0:
+        return None, (p.stderr or p.stdout).strip()
+    return [ln for ln in p.stdout.splitlines() if ln.strip()], ""
+
+def cmd_reflexes(args):
+    _require_workspace()
+    print("tyf reflexes (transparent hooks)")
+    print("- documentation honesty: mutating commands run `tyf check` warn-only,")
+    print("  unless TYF_NO_DOC_HOOK=1 is set.")
+    print("- attentive amanuensis: after `tyf write`, new or resurfaced gaps are")
+    print("  counted and handed back; nothing is fixed automatically.")
+    print("- workspace integrity: `tyf doctor` verifies structure, write logs, and")
+    print("  out-of-band manuscript edits.")
+    print("- git recovery: TYF never commits silently. In a git workspace, use")
+    print("  `tyf snapshot --message \"meaningful checkpoint\"` to stage and commit")
+    print("  the current workspace state as an explicit recovery point.")
+    root = _git_root()
+    if root:
+        status, err = _git_status_lines()
+        if status is None:
+            print(f"- git status: unavailable ({err})")
+        elif status:
+            print(f"- git status: {len(status)} changed path(s) visible to snapshot.")
+        else:
+            print("- git status: clean.")
+    else:
+        print("- git status: this workspace is not inside a git repository.")
+
+def cmd_snapshot(args):
+    _require_workspace()
+    root = _git_root()
+    if not root:
+        sys.exit("Refused: `tyf snapshot` needs this workspace to be inside a git repository.")
+    message = _one_line(args.message)
+    if not message:
+        sys.exit("Refused: snapshot needs --message.")
+    status, err = _git_status_lines()
+    if status is None:
+        sys.exit(f"Refused: git status failed: {err}")
+    if not status:
+        print("tyf snapshot: no git changes to commit.")
+        return
+    log_event(".", "snapshot", message, f"git recovery point at {root}")
+    status, err = _git_status_lines()
+    if status is None:
+        sys.exit(f"Refused: git status failed after event log update: {err}")
+    add = _git(["add", "-A"])
+    if add.returncode != 0:
+        sys.exit((add.stderr or add.stdout or "git add failed").strip())
+    commit = _git(["commit", "-m", message])
+    if commit.returncode != 0:
+        sys.exit((commit.stderr or commit.stdout or "git commit failed").strip())
+    rev = _git(["rev-parse", "--short", "HEAD"])
+    short = rev.stdout.strip() if rev.returncode == 0 else "(unknown)"
+    print(f"Snapshot committed: {short} {message}")
+    print("Included changed paths:")
+    for ln in status[:20]:
+        print(f"  {ln}")
+    if len(status) > 20:
+        print(f"  ... and {len(status) - 20} more")
 
 def _set_active(work_id):
     path = "WORKSPACE_STATE.yaml"
@@ -1013,8 +1263,9 @@ def _installed_version():
     import json
     try:
         p = os.path.join(_pack_root(), ".claude-plugin", "plugin.json")
-        return json.load(open(p, encoding="utf-8")).get("version", "0.0.0")
-    except Exception:
+        with open(p, encoding="utf-8") as f:
+            return json.load(f).get("version", "0.0.0")
+    except Exception:  # noqa: BLE001  # degradation: ok: unreadable or absent plugin metadata reports the safe unknown version
         return "0.0.0"
 
 def _latest_release_tag():
@@ -1030,7 +1281,7 @@ def _latest_release_tag():
             "Accept": "application/vnd.github+json", "User-Agent": "tyf-update-check"})
         with urllib.request.urlopen(req, timeout=5) as r:
             return json.load(r).get("tag_name")
-    except Exception:
+    except Exception:  # noqa: BLE001  # degradation: ok: offline/update failures mean "no latest tag", not command failure
         return None
 
 def _should_check(now_dt, last_dt, hours=24):
@@ -1045,8 +1296,9 @@ def _update_cache_path():
 def _read_update_cache():
     import json
     try:
-        return json.load(open(_update_cache_path(), encoding="utf-8"))
-    except Exception:
+        with open(_update_cache_path(), encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:  # noqa: BLE001  # degradation: ok: missing/corrupt cache falls back to empty update state
         return {}
 
 def _write_update_cache(data):
@@ -1056,7 +1308,7 @@ def _write_update_cache(data):
         os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
         with open(p, "w", encoding="utf-8") as f:
             json.dump(data, f)
-    except Exception:
+    except Exception:  # noqa: BLE001  # degradation: ok: update cache writes are best-effort and must not fail checks
         pass  # the cache is best-effort and must never break a check
 
 def _harness_update_hints():
@@ -1122,17 +1374,54 @@ def _doc_hook_tail():
         if extra > 0:
             print(f"  ... and {extra} more")
 
+def _git_hook_tail():
+    """Surface git recovery state without staging or committing silently."""
+    if os.environ.get("TYF_NO_DOC_HOOK") == "1":
+        return
+    if not os.path.isfile("WORKSPACE_STATE.yaml") or not _git_root():
+        return
+    status, err = _git_status_lines()
+    if status is None:
+        print(f"\n[git-hook] status unavailable ({err})")
+        return
+    if status:
+        print(f"\n[git-hook] {len(status)} changed path(s) in this git workspace.")
+        print("  Recovery point is explicit: run `tyf snapshot --message \"...\"`.")
+
 def main():
     p = argparse.ArgumentParser(prog="tyf", description="TYF workspace helper")
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("init"); s.add_argument("name"); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
     s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.set_defaults(fn=cmd_new_work)
+    s = sub.add_parser("start", help="plain-language first book/session entrypoint")
+    s.add_argument("title")
+    s.add_argument("--id", default=None, help="optional stable work id; otherwise slugged from title")
+    s.add_argument("--type", default="book")
+    s.add_argument("--register", default=None)
+    s.set_defaults(fn=cmd_start)
+    s = sub.add_parser("begin", help="create and open a first-session work packet")
+    s.add_argument("id")
+    s.add_argument("--type", default="book")
+    s.add_argument("--register", default=None)
+    s.add_argument("--title", default=None)
+    s.set_defaults(fn=cmd_begin)
+    s = sub.add_parser("capture", help="append author source, voice, claim, or question material")
+    s.add_argument("work")
+    s.add_argument("--kind", choices=sorted(_CAPTURE_TARGETS.keys()), required=True)
+    s.add_argument("--title", default=None)
+    s.add_argument("--text", required=True)
+    s.set_defaults(fn=cmd_capture)
     s = sub.add_parser("open"); s.add_argument("work"); s.set_defaults(fn=cmd_open)
     s = sub.add_parser("mark-ready"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_mark_ready)
     s = sub.add_parser("audit"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_audit)
     s = sub.add_parser("write"); s.add_argument("work"); s.add_argument("--from", dest="src", required=True); s.add_argument("--confirm", action="store_true"); s.add_argument("--force", action="store_true", help="allow re-writing an existing manuscript file"); s.set_defaults(fn=cmd_write)
     s = sub.add_parser("doctor"); s.add_argument("--repair", action="store_true", help="create any missing required structure"); s.set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("reflexes", help="show TYF's transparent hooks and reflexes")
+    s.set_defaults(fn=cmd_reflexes)
+    s = sub.add_parser("snapshot", help="stage and commit an explicit git recovery point")
+    s.add_argument("--message", "-m", required=True)
+    s.set_defaults(fn=cmd_snapshot)
     s = sub.add_parser("check")
     s.add_argument("--quiet", action="store_true", help="print only problems")
     s.add_argument("--no-strict", dest="strict", action="store_false", help="warn only; exit 0 even on drift")
@@ -1154,8 +1443,9 @@ def main():
     args = p.parse_args()
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "capture", "write", "mark-ready"}:
         _doc_hook_tail()
+        _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of
     # only the NEW or resurfaced items (via the ledger), so the author is not
     # nagged about things already seen. Surfacing only; never modifies.

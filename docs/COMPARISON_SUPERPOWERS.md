@@ -45,7 +45,7 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 ## Where TYF is fooling itself
 
 1. **Untested is untested.** Every "stronger guarantee" above is a design claim. Superpowers earned its confidence; TYF has borrowed the *form* of that confidence (rationalization tables, RED/GREEN scenarios) without paying the price (actually running them). The scenarios in `pressure-scenarios.md` have never been executed against a subagent.
-2. **Surface-area-to-usage ratio.** TYF has 16 skills, a helper with 12 commands, a SQLite layer, two background loops, and an opt-in LLM pass, for zero real users. Superpowers grew its surface from usage. TYF risks being over-engineered for problems no author has actually hit.
+2. **Surface-area-to-usage ratio.** TYF has 16 skills, a broad helper CLI, a SQLite layer, visible reflex hooks, and an opt-in LLM pass, for zero real users. Superpowers grew its surface from usage. TYF risks being over-engineered for problems no author has actually hit.
 3. **Gentleness as a liability.** TYF's tone is faithful and warm. Superpowers learned that under pressure, agents need blunt imperatives. TYF's softer dispatch may rationalize more easily, the exact failure its rationalization tables try to prevent.
 4. **The redactor/voice substrates are unproven at scale.** They are elegant on paper. Whether an agent actually consults them at every band, every pass, under a long real project, is unknown.
 

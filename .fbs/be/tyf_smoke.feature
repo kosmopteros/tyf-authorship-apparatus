@@ -1,0 +1,61 @@
+Feature: TYF helper smoke suite
+
+  @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: helper happy path supports first writing session
+    When Run "python tests/test_tyf.py -v"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper command surface stays visible
+    When Run "python tests/test_solo_oracles.py helper"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: helper refuses unsafe or out-of-workspace writes
+    When Run "python tests/test_tyf.py -v"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: helper keeps first-day setup source-first and recoverable
+    When Run "python tests/test_tyf.py -v"
+    Then Exit code is 0
+
+  @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: public onboarding has paste-ready author prompts
+    When Run "python tests/test_solo_oracles.py onboarding"
+    Then Exit code is 0
+
+  @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: public onboarding entrypoint is visible from the README
+    When Run "python tests/test_solo_oracles.py onboarding-entry"
+    Then Exit code is 0
+
+  @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: public onboarding does not make the author operate the CLI first
+    When Run "python tests/test_solo_oracles.py onboarding"
+    Then Exit code is 0
+
+  @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: public onboarding stays linked into the active skills
+    When Run "python tests/test_solo_oracles.py onboarding"
+    Then Exit code is 0
+
+  @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
+  Scenario: Codex plugin happy path validates
+    When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
+    Then Exit code is 0
+
+  @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: Codex plugin manifest has independent structural shape
+    When Run "python tests/test_solo_oracles.py plugin"
+    Then Exit code is 0
+
+  @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
+  Scenario: Codex plugin catches invalid manifest or skill metadata
+    When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
+    Then Exit code is 0
+
+  @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
+  Scenario: Codex plugin remains installable as a writing apparatus
+    When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
+    Then Exit code is 0

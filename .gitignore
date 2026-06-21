@@ -9,3 +9,9 @@ Thumbs.db
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# SOLO local runtime scratch
+.fbs/.solo-ledger.lock
+.fbs/recover-live.log
+.fbs/runs/
+.fbs/store/agent_io/

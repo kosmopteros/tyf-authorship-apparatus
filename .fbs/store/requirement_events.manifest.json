@@ -1,0 +1,7 @@
+{
+  "event_schema": 2,
+  "head_event_id": "sha256:30edc992a2ba4cdf05268c0e6b12441d1c0fe8aa06d0d7e01e7055787ada37aa",
+  "ledger_digest": "sha256:6158f5ac64fe13876c6b39bf00f3e9c698c80b3ad25825f4a415c24b3371bd83",
+  "rows": 7,
+  "schema": 1
+}

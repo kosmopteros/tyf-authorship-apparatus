@@ -8,6 +8,8 @@ TYF (*The Yours Faithfully*) is a faithful apparatus for authorship. Its job is 
 
 Before any task that touches source material, authorship, drafting, editing, voice, claims, citations, or a manuscript, check the TYF skills and load the earliest applicable one. Start from `using-tyf`, which routes to the rest. This is a workflow, not a suggestion.
 
+If the author says "start my book", "new book", "set up TYF", or similar, do not hand them a command list. Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace, run `tyf start "Working Title"` after getting a title, then show what was created and ask source questions before drafting.
+
 ## The commitments (load-bearing, not tone)
 
 1. **The author is the source, not the prompt.** The highest-value passes elicit and structure knowledge; drafting is downstream and subordinate.
@@ -38,3 +40,15 @@ Lifecycle: `initializing-a-workspace` · `working-the-workspace` · `scheduling-
 Editorial apparatus: `using-tyf` · `ingesting-sources` · `interviewing-the-author` · `structuring-knowledge` · `composing-as-amanuensis` · `reading-sympathetically` · `diagnosing-text` · `editing-faithfully` · `auditing-adversarially` · `controlling-manuscript-writes`
 
 Cross-cutting substrates (read by every Diagnose, Propose, Revise, Audit pass at every band): `managing-voice` (how the work sounds) · `keeping-the-redactor-canon` (whether it holds together; the Milchin tradition across micro, macro, and meta)
+
+<!-- BEGIN FBS SOLO REFLEX -->
+# SOLO Reflex
+
+- If this repo has `.fbs/` or `fbs.yaml`, use the `using-solo` skill before
+  changing code, specs, docs, commands, manifests, or project structure.
+- Compose with Superpowers for brainstorming, planning, TDD, and completion
+  checks. SOLO owns executable Be, R->F coverage, doc honesty, prove-red, and
+  the gate.
+- If this repo has no `.fbs/` and looks clean/new, offer `fbs init` once. Use
+  `.solo-setup-offered` as the local marker after the operator declines or defers.
+<!-- END FBS SOLO REFLEX -->

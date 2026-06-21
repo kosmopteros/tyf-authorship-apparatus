@@ -1,0 +1,26 @@
+project: TYF
+structure:
+  paths: [src/]
+  language: python
+be:
+  path: .fbs/be
+  adapters: [pytest]
+loop:
+  max_iter: 30
+  max_r1: 3
+  max_r2: 1
+agent:
+  cli: claude
+recover:
+  # Bloat budgets for `fbs recover` — policy, not constants. Per-language, since
+  # a TypeScript function may rightly run longer than a Python one. Optional;
+  # these are the built-in defaults.
+  bloat:
+    doc_bytes: 16384       # agent-context docs (CLAUDE/AGENTS/GEMINI) over this are flagged
+    function:
+      default:
+        loc: 60
+        complexity: 12
+      typescript:
+        loc: 90
+        complexity: 15

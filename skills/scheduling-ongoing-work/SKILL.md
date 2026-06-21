@@ -1,6 +1,6 @@
 ---
 name: scheduling-ongoing-work
-description: Use when authorship is iterative and ongoing rather than a single session: setting up recurring audits, voice-drift scans, return-after-time digests, proposal review, or any hook that should fire on save, on open, or on a cadence
+description: "Use when authorship is iterative and ongoing rather than a single session: setting up recurring audits, voice-drift scans, return-after-time digests, proposal review, or any hook that should fire on save, on open, or on a cadence"
 ---
 
 # Scheduling ongoing work

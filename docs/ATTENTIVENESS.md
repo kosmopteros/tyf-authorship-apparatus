@@ -16,7 +16,7 @@ On each run the loop re-derives items from current content, hashes each, and dif
 - content dismissed but now in a *different context* *resurfaces*, because the situation changed and the old dismissal no longer covers it;
 - content that has vanished entirely is marked *resolved*, since the author's own edit settled it.
 
-This is the temp memory reservoir, content-addressed so it survives with no git and no trustworthy timestamps. SQLite gives it atomic updates (a scheduled run and a write will not clobber each other), real timestamp columns, and an append-only event log: a git-like spine recording every init, write, mark-ready, dismiss, and repair. The database is disposable derived state, rebuildable by re-scanning content, and `tyf reconcile --export` mirrors it to Markdown for reading. The body of work itself never goes here; it stays in Markdown and YAML, owned by and legible to the author.
+This is the temp memory reservoir, content-addressed so it survives with no git and no trustworthy timestamps. SQLite gives it atomic updates (a scheduled run and a write will not clobber each other), real timestamp columns, and an append-only event log: a git-like spine recording apparatus actions such as init, start, begin, capture, write, mark-ready, dismiss, repair, and explicit snapshots. The database is disposable derived state, rebuildable by re-scanning content, and `tyf reconcile --export` mirrors it to Markdown for reading. The body of work itself never goes here; it stays in Markdown and YAML, owned by and legible to the author.
 
 ## Dismissal and resurfacing
 

@@ -37,4 +37,6 @@ No em-dashes in prose; use a colon, a semicolon, or a comma. No stacked-negation
 
 ## Helper
 
-Use `tyf` for file operations: `init`, `status`, `new-work`, `open`, `mark-ready`, `audit`, `write`, `doctor`. The helper is the single writer into `manuscript/`.
+Use `tyf` for file operations. For a new book or body of work, prefer `tyf start "Working Title"` and then ask the author the source questions it prints. Do not hand the author an advanced command list unless they ask for one.
+
+Advanced helper commands include `init`, `status`, `new-work`, `begin`, `capture`, `open`, `mark-ready`, `audit`, `write`, `doctor`, `reflexes`, and `snapshot`. The helper is still the single writer into `manuscript/`. `tyf reflexes` shows visible hooks, and `tyf snapshot --message "..."` makes an explicit git recovery commit when the workspace is a git repo. TYF never commits silently.

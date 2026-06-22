@@ -2,7 +2,7 @@
 
 > **Tested target vs portability targets.** The canonical, tested target for v1 is Cowork (and the same skills via manual drop-in on Claude Code). The other harness manifests in this repo are portability *targets*: the skills themselves are plain `SKILL.md` and run without change, but each harness's plugin or extension manifest schema must be validated against that harness's current plugin documentation before you publish there. Treat anything beyond Cowork plus manual skills as unverified until you run it.
 
-TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same sixteen skills plus a context file under the filename that harness expects.
+TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same sixteen skills plus a context file under the filename that harness expects. The pack-root context files are contributor context for this development repository; author workspaces should use the generated context from `tyf init` or the clean templates in `author-context/`.
 
 ## Portable Workspace Format
 
@@ -26,7 +26,7 @@ This means Markdown, YAML, and JSONL are the durable truth. SQLite is an index, 
 | Gemini CLI | `gemini-extension.json` | `GEMINI.md` | extension dir |
 | OpenCode | `.opencode/INSTALL.md` | `AGENTS.md` | OpenCode skills dir |
 
-The three context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`) carry identical content. Each harness reads its own filename.
+The three pack-root context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`) carry identical contributor content. Each harness reads its own filename. Clean author-facing templates live in `author-context/`. For a book workspace, run `tyf init` in the book folder, or `tyf init <book-folder>` near it, so TYF writes the matching local context files.
 
 ## Install
 
@@ -72,7 +72,7 @@ gemini extensions install https://github.com/kosmopteros/tyf-authorship-apparatu
 
 **OpenCode:** tell the agent to fetch and follow `.opencode/INSTALL.md` from the repository.
 
-**Any harness, manual:** copy `skills/*` into the harness skills directory and place the matching context file where the harness reads session context.
+**Any harness, manual:** copy `skills/*` into the harness skills directory. For a book workspace, run `tyf init` in the book folder, or `tyf init <book-folder>` near it, so the local `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` are generated without contributor-only routing. If your harness needs a manual context template outside an initialized workspace, use the matching file from `author-context/`, not the pack-root development context.
 
 ```
 bash scripts/install.sh claude     # or: codex | cursor | <explicit path>

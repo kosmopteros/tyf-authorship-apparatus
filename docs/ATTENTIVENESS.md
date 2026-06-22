@@ -6,6 +6,8 @@ The attentive loop (`tyf notice`) surfaces what the author may have forgotten or
 
 The loop keeps a small SQLite database, `.tyf/ledger.db` (using Python's stdlib `sqlite3`, so no third-party dependency). For every item it has ever surfaced it stores a fingerprint of the *content the item is about* (the gap line, the unfinished sentence, the claim row), a fingerprint of the *surrounding context*, and a status: open, dismissed, or resolved.
 
+For style-sheet lag, timestamps remain only the first hint. If a manuscript file is newer than the style sheet but its content hash matches the latest controlled `tyf write` record, and the style sheet still carries the core language and decision sections, TYF treats that as a clean controlled write rather than a style problem. It still surfaces lag for direct or unlogged manuscript changes, changed hashes, or a style sheet missing its core metadata.
+
 The fingerprint is a hash of normalized text, whitespace-insensitive, so a reflow or reindent does not read as a new item. Crucially it is keyed on *what was said*, never on *when*. This matters because TYF cannot assume git, and filesystem timestamps lie: a sync tool, a copy, a Cowork file operation, or an editor "save all" changes mtime without changing content, and a restore can do the reverse. So the loop uses mtime only as a cheap hint about what is worth re-reading, never as the thing that decides what changed or what is true.
 
 On each run the loop re-derives items from current content, hashes each, and diffs against the ledger:

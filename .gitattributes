@@ -4,3 +4,10 @@
 *.sh     text eol=lf
 *.py     text eol=lf
 bin/tyf  text eol=lf
+
+# Release archives should ship the apparatus, not the workshop residue used to
+# build and test it.
+.fbs/** export-ignore
+.pytest_cache/** export-ignore
+**/__pycache__/** export-ignore
+*.pyc export-ignore

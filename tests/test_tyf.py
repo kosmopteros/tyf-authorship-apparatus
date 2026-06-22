@@ -1092,8 +1092,16 @@ class CLIBehaviour(unittest.TestCase):
         ws = self.ws()
         rc, out = run_tyf(["start", "The New Book"], ws)
         self.assertNotEqual(rc, 0, "positional title compatibility should be gone")
-        self.assertIn("arrival path not found", out.lower())
+        self.assertIn('No arrival path found: "The New Book"', out)
+        self.assertIn('tyf start --title "The New Book"', out)
         self.assertFalse((ws / "works" / "the-new-book").exists())
+
+    def test_start_positional_title_error_points_to_title_flag(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "Working Title"], ws)
+        self.assertNotEqual(rc, 0, "positional title must not be accepted")
+        self.assertIn('No arrival path found: "Working Title"', out)
+        self.assertIn('tyf start --title "Working Title"', out)
 
     def test_today_command_is_removed(self):
         ws = self.ws()
@@ -1523,6 +1531,38 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(len(notices), 2)
         self.assertEqual(len(hashes), 2, notices)
 
+    def test_notice_does_not_report_style_lag_after_clean_controlled_write(self):
+        ws = self.ws()
+        rc, out = run_tyf(["new-work", "demo"], ws)
+        self.assertEqual(rc, 0, out)
+        style = ws / "works" / "demo" / "style-sheet.md"
+        old = 1_600_000_000
+        os.utime(style, (old, old))
+        src = self.make_draft(ws, work="demo", name="chapter.md", text="Controlled prose.\n")
+        decision = self.gate_decision(ws, work="demo", src=src, unit="chapter.md")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertEqual(rc, 0, out)
+        notices = tyf.gather_notices(str(ws))
+        self.assertFalse(
+            [n for n in notices if n["kind"] == "style-sheet-lag" and n["where"] == "works/demo"],
+            notices,
+        )
+
+    def test_notice_reports_style_lag_for_unlogged_manuscript_change(self):
+        ws = self.ws()
+        rc, out = run_tyf(["new-work", "demo"], ws)
+        self.assertEqual(rc, 0, out)
+        style = ws / "works" / "demo" / "style-sheet.md"
+        old = 1_600_000_000
+        os.utime(style, (old, old))
+        manuscript = ws / "works" / "demo" / "manuscript" / "chapter.md"
+        manuscript.write_text("Manual prose.\n", encoding="utf-8")
+        notices = tyf.gather_notices(str(ws))
+        self.assertTrue(
+            [n for n in notices if n["kind"] == "style-sheet-lag" and n["where"] == "works/demo"],
+            notices,
+        )
+
 
 class DocCheck(unittest.TestCase):
     def setUp(self):
@@ -1622,6 +1662,47 @@ class DocCheck(unittest.TestCase):
         self.assertTrue(any("manifest version" in p.lower() or "version divergence" in p.lower()
                             for p in problems),
                         f"expected manifest version divergence, got {problems}")
+
+    def test_author_context_templates_do_not_include_solo_development_reflex(self):
+        for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
+            path = REPO / "author-context" / name
+            self.assertTrue(path.is_file(), f"{name} author context template should exist")
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("TYF workspace", text)
+            self.assertIn("tyf start", text)
+            self.assertIn("single work", text.lower())
+            self.assertNotIn("SOLO Reflex", text)
+            self.assertNotIn("using-solo", text)
+            self.assertNotIn("fbs", text.lower())
+
+    def test_release_archive_excludes_workshop_debris(self):
+        attrs = (REPO / ".gitattributes").read_text(encoding="utf-8")
+        for token in (
+                ".fbs/** export-ignore",
+                ".pytest_cache/** export-ignore",
+                "**/__pycache__/** export-ignore",
+                "*.pyc export-ignore"):
+            self.assertIn(token, attrs)
+
+    def test_readme_pressure_status_matches_validation_evidence(self):
+        readme = (REPO / "README.md").read_text(encoding="utf-8")
+        self.assertNotIn("have not yet been run against a subagent", readme)
+        self.assertIn("GREEN passed 11/11", readme)
+        self.assertIn("RED baseline", readme)
+        self.assertIn("proof is partial", readme)
+
+    def test_install_docs_route_author_workspaces_away_from_dev_context(self):
+        install = (REPO / "scripts" / "install.sh").read_text(encoding="utf-8")
+        portability = (REPO / "docs" / "PORTABILITY.md").read_text(encoding="utf-8")
+        self.assertIn("For a book workspace, run `tyf init`", install)
+        self.assertIn("Do not copy the pack development context", install)
+        self.assertIn("author-context", install)
+        self.assertIn("author-context", portability)
+        self.assertIn("run `tyf init`", portability)
+        self.assertNotIn(
+            "place the matching context file where the harness reads session context",
+            portability,
+        )
 
 
 class PackRoot(unittest.TestCase):

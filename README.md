@@ -77,7 +77,7 @@ Each step has a skill. Voice and Redactor are not steps; they are substrates eve
 bash scripts/install.sh claude     # or: codex | cursor | <explicit path>
 ```
 
-Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) where your harness reads session context.
+For a book workspace, run `tyf init <book-folder>` so TYF writes the local `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` context without contributor-only routing. If a harness needs manual context before a workspace exists, use the matching file from `author-context/`; the pack-root context files are for contributing to TYF itself.
 
 For Codex specifically, TYF has two layers. Install the TYF skills once into `$CODEX_HOME/skills` or `~/.codex/skills` so `$using-tyf` is available. Then, inside each book repo, `tyf init` writes the local `AGENTS.md` workspace contract so Codex entering that repo knows to run `tyf start` or `tyf start <path>` before drafting.
 
@@ -126,7 +126,7 @@ The Gate chain binds manuscript writes to records instead of a bare flag. A prop
 
 `tyf reflexes` shows the apparatus behavior that would otherwise be easy to forget: the documentation-honesty tail hook, the attentive-amanuensis notice hook after controlled writes, the doctor integrity check, and the git recovery path. If a workspace is also a git repository, mutating commands surface changed-path counts and point to `tyf snapshot`. `tyf snapshot --message "..."` stages and commits the current workspace as an explicit recovery point. TYF never commits silently.
 
-`tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed SQLite notice index (`.tyf/ledger.db`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. Apparatus actions are recorded separately in `.tyf/events.jsonl`, a human-readable hash chain that `tyf doctor` verifies before mutating commands trust it; SQLite keeps only a derived event mirror for counts. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.
+`tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging uncontrolled or stylistically unresolved manuscript changes, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed SQLite notice index (`.tyf/ledger.db`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. Apparatus actions are recorded separately in `.tyf/events.jsonl`, a human-readable hash chain that `tyf doctor` verifies before mutating commands trust it; SQLite keeps only a derived event mirror for counts. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.
 
 `tyf check` verifies the pack's own consistency: skill count, names, dead references, command drift, identical context files, valid JSON, no stray em-dashes. It runs automatically warn-only after every mutating command (so doc drift surfaces the moment structure changes, with no reliance on git or memory) and hard-fails as a standalone command for CI. This is the deterministic, zero-token half of the `keeping-documentation-honest` discipline; semantic drift still needs a reading pass.
 
@@ -136,7 +136,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. The semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. The semantic engine is still partial. The pressure scenarios have had a first subagent run: GREEN passed 11/11, but the RED baseline was weak, so the proof is partial. Before treating it as production-bulletproof, re-run `tests/pressure-scenarios.md` in your harness: once with skills absent or constrained (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 
@@ -152,7 +152,7 @@ This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserv
 
 ## How it compares
 
-`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, but superpowers has real usage and three disciplines TYF lacks (execution-to-completion, debugging/isolation, receiving critique). The honest gap is testing: TYF's RED/GREEN scenarios have not yet been run against a subagent.
+`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, but superpowers has real usage and three disciplines TYF lacks (execution-to-completion, debugging/isolation, receiving critique). The honest gap is testing depth: TYF's RED/GREEN scenarios have had a first subagent run with GREEN passed 11/11, but the RED baseline was weak, so the proof is partial.
 
 ## License
 

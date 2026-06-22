@@ -582,6 +582,40 @@ def gather_notices(root="."):
             "context_hash": _h(context) if context else "",
         })
 
+    def style_sheet_has_minimum_metadata(path):
+        text = _read(path)
+        return all(token in text for token in (
+            "Writing language:",
+            "## Terminology decisions",
+            "## Apparatus decisions",
+            "## Finish decisions",
+        ))
+
+    def style_sheet_lag_should_surface(manuscript_dir, style_sheet, write_log):
+        if not (os.path.isdir(manuscript_dir) and os.path.isfile(style_sheet)):
+            return False
+        style_mtime = _mtime(style_sheet)
+        changed = []
+        try:
+            names = os.listdir(manuscript_dir)
+        except OSError:  # degradation: ok: unreadable manuscript dirs produce no notice
+            return False
+        for name in names:
+            path = os.path.join(manuscript_dir, name)
+            if os.path.isfile(path) and _mtime(path) > style_mtime:
+                changed.append(path)
+        if not changed:
+            return False
+        if not style_sheet_has_minimum_metadata(style_sheet):
+            return True
+        logged = _logged_hashes(_read(write_log))
+        for path in changed:
+            expected = logged.get(os.path.basename(path))
+            actual = hashlib.sha256(_read(path).encode("utf-8")).hexdigest()
+            if not expected or expected != actual:
+                return True
+        return False
+
     def prose_walks():
         roots = []
         for rel in ("drafts", "manuscript"):
@@ -636,11 +670,9 @@ def gather_notices(root="."):
     # Enacted-races-ahead: manuscript changed after its style sheet (mtime hint only).
     ss = os.path.join(root, "style-sheet.md")
     man = os.path.join(root, "manuscript")
-    if os.path.isdir(man) and os.path.isfile(ss):
-        newest = max([_mtime(os.path.join(man, f)) for f in os.listdir(man)] or [0])
-        if newest > _mtime(ss):
-            add("style-sheet-lag", "manuscript/",
-                "manuscript changed after the style sheet; decisions may be unrecorded", "root")
+    if style_sheet_lag_should_surface(man, ss, os.path.join(root, ".review", "write-log.md")):
+        add("style-sheet-lag", "manuscript/",
+            "manuscript changed after the style sheet; decisions may be unrecorded", "root")
     if os.path.isdir(os.path.join(root, "works")):
         for w in sorted(os.listdir(os.path.join(root, "works"))):
             wd = os.path.join(root, "works", w)
@@ -648,11 +680,9 @@ def gather_notices(root="."):
                 continue
             ss = os.path.join(wd, "style-sheet.md")
             man = os.path.join(wd, "manuscript")
-            if os.path.isdir(man) and os.path.isfile(ss):
-                newest = max([_mtime(os.path.join(man, f)) for f in os.listdir(man)] or [0])
-                if newest > _mtime(ss):
-                    add("style-sheet-lag", f"works/{w}",
-                        "manuscript changed after the style sheet; decisions may be unrecorded", w)
+            if style_sheet_lag_should_surface(man, ss, os.path.join(wd, ".review", "write-log.md")):
+                add("style-sheet-lag", f"works/{w}",
+                    "manuscript changed after the style sheet; decisions may be unrecorded", w)
 
     # Assumptions left untouched while the manuscript moved (mtime hint only).
     asm = os.path.join(root, "ASSUMPTIONS.md")
@@ -1790,7 +1820,10 @@ def _import_arrival(args, announce=True):
     _require_workspace()
     src = os.path.abspath(args.path)
     if not os.path.exists(src):
-        sys.exit(f"Refused: arrival path not found: {args.path}")
+        title_hint = ""
+        if getattr(args, "cmd", "") == "start":
+            title_hint = f'\nIf this is a title, use:\n  tyf start --title "{args.path}"'
+        sys.exit(f'Refused: No arrival path found: "{args.path}".{title_hint}')
     work_id, created_work = _work_for_arrival(args)
     _ensure_real_dir(os.path.join("sources", "imports"), "sources/imports/")
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

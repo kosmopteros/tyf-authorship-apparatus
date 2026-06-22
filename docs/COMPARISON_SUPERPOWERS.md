@@ -44,14 +44,14 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 
 ## Where TYF is fooling itself
 
-1. **Untested is untested.** Every "stronger guarantee" above is a design claim. Superpowers earned its confidence; TYF has borrowed the *form* of that confidence (rationalization tables, RED/GREEN scenarios) without paying the price (actually running them). The scenarios in `pressure-scenarios.md` have never been executed against a subagent.
+1. **Partial proof is partial proof.** Every "stronger guarantee" above is still a young design claim. Superpowers earned its confidence through usage; TYF has borrowed the *form* of that confidence (rationalization tables, RED/GREEN scenarios) and now has only a first subagent run. GREEN passed 11/11, but the RED baseline was weak, so the proof is partial rather than settled.
 2. **Surface-area-to-usage ratio.** TYF has 16 skills, a broad helper CLI, a SQLite layer, visible reflex hooks, and an opt-in LLM pass, for zero real users. Superpowers grew its surface from usage. TYF risks being over-engineered for problems no author has actually hit.
 3. **Gentleness as a liability.** TYF's tone is faithful and warm. Superpowers learned that under pressure, agents need blunt imperatives. TYF's softer dispatch may rationalize more easily, the exact failure its rationalization tables try to prevent.
 4. **The redactor/voice substrates are unproven at scale.** They are elegant on paper. Whether an agent actually consults them at every band, every pass, under a long real project, is unknown.
 
 ## What TYF should steal from superpowers next
 
-1. **Run the RED/GREEN loop for real.** This is non-negotiable and overdue. Until the pressure scenarios run against a subagent, TYF's discipline claims are unverified.
+1. **Repeat and strengthen the RED/GREEN loop.** This is non-negotiable. The first subagent run is useful, but TYF needs stronger RED baselines, repeated harness runs, and evidence that failures appear when the skills are absent or constrained.
 2. **An execution-and-completion discipline.** Something like `executing-plans` adapted to authorship: how to drive a whole work to done across sessions, not just compose a unit.
 3. **A receiving-critique skill.** The author (or a beta reader, or an editor) gives feedback; how does the apparatus triage it faithfully without either capitulating or defending? Superpowers' `receiving-code-review` is the template.
 4. **An update/distribution path.** A way for an installed TYF to pull improvements, the plugin-shim pattern superpowers uses.

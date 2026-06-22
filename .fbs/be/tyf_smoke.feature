@@ -160,6 +160,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_is_not_a_compatibility_alias CLIBehaviour.test_today_command_is_removed -v"
     Then Exit code is 0
 
+  @covers:tyf-start-title-footgun-contract @covers:tyf-writing-runway-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: start positional title mistake stays strict but points to title flag
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_is_not_a_compatibility_alias CLIBehaviour.test_start_positional_title_error_points_to_title_flag -v"
+    Then Exit code is 0
+
+  @covers:tyf-start-title-footgun-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: explicit title flag remains the title happy path
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_records_non_latin_title_without_id_gate CLIBehaviour.test_start_records_explicit_writing_language -v"
+    Then Exit code is 0
+
+  @covers:tyf-start-title-footgun-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: positional start title does not create a hidden work alias
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_is_not_a_compatibility_alias -v"
+    Then Exit code is 0
+
+  @covers:tyf-start-title-footgun-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: positional start title error names the title flag recovery
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_error_points_to_title_flag -v"
+    Then Exit code is 0
+
+  @covers:tyf-start-title-footgun-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: start keeps no legacy today fallback while guiding title recovery
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_error_points_to_title_flag CLIBehaviour.test_today_command_is_removed -v"
+    Then Exit code is 0
+
   @covers:tyf-doc-drift-command-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check accepts the current repo pack
     When Run "python tests/test_tyf.py DocCheck.test_repo_pack_is_clean -v"
@@ -183,6 +208,36 @@ Feature: TYF helper smoke suite
   @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check flags plugin manifest version divergence
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_plugin_manifest_version_divergence -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: README pressure status matches validation evidence
+    When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: author context templates stay clean and install docs avoid dev context
+    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_solo_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: release packaging has clean author context happy path
+    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_solo_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: author context templates contain no development reflex
+    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_solo_development_reflex -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: install and portability docs route book workspaces to generated context
+    When Run "python tests/test_tyf.py DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: release export ignores workshop debris
+    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris -v"
     Then Exit code is 0
 
   @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
@@ -243,6 +298,21 @@ Feature: TYF helper smoke suite
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper keeps first-day setup source-first and recoverable
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_is_not_a_compatibility_alias CLIBehaviour.test_today_command_is_removed CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
+    Then Exit code is 0
+
+  @covers:tyf-attentive-notice-quality-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:docs/ATTENTIVENESS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: clean controlled write does not create style-sheet lag noise
+    When Run "python tests/test_tyf.py CLIBehaviour.test_notice_does_not_report_style_lag_after_clean_controlled_write -v"
+    Then Exit code is 0
+
+  @covers:tyf-attentive-notice-quality-contract @bind-file:scripts/tyf.py @bind-file:docs/ATTENTIVENESS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: attentive notices distinguish clean controlled writes from style problems
+    When Run "python tests/test_tyf.py CLIBehaviour.test_notice_does_not_report_style_lag_after_clean_controlled_write CLIBehaviour.test_notice_reports_style_lag_for_unlogged_manuscript_change -v"
+    Then Exit code is 0
+
+  @covers:tyf-attentive-notice-quality-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:docs/ATTENTIVENESS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: unlogged manuscript changes still surface style-sheet lag
+    When Run "python tests/test_tyf.py CLIBehaviour.test_notice_reports_style_lag_for_unlogged_manuscript_change -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli

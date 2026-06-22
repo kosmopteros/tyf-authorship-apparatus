@@ -79,8 +79,15 @@ else
   echo "  If you copy the helper elsewhere, set TYF_PACK_ROOT=$ROOT so 'tyf check' finds the pack."
 fi
 
-# 3. Context file
+# 3. Context guidance
 echo
-echo "Last step: place the matching context file where your harness reads session context:"
-echo "  source: $ROOT/$(ctx_file_for "$HARNESS")"
+echo "Book workspace context:"
+echo '  For a book workspace, run `tyf init` in the book folder, or `tyf init <book-folder>` near it.'
+echo "  Use the generated context files."
+echo "  Do not copy the pack development context into a book workspace."
+echo "  Clean author-context templates are available at: $ROOT/author-context/"
+echo
+echo "Contributor context for working on this TYF pack:"
+echo "  $ROOT/$(ctx_file_for "$HARNESS")"
+echo
 echo "Then verify: ask the agent to list its TYF skills; it should route through 'using-tyf' first."

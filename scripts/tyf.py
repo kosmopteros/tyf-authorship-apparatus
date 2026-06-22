@@ -11,6 +11,8 @@ Commands:
   tyf new-work <id> [--type T] [--register R]
   tyf start ["Working Title"] [--id work-id]
                                           writer-facing first book/session entrypoint
+  tyf today [path]                       open today's writing runway, optionally
+                                          preserving an arrival first
   tyf begin <id> [--title T] [--register R]
                                           create a first-session packet for a book
   tyf import <path> [--kind K] [--work id]
@@ -46,7 +48,8 @@ Apparatus memory (JSONL + SQLite, stdlib)
   docs/ATTENTIVENESS.md.
 
 Documentation-honesty hook
-  Every mutating command (init, new-work, start, begin, capture, propose, audit --record, accept, write, mark-ready) runs `check` as a
+  Every mutating command (init, new-work, start, today, begin, import, capture,
+  propose, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -890,8 +893,8 @@ def _required_structure(root):
 
 This is an author-owned TYF workspace.
 
-- If the author says "start my book", use `tyf start`; a title can stay unknown.
-- If the author brings existing material, use `tyf import <path>` to preserve it before drafting.
+- If the author says "start my book" or wants to write today, use `tyf today`; a title can stay unknown.
+- If the author brings existing material, use `tyf today <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `works/*/drafts/`.
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; pass relevant ids to `tyf propose --source-ref <id>`.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
@@ -906,7 +909,7 @@ This is an author-owned TYF workspace.
         "tyf.portable.json":
             json.dumps({
                 "format": "tyf-workspace",
-                "format_version": "0.4.0",
+                "format_version": "0.4.1",
                 "canonical_text_state": [
                     "WORKSPACE_STATE.yaml",
                     "manifest.yaml",
@@ -1522,7 +1525,7 @@ No manuscript text was written.
     return orientation
 
 
-def cmd_import(args):
+def _import_arrival(args, announce=True):
     _require_workspace()
     src = os.path.abspath(args.path)
     if not os.path.exists(src):
@@ -1547,14 +1550,123 @@ def cmd_import(args):
         work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped)
     log_event(".", "import", f"{work_id}/{os.path.basename(preserved)}",
               f"kind={kind} orientation={orientation} fragment={fragment['id'] if fragment else 'none'}")
-    print(f"Imported arrival for work {work_id}.")
+    result = {
+        "work_id": work_id,
+        "created_work": created_work,
+        "src": src,
+        "preserved": preserved,
+        "orientation": orientation,
+        "fragment": fragment,
+        "kind": kind,
+    }
+    if announce:
+        print(f"Imported arrival for work {work_id}.")
+        print(f"  Work id: {work_id}")
+        print(f"  Preserved: {preserved}")
+        print(f"  Orientation: {orientation}")
+        if fragment:
+            print(f"Source fragment: {fragment['id']}")
+        print("No manuscript text was written.")
+        print("Next useful move: read the orientation packet, classify the arrival, and ask the author before promoting anything.")
+    return result
+
+
+def cmd_import(args):
+    _import_arrival(args, announce=True)
+
+
+def _work_for_today(args):
+    if getattr(args, "work", None):
+        work_id = _safe_work_id(args.work)
+        _confine_work(work_id)
+        _require_work(work_id)
+        return work_id, False, None
+    active = _active_work_id()
+    if active:
+        return active, False, None
+    title = _one_line(getattr(args, "title", None))
+    work_id = _safe_work_id(_slugify_title(title) if title else _untitled_work_id())
+    _confine_work(work_id)
+    _create_work(work_id, "book", title=title, language=getattr(args, "language", None), activate=True)
+    _write_begin_packet(work_id, title, getattr(args, "language", None))
+    return work_id, True, None
+
+
+def _today_paths(work_id):
+    base = os.path.join("works", work_id)
+    return (
+        os.path.join(base, ".review", "today.md"),
+        os.path.join(base, "drafts", "today-draft.md"),
+    )
+
+
+def _write_today_runway(work_id, arrival=None):
+    _require_work(work_id)
+    runway, draft = _today_paths(work_id)
+    orientation = arrival.get("orientation") if arrival else ""
+    preserved = arrival.get("preserved") if arrival else ""
+    write(runway, f"""# Today writing session
+
+Work: `{work_id}`
+
+## Purpose
+
+Start writing today from the author's actual material. Do not wait for a title,
+complete outline, perfect classification, audit readiness, or publication-grade
+certainty.
+
+## Source State
+
+{f"- Arrival orientation: `{orientation.replace(os.sep, '/')}`" if orientation else "- No arrival was provided in this command."}
+{f"- Raw material preserved at: `{preserved.replace(os.sep, '/')}`" if preserved else "- Use the first-session packet and any existing sources."}
+
+## Today's Move
+
+1. If there is an arrival orientation, read it first and pick a simple
+   organization principle: chronology, voice, scene, question, chapter, or
+   source type.
+2. Ask only the questions needed to begin one passage.
+3. Write candidate prose in `{draft.replace(os.sep, "/")}`.
+4. Keep uncertainty visible in brackets rather than solving it silently.
+5. Leave `manuscript/` empty until the author later chooses to pass material
+   through proposal, review, acceptance, and controlled write.
+
+## Non-Blocking Rules
+
+- Unknown title is acceptable.
+- Unknown final structure is acceptable.
+- Imperfect scaffold organization is acceptable.
+- Drafting today is allowed; manuscript publication is later.
+""")
+    if not os.path.exists(draft):
+        write(draft, f"""# Today draft
+
+[Start drafting here. Use the preserved scaffold, source packet, interview
+answers, or one remembered image. Keep unresolved facts in brackets.]
+
+""")
+    return runway, draft
+
+
+def cmd_today(args):
+    _require_workspace()
+    arrival = None
+    if getattr(args, "path", None):
+        arrival = _import_arrival(args, announce=False)
+        work_id = arrival["work_id"]
+    else:
+        work_id, _created, _unused = _work_for_today(args)
+    runway, draft = _write_today_runway(work_id, arrival)
+    log_event(".", "today", work_id, f"runway={runway} draft={draft}")
+    print("Today writing session opened.")
     print(f"  Work id: {work_id}")
-    print(f"  Preserved: {preserved}")
-    print(f"  Orientation: {orientation}")
-    if fragment:
-        print(f"Source fragment: {fragment['id']}")
+    if arrival:
+        print(f"  Preserved arrival: {arrival['preserved']}")
+        print(f"  Arrival orientation: {arrival['orientation']}")
+    print(f"  Runway: {runway}")
+    print(f"  Draft runway: {draft}")
     print("No manuscript text was written.")
-    print("Next useful move: read the orientation packet, classify the arrival, and ask the author before promoting anything.")
+    print(f"Next: write in {draft.replace(os.sep, '/')}; keep uncertainty visible, and let the Gate come later.")
 
 def _git(args):
     import subprocess
@@ -1681,7 +1793,7 @@ def cmd_resume(args):
         work = _active_work_id()
     if not work:
         print("No active work yet.")
-        print("Next useful move: run `tyf start` for an untitled work, or `tyf import <path>` to preserve existing material.")
+        print("Next useful move: run `tyf today` for an untitled work, or `tyf today <path>` to preserve existing material and open a writing runway.")
         return
     _confine_work(work)
     _require_work(work)
@@ -2729,7 +2841,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "open", "mark-ready",
+        "new-work", "start", "today", "begin", "import", "capture", "open", "mark-ready",
         "propose", "accept", "adopt", "write", "snapshot", "dismiss",
     }
 
@@ -2757,6 +2869,13 @@ def main():
     s.add_argument("--register", default=None)
     s.add_argument("--language", default=None, help="writing language label, for example English, Portuguese, Russian, or Japanese")
     s.set_defaults(fn=cmd_start)
+    s = sub.add_parser("today", help="open today's writing runway, optionally preserving an arrival first")
+    s.add_argument("path", nargs="?", help="optional chat, folder, old workspace, or zip to preserve before writing")
+    s.add_argument("--kind", choices=("auto", "source", "chat", "bundle", "dump", "transcript", "note"), default="auto")
+    s.add_argument("--work", default=None, help="existing work id; defaults to active work or creates an untitled work")
+    s.add_argument("--title", default=None, help="working title if a new work must be created")
+    s.add_argument("--language", default=None, help="writing language label if a new work must be created")
+    s.set_defaults(fn=cmd_today)
     s = sub.add_parser("begin", help="create and open a first-session work packet")
     s.add_argument("id")
     s.add_argument("--type", default="book")
@@ -2846,7 +2965,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "propose", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "today", "begin", "import", "capture", "propose", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

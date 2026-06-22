@@ -90,6 +90,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_resume_reports_active_work_state_and_next_useful_move -v"
     Then Exit code is 0
 
+  @covers:tyf-today-mode-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: today mode structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py today-mode"
+    Then Exit code is 0
+
+  @covers:tyf-today-mode-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: today mode opens a titleless writing runway
+    When Run "python tests/test_tyf.py CLIBehaviour.test_today_without_arrival_opens_titleless_writing_runway -v"
+    Then Exit code is 0
+
+  @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  Scenario: today mode preserves a cold-start scaffold before drafting
+    When Run "python tests/test_tyf.py CLIBehaviour.test_today_with_folder_arrival_preserves_scaffold_and_opens_runway -v"
+    Then Exit code is 0
+
+  @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: today mode inherits titleless nonblocking start
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_allows_no_title_and_keeps_intake_non_blocking -v"
+    Then Exit code is 0
+
+  @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: today mode inherits containment for unorganized arrivals
+    When Run "python tests/test_tyf.py CLIBehaviour.test_import_folder_preserves_tree_and_lists_without_live_merge CLIBehaviour.test_import_tyf_shaped_zip_is_detected_without_merging -v"
+    Then Exit code is 0
+
   @covers:tyf-doc-drift-command-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check accepts the current repo pack
     When Run "python tests/test_tyf.py DocCheck.test_repo_pack_is_clean -v"

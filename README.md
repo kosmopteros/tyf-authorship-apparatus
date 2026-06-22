@@ -2,7 +2,7 @@
 
 *The Yours Faithfully. A faithful apparatus for authorship.*
 
-**v0.4.0 "Amanuensis entry".**
+**v0.4.1 "Today Mode".**
 
 TYF is not a writing assistant. TYF is not a productivity system. TYF is not a knowledge-management tool.
 
@@ -81,18 +81,19 @@ Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) w
 
 ## The helper
 
-`tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. The public entrypoint is simple:
+`tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. The public entrypoint for an author who wants to write today is simple:
 
 ```
-tyf start
+tyf today
 ```
 
-That creates an untitled first-session packet, seed outline, and review runway, then tells the agent the first source questions to ask. If the author already has a title, use `tyf start "Working Title"`; if they bring a chat, folder, old workspace, or zip, use `tyf import <path>` first. None of these write manuscript text. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
+That creates or reuses an untitled work, opens `.review/today.md`, creates `drafts/today-draft.md`, and tells the agent where to start writing candidate prose. If the author brings a chat, folder, old workspace, or zip, use `tyf today <path>` so TYF preserves the arrival first and links the orientation packet into the writing runway. None of this writes manuscript text; it only makes a real writing session possible. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
 
 Advanced commands for agents and maintainers:
 
 ```
-tyf init <name>          tyf start ["<working title>"] [--id <id>] [--language <language>]
+tyf init <name>          tyf today [<path>] [--kind dump|chat|bundle|source]
+tyf start ["<working title>"] [--id <id>] [--language <language>]
 tyf begin <id> --title <t> --register <r> [--language <language>]
 tyf import <path> [--kind auto|source|chat|bundle|dump|transcript|note] [--work <id>]
 tyf capture <work> --kind source|voice|claim|question --text <text>
@@ -112,7 +113,9 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It can run without a title, creates an `untitled-...` work when needed, records `title_status: "unknown"` until the author has a working title, opens the work as active, records the writing language in `work.yaml`, and adds a source/interview packet in `sources/interviews/`, a seed outline in `outline/`, and a first-session runway in `.review/`. Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles fall back to stable generated ids, and TYF preserves UTF-8 source, draft, and manuscript text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
+`tyf today [path]` is the low-friction way to start writing today without turning TYF into the writer. It can run without a title, creates or reuses an active work, preserves an optional cold-start scaffold through the import/orientation lane, writes a session runway at `works/<id>/.review/today.md`, and creates a candidate-prose file at `works/<id>/drafts/today-draft.md`. It explicitly treats title, final structure, and audit readiness as non-blocking for drafting. The Gate comes later, when candidate prose is ready to become manuscript.
+
+`tyf start` remains the lower-level first-session setup command. It can run without a title, creates an `untitled-...` work when needed, records `title_status: "unknown"` until the author has a working title, opens the work as active, records the writing language in `work.yaml`, and adds a source/interview packet in `sources/interviews/`, a seed outline in `outline/`, and a first-session runway in `.review/`. Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles fall back to stable generated ids, and TYF preserves UTF-8 source, draft, and manuscript text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
 
 `tyf import <path>` is the arrival lane for projects that do not start from zero. Text files and chat exports are preserved under `sources/imports/`, get an orientation packet, and mint source fragments when appropriate. Zip and folder arrivals are containment-first: TYF preserves the raw bundle, writes an orientation/triage packet with a listing and analysis questions, and does not unpack or merge it into live workspace directories until the author accepts an organization plan. A TYF-shaped archive is recognized as such in the orientation packet, but it is still reviewed before merging. `tyf resume` shows the active work, title/language/status, first-session evidence, pending proposals and decisions, open prompts, and the next useful move.
 
@@ -132,7 +135,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.4.0 alpha. The helper has a stronger amanuensis entry and continuity slice, but the semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.4.1 alpha. The helper now prioritizes Today Mode for real author sessions: preserve the scaffold, keep uncertainty visible, and start candidate prose today. The semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 

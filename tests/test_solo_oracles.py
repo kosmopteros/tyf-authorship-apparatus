@@ -19,7 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 def check_helper() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     required = {
-        "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
+        "start", "today", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
         "audit", "accept", "adopt", "write", "doctor", "check",
     }
     missing = sorted(
@@ -27,7 +27,7 @@ def check_helper() -> None:
         if f'add_parser("{command}"' not in source
     )
     assert not missing, f"missing TYF commands: {missing}"
-    for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_resume",
+    for handler in ("cmd_start", "cmd_today", "cmd_begin", "cmd_import", "cmd_capture", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_accept",
                     "cmd_adopt"):
         assert f"def {handler}(" in source, f"missing {handler}"
@@ -147,6 +147,24 @@ def check_amanuensis_entry() -> None:
     assert "organization principle" in ingesting.lower()
 
 
+def check_today_mode() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for token in ("cmd_today", "_write_today_runway", "Today writing session",
+                  "today-draft.md", "No manuscript text was written",
+                  "let the Gate come later"):
+        assert token in source, f"today mode runtime missing {token}"
+    assert '"today"' in source, "today must be event-journal protected"
+    assert "test_today_without_arrival_opens_titleless_writing_runway" in tests
+    assert "test_today_with_folder_arrival_preserves_scaffold_and_opens_runway" in tests
+    assert "tyf today" in using
+    assert "tyf today" in readme
+    assert "write today" in readme.lower() or "writing today" in readme.lower()
+
+
 def check_portability() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
@@ -187,12 +205,12 @@ def check_onboarding() -> None:
     assert "## Paste Into Codex" in start_here
     assert "## Paste Into Claude Cowork" in start_here
     assert "do not block on a title" in start_here.lower()
-    assert "tyf import <path>" in start_here
+    assert "tyf today <path>" in start_here
     assert "[docs/START_HERE.md]" in readme
     assert "do not hand them a command list" in using.lower()
-    assert "tyf start" in init
+    assert "tyf today" in init
     assert "tyf import <path>" in init
-    assert "Use TYF to start my new book" in cowork
+    assert "Use TYF to help me start writing my new book today" in cowork
     assert "writing language" in start_here.lower()
     assert "writing language" in init.lower()
 
@@ -202,7 +220,7 @@ def check_onboarding_entry() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "Paste Into Codex" in start_here
     assert "Paste Into Claude Cowork" in start_here
-    assert "Do not draft manuscript prose yet" in start_here
+    assert "Do not write manuscript text yet" in start_here
     assert "start with a paste prompt" in readme
     assert "You should not need to learn the helper commands" in readme
 
@@ -211,7 +229,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "portability"),
+        choices=("helper", "plugin", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "today-mode", "portability"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -222,6 +240,8 @@ def main(argv: list[str] | None = None) -> int:
         check_provenance()
     elif args.oracle == "amanuensis-entry":
         check_amanuensis_entry()
+    elif args.oracle == "today-mode":
+        check_today_mode()
     elif args.oracle == "portability":
         check_portability()
     elif args.oracle == "onboarding":

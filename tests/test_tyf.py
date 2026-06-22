@@ -122,7 +122,7 @@ class CLIBehaviour(unittest.TestCase):
         ws = self.ws()
         marker = json.loads((ws / "tyf.portable.json").read_text(encoding="utf-8"))
         self.assertEqual(marker["format"], "tyf-workspace")
-        self.assertEqual(marker["format_version"], "0.4.0")
+        self.assertEqual(marker["format_version"], "0.4.1")
         self.assertEqual(marker["git"], "optional")
         self.assertIn("WORKSPACE_STATE.yaml", marker["canonical_text_state"])
         self.assertIn("manifest.yaml", marker["canonical_text_state"])
@@ -1211,6 +1211,52 @@ class CLIBehaviour(unittest.TestCase):
         self.assertFalse((ws / "works" / "old").exists())
         self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
 
+    def test_today_without_arrival_opens_titleless_writing_runway(self):
+        ws = self.ws()
+        rc, out = run_tyf(["today"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        base = ws / "works" / work_id
+        runway = base / ".review" / "today.md"
+        draft = base / "drafts" / "today-draft.md"
+        self.assertTrue(runway.is_file())
+        self.assertTrue(draft.is_file())
+        self.assertIn("Today writing session", runway.read_text(encoding="utf-8"))
+        self.assertIn("Do not wait for a title", runway.read_text(encoding="utf-8"))
+        self.assertIn("Start drafting here", draft.read_text(encoding="utf-8"))
+        self.assertIn('title_status: "unknown"', (base / "work.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(list((base / "manuscript").iterdir()), [])
+        self.assertIn("Today writing session", out)
+        self.assertIn("No manuscript text was written", out)
+        self.assertIn("Draft runway", out)
+
+    def test_today_with_folder_arrival_preserves_scaffold_and_opens_runway(self):
+        ws = self.ws()
+        scaffold = self.tmp / "cold-start-scaffold"
+        (scaffold / "notes").mkdir(parents=True)
+        (scaffold / "notes" / "voice.md").write_text(
+            "I want the book to begin from kinship and weather.\n", encoding="utf-8")
+        (scaffold / "outline.md").write_text("No fixed title yet.\n", encoding="utf-8")
+
+        rc, out = run_tyf(["today", str(scaffold), "--kind", "dump"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        base = ws / "works" / work_id
+        preserved = list((ws / "sources" / "imports").glob("*cold-start-scaffold"))
+        self.assertEqual(len(preserved), 1)
+        self.assertTrue((preserved[0] / "notes" / "voice.md").is_file())
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
+        self.assertIn("notes/voice.md", orientation_text)
+        runway = (base / ".review" / "today.md").read_text(encoding="utf-8")
+        draft = (base / "drafts" / "today-draft.md").read_text(encoding="utf-8")
+        self.assertIn("Arrival orientation", runway)
+        self.assertIn("organization principle", runway)
+        self.assertIn("Start drafting here", draft)
+        self.assertEqual(list((base / "manuscript").iterdir()), [])
+        self.assertIn("Arrival orientation", out)
+        self.assertIn("Next: write in", out)
+
     def test_user_yaml_values_are_safely_quoted(self):
         ws = self.ws()
         rc, out = run_tyf(
@@ -1230,7 +1276,7 @@ class CLIBehaviour(unittest.TestCase):
         for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
             text = (ws / name).read_text(encoding="utf-8")
             self.assertIn("TYF workspace", text)
-            self.assertIn("tyf start", text)
+            self.assertIn("tyf today", text)
 
     def test_new_work_adds_event_log_entry(self):
         ws = self.ws()

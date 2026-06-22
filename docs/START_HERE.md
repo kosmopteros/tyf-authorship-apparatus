@@ -7,7 +7,7 @@ TYF is for people writing books, essays, talks, courses, or newsletters with an 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
 
-Install or load the TYF skills for Codex, read `using-tyf`, and help me start a new book. Do not draft manuscript prose yet. Set up the workspace, but do not block on a title; if I do not have one, run `tyf start` and keep the title unknown. If I bring existing material, preserve it first with `tyf import <path>` and show me the orientation packet before organizing it. Show me what files were created and ask me the first three source questions. If you use git, make recovery points explicit and never commit silently.
+Install or load the TYF skills for Codex, read `using-tyf`, and help me start writing my new book today. Set up the workspace, but do not block on a title or writing language; ask if either matters now, then keep moving. If I bring existing material, preserve it first. Run `tyf today` or `tyf today <path>` for my scaffold/chat/folder/zip, show me the orientation and writing runway, then ask only the questions needed to begin one candidate passage. Do not write manuscript text yet; candidate prose belongs in `drafts/today-draft.md`. If you use git, make recovery points explicit and never commit silently.
 ```
 
 ## Paste Into Claude Cowork
@@ -15,16 +15,16 @@ Install or load the TYF skills for Codex, read `using-tyf`, and help me start a 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
 
-Install or load the TYF skills, paste the TYF project instructions into this Cowork project if they are not already present, and help me start a new book. Do not draft manuscript prose yet. Set up the workspace, but do not block on a title; if I do not have one, run `tyf start` and keep the title unknown. If I bring existing material, preserve it first with `tyf import <path>` and show me the orientation packet before organizing it. Show me what files were created and ask me the first three source questions. If you use git, make recovery points explicit and never commit silently.
+Install or load the TYF skills, paste the TYF project instructions into this Cowork project if they are not already present, and help me start writing my new book today. Set up the workspace, but do not block on a title or writing language; ask if either matters now, then keep moving. If I bring existing material, preserve it first. Run `tyf today` or `tyf today <path>` for my scaffold/chat/folder/zip, show me the orientation and writing runway, then ask only the questions needed to begin one candidate passage. Do not write manuscript text yet; candidate prose belongs in `drafts/today-draft.md`. If you use git, make recovery points explicit and never commit silently.
 ```
 
 ## What Your Agent Should Do
 
 1. Load `using-tyf`, then `initializing-a-workspace`.
 2. Create or enter a TYF workspace.
-3. Run `tyf start` when the title is unknown, or `tyf start "<working title>" --language "<writing language>"` when those labels are already known.
-4. If existing material arrives, run `tyf import <path>` and use the orientation packet to contain, classify, and ask before moving anything.
-5. Show the created packet in plain language.
-6. Ask source questions before drafting anything.
+3. Run `tyf today` when there is no arrival, or `tyf today <path>` when a scaffold/chat/folder/zip arrives.
+4. Show the preserved arrival, orientation packet, `.review/today.md`, and `drafts/today-draft.md` in plain language.
+5. Ask only the questions needed to begin one candidate passage.
+6. Draft candidates in `drafts/`; keep `manuscript/` empty until explicit controlled write.
 
 The advanced helper commands still exist for agents and maintainers. For a new author, the public path is: paste the prompt, answer the questions, and keep the manuscript empty until you explicitly approve a controlled write.

@@ -11,6 +11,7 @@
 ## 0.4.0 amanuensis entry
 
 - Shipped the author-facing start/resume/import/adopt slice: titleless start, source/interview first-session packets, contained arrivals under `sources/imports/`, workspace-owned source fragments, direct author-edit adoption, and resume continuity.
+- Shipped 0.4.1 Today Mode on top of that slice: `tyf today [path]` preserves an optional cold-start scaffold, opens `.review/today.md`, creates `drafts/today-draft.md`, and treats title/structure/audit readiness as non-blocking for drafting today.
 - Keep improving the complete source-to-manuscript vertical slice: claim/example provenance, proposal generation from preserved evidence, author decision, audit, and write record.
 - Promote the current canonical event journal from action history toward the authority for derived SQLite projections.
 - Add install validation for macOS, Linux, and Windows.

@@ -31,7 +31,7 @@ The three context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`) carry identical 
 
 If you use more than one harness, install separately for each.
 
-For non-technical authors, use the paste prompts in `docs/START_HERE.md`. They tell Codex or Claude Cowork to install or load TYF, set up the workspace, start even when the title is unknown, preserve existing material with `tyf import <path>` when it arrives, and ask source questions before drafting.
+For non-technical authors, use the paste prompts in `docs/START_HERE.md`. They tell Codex or Claude Cowork to install or load TYF, set up the workspace, run `tyf today` even when the title is unknown, preserve existing material with `tyf today <path>` when it arrives, and open a candidate draft runway before any manuscript write.
 
 **Claude Code** (plugin marketplace):
 

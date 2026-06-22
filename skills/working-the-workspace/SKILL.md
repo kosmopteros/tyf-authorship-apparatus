@@ -49,7 +49,7 @@ Before writing anything, name the pass you are in and check the table. If the pa
 
 The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; `tyf propose --source-ref <id>` binds preserved source fragments into the Gate, `tyf accept --lines 2,5-8` narrows the accepted subset when the author approves only selected source lines, and `tyf accept --patch <diff>` applies an exact reviewed unified diff. The helper updates `work.yaml` status as the Gate advances and refuses acceptance before `audited` or writing before `accepted`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
 
-For a first writing session, `tyf start` creates a normal work even when the title is unknown, writes the first-session evidence packet to `sources/interviews/`, creates a seed outline and `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf import <path>` preserves existing material under `sources/imports/` and writes an orientation packet; zip and folder arrivals stay contained until the author accepts an organization plan. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures and textual imports mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
+For a first writing session, `tyf today` creates or reuses a normal work even when the title is unknown, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. If a scaffold/chat/folder/zip arrives, `tyf today <path>` preserves it under `sources/imports/` and links the orientation packet into the runway before drafting. `tyf start` is the lower-level setup form when an agent wants the first-session evidence packet under `sources/interviews/` without opening a draft runway. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf import <path>` preserves later material under `sources/imports/` and writes an orientation packet; zip and folder arrivals stay contained until the author accepts an organization plan. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures and textual imports mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
 
 ## Rationalization table
 
@@ -72,8 +72,9 @@ For a first writing session, `tyf start` creates a normal work even when the tit
 
 ```
 tyf status            # active work, band, open gates, write-zone reminder
+tyf today [path]      # preserve an optional arrival and open today's draft runway
 tyf start ["Title"] --language "<writing language>"
-                     # public first-session flow, no manuscript text
+                     # lower-level first-session flow, no manuscript text
 tyf import <path>    # preserve an arrival and create an orientation packet
 tyf resume [work]    # active work, state, prompts, and next useful move
 tyf begin <work> --language "<writing language>"

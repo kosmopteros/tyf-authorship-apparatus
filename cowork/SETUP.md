@@ -20,9 +20,9 @@ bash scripts/install.sh claude     # or an explicit Cowork skills path
 
 1. Create a Cowork project and point its folder at where your workspace will live.
 2. Paste the contents of `cowork/PROJECT_INSTRUCTIONS.md` into the project's instructions. This loads the commitments, the mandatory skill check, and the write zones at the start of every task.
-3. In a task, paste: "Use TYF to start my new book. Set up the workspace if needed, do not draft manuscript prose yet, do not block on a title, and ask me the first source questions. If I provide existing material, preserve it first and show me the orientation packet."
+3. In a task, paste: "Use TYF to help me start writing my new book today. Set up the workspace if needed, do not block on a title, preserve any existing material first, show me the orientation and writing runway, and help me begin one candidate passage in drafts without writing manuscript text."
 
-Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace yet, then run `tyf start` if the title is unknown or `tyf start "Working Title"` if the author already has one. If a chat export, folder, old workspace, or zip arrives, it should run `tyf import <path>` and read the orientation packet before organizing anything. It should tell you what files were created in plain language.
+Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace yet, then run `tyf today` or `tyf today <path>` if a chat export, folder, old workspace, zip, or scaffold arrives. It should read the orientation packet before organizing anything, show `.review/today.md` and `drafts/today-draft.md`, and tell you what files were created in plain language.
 
 ## Make the controlled write hold in Cowork
 

@@ -183,6 +183,38 @@ def check_portability() -> None:
     assert "tyf.portable.json" in workspace
 
 
+def check_single_work() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    public_files = [
+        ROOT / "README.md",
+        ROOT / "docs" / "WORKSPACE_CONTRACT.md",
+        ROOT / "docs" / "PORTABILITY.md",
+        ROOT / "skills" / "using-tyf" / "SKILL.md",
+        ROOT / "skills" / "initializing-a-workspace" / "SKILL.md",
+        ROOT / "skills" / "working-the-workspace" / "SKILL.md",
+    ]
+
+    for token in (
+        "single_work",
+        '"format_version": "0.5.0"',
+        '"work.yaml"',
+        '"drafts/"',
+        '"manuscript/"',
+        "ROOT_WORK_ID",
+        "test_init_creates_single_work_root_layout",
+        "test_today_without_arrival_opens_titleless_writing_runway",
+    ):
+        assert token in source or token in tests, f"single-work runtime/test missing {token}"
+
+    for path in public_files:
+        text = path.read_text(encoding="utf-8")
+        assert "single work" in text.lower() or "book folder" in text.lower(), f"{path} does not describe the single-work beta surface"
+        assert "drafts/today-draft.md" in text or "drafts/" in text, f"{path} does not point to root drafts"
+        assert "works/<id>" not in text, f"{path} still exposes works/<id> as public beta shape"
+        assert "works/*/drafts" not in text, f"{path} still exposes multi-work draft glob"
+
+
 def check_plugin() -> None:
     manifest_path = ROOT / ".codex-plugin" / "plugin.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -203,7 +235,7 @@ def check_codex_skill() -> None:
     openai_yaml = ROOT / "skills" / "using-tyf" / "agents" / "openai.yaml"
     contexts = [(ROOT / name).read_text(encoding="utf-8") for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md")]
 
-    assert manifest["version"] == "0.4.1"
+    assert manifest["version"] == "0.5.0"
     assert manifest["skills"] == "./skills/"
     assert '${CODEX_HOME:-$HOME/.codex}/skills' in install
     assert "~/.codex/skills/" in portability
@@ -253,7 +285,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "today-mode", "portability"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "today-mode", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -270,6 +302,8 @@ def main(argv: list[str] | None = None) -> int:
         check_today_mode()
     elif args.oracle == "portability":
         check_portability()
+    elif args.oracle == "single-work":
+        check_single_work()
     elif args.oracle == "onboarding":
         check_onboarding()
     elif args.oracle == "onboarding-entry":

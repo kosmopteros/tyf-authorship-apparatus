@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+Release label: "Single Book Folder".
+
+- Reshaped the beta launch workspace so one folder equals one work: `tyf init` now creates root-level `work.yaml`, `style-sheet.md`, `outline/`, `drafts/`, `manuscript/`, and `.review/` instead of making first-time authors manage `works/<id>`.
+- Updated Today Mode so `tyf today [path]` opens `.review/today.md` and `drafts/today-draft.md` at the book-folder root, including cold-start folder/chat/zip arrivals.
+- Updated `tyf.portable.json` to `format_version: "0.5.0"` with `single_work: true` and root-level canonical text state.
+- Aligned public onboarding, generated context files, Codex/Claude/Gemini repo contexts, and workspace skills around the single-work beta surface.
+- Expanded the helper smoke suite to 103 tests and SOLO Be coverage to 67 scenarios.
+
 ## 0.4.1
 
 Release label: "Today Mode".

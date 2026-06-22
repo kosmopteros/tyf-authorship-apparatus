@@ -115,6 +115,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_import_folder_preserves_tree_and_lists_without_live_merge CLIBehaviour.test_import_tyf_shaped_zip_is_detected_without_merging -v"
     Then Exit code is 0
 
+  @covers:tyf-single-work-beta-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: beta book folder is the single work
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_single_work_root_layout CLIBehaviour.test_today_without_arrival_opens_titleless_writing_runway -v"
+    Then Exit code is 0
+
+  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: beta workspace init does not create a public works catalog
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_single_work_root_layout CLIBehaviour.test_init_creates_workspace_context_contracts -v"
+    Then Exit code is 0
+
+  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: beta Today Mode keeps cold-start arrivals in the root book folder
+    When Run "python tests/test_tyf.py CLIBehaviour.test_beta_today_arrival_uses_root_book_folder CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment -v"
+    Then Exit code is 0
+
+  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: beta portability marker declares a single-work bundle
+    When Run "python tests/test_tyf.py CLIBehaviour.test_beta_portable_marker_declares_single_work_bundle -v"
+    Then Exit code is 0
+
+  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: beta public docs do not teach multi-work startup
+    When Run "python tests/test_solo_oracles.py single-work"
+    Then Exit code is 0
+
   @covers:tyf-doc-drift-command-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check accepts the current repo pack
     When Run "python tests/test_tyf.py DocCheck.test_repo_pack_is_clean -v"

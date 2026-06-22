@@ -6,10 +6,11 @@ TYF is one set of skills that runs across multiple agent harnesses. The unit of 
 
 ## Portable Workspace Format
 
-A TYF workspace is a text-first author-work bundle. `tyf init` writes `tyf.portable.json` at the workspace root so agents can recognize and re-enter it after a move, zip, chat handoff, or harness switch. The marker identifies:
+A TYF workspace is a text-first author-work bundle. For the beta launch, the book folder is the single work. `tyf init` writes `tyf.portable.json` at the workspace root so agents can recognize and re-enter it after a move, zip, chat handoff, or harness switch. The marker identifies:
 
 - `format: "tyf-workspace"` and a format version.
-- canonical text state: `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, `sources/`, `knowledge-base/`, `voice/`, `redactor-canon/`, `works/`, and `.tyf/events.jsonl`.
+- `single_work: true`.
+- canonical text state: `WORKSPACE_STATE.yaml`, `work.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, `style-sheet.md`, `outline/`, `drafts/`, `manuscript/`, `.review/`, `sources/`, `knowledge-base/`, `voice/`, `redactor-canon/`, and `.tyf/events.jsonl`.
 - derived/disposable state: `.tyf/ledger.db` and SQLite journal files.
 - `git: "optional"`.
 

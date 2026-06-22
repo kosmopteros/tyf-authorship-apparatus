@@ -1,6 +1,6 @@
 ---
 name: working-the-workspace
-description: "Use whenever operating on the workspace files or repo: reading or writing sources, knowledge-base, voice, works, drafts, or manuscript; deciding where a pass may write; or when unsure which directory a result belongs in"
+description: "Use whenever operating on the workspace files or repo: reading or writing sources, knowledge-base, voice, drafts, review records, or manuscript; deciding where a pass may write; or when unsure which directory a result belongs in"
 ---
 
 # Working the workspace
@@ -18,17 +18,16 @@ workspace/
 ├── WORKSPACE_STATE.yaml      durable state: active work, active band, gates
 ├── manifest.yaml             voice inheritance, hooks
 ├── ASSUMPTIONS.md            explicit, updated as the author learns
+├── work.yaml                 type, registers, status, scope, overrides
+├── outline/                  thesis, argument-spine, chapter outlines
+├── drafts/                   candidate text from the amanuensis   [Compose writes here]
+├── manuscript/               the work itself                       [controlled write only]
+├── style-sheet.md            running, the redactor's instrument
+├── .review/                  findings, never auto-applied          [Propose/Audit write here]
 ├── sources/             raw, preserved, source fragments [read-mostly]
 ├── knowledge-base/           concepts, claims, argument spine, claims index
 ├── voice/             registers, fences, anti-patterns
-├── redactor-canon/           terminology, logic, apparatus, type rules
-└── works/<id>/
-    ├── work.yaml             type, registers, status, scope, overrides
-    ├── outline/              thesis, argument-spine, chapter outlines
-    ├── drafts/               candidate text from the amanuensis   [Compose writes here]
-    ├── manuscript/           the work itself                       [controlled write only]
-    ├── style-sheet.md        running, the redactor's instrument
-    └── .review/              findings, never auto-applied          [Propose/Audit write here]
+└── redactor-canon/           terminology, logic, apparatus, type rules
 ```
 
 ## Who may write where
@@ -38,10 +37,10 @@ workspace/
 | Elicit (ingest, interview) | `sources/`, `knowledge-base/`, `voice/` | any `manuscript/` |
 | Read (sympathetic read) | nothing | everything |
 | Diagnose | nothing | everything |
-| Propose (editor) | `works/<id>/.review/` | `manuscript/`, `drafts/` |
-| Compose (Amanuensis) | `works/<id>/drafts/` | `manuscript/` |
-| Audit (adversarial audit) | `works/<id>/.review/` | `manuscript/` |
-| Revise (the controlled write) | `works/<id>/manuscript/` | nothing it was not given |
+| Propose (editor) | `.review/` | `manuscript/`, `drafts/` |
+| Compose (Amanuensis) | `drafts/` | `manuscript/` |
+| Audit (adversarial audit) | `.review/` | `manuscript/` |
+| Revise (the controlled write) | `manuscript/` | nothing it was not given |
 
 ## The disciplined move
 
@@ -49,7 +48,7 @@ Before writing anything, name the pass you are in and check the table. If the pa
 
 The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; `tyf propose --source-ref <id>` binds preserved source fragments into the Gate, `tyf accept --lines 2,5-8` narrows the accepted subset when the author approves only selected source lines, and `tyf accept --patch <diff>` applies an exact reviewed unified diff. The helper updates `work.yaml` status as the Gate advances and refuses acceptance before `audited` or writing before `accepted`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
 
-For a first writing session, `tyf today` creates or reuses a normal work even when the title is unknown, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. If a scaffold/chat/folder/zip arrives, `tyf today <path>` preserves it under `sources/imports/` and links the orientation packet into the runway before drafting. `tyf start` is the lower-level setup form when an agent wants the first-session evidence packet under `sources/interviews/` without opening a draft runway. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf import <path>` preserves later material under `sources/imports/` and writes an orientation packet; zip and folder arrivals stay contained until the author accepts an organization plan. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures and textual imports mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
+For a first writing session, `tyf today` creates or reuses the root single work even when the title is unknown, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. If a scaffold/chat/folder/zip arrives, `tyf today <path>` preserves it under `sources/imports/` and links the orientation packet into the runway before drafting. `tyf start` is the lower-level setup form when an agent wants the first-session evidence packet under `sources/interviews/` without opening a draft runway. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf import <path>` preserves later material under `sources/imports/` and writes an orientation packet; zip and folder arrivals stay contained until the author accepts an organization plan. `tyf capture work --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures and textual imports mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
 
 ## Rationalization table
 

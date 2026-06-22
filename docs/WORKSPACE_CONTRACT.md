@@ -1,6 +1,6 @@
 # The workspace contract
 
-The skills above are the apparatus. The **workspace** is where an author's body of work lives. State is plain, readable files: no black boxes. A workspace holds shared substrate at the top and per-work directories beneath, so several works can share knowledge and voice while staying contained.
+The skills above are the apparatus. The **workspace** is where an author's body of work lives. State is plain, readable files: no black boxes. For the beta launch, one book folder is one single work: shared substrate and the book's drafts, outline, manuscript, style sheet, and review records live at the workspace root.
 
 This is distinct from the plugin manifests. `plugin.json` describes the skill pack to a harness. The files below describe an author's writing workspace.
 
@@ -11,6 +11,12 @@ workspace/
 ├── WORKSPACE_STATE.yaml          # durable state: active work, active band, write-control state
 ├── tyf.portable.json             # portable bundle marker: canonical text vs derived state
 ├── ASSUMPTIONS.md                # explicit, updated as the author learns
+├── work.yaml                     # type, writing language, registers used, status, scope
+├── outline/                      # thesis, argument-spine, chapter-outlines, seed.md
+├── manuscript/                   # behind the controlled write
+├── drafts/                       # candidate text from the amanuensis
+├── style-sheet.md                # running, emitted by passes
+├── .review/                      # findings, Gate records, record seals, never auto-applied
 │
 ├── sources/                 # The sources: raw, preserved, shared
 │   ├── uploads/  transcripts/  interviews/  imports/  notes/  links.md
@@ -27,15 +33,6 @@ workspace/
 │   ├── register-fences.md
 │   └── anti-patterns.md
 │
-├── works/                        # the works: each work is contained
-│   └── <work-id>/
-│       ├── work.yaml             # type, writing language, registers used, status, scope
-│       ├── outline/              # thesis, argument-spine, chapter-outlines, seed.md
-│       ├── manuscript/           # behind the controlled write
-│       ├── drafts/               # candidate text from the amanuensis
-│       ├── style-sheet.md        # running, emitted by passes
-│       └── .review/              # findings, Gate records, record seals, never auto-applied
-│
 ├── .tyf/                         # apparatus memory: events.jsonl + SQLite notice index (not the work)
 ├── .proposals/                   # harness self-extensions awaiting author commit
 └── .hooks/                       # contextual hook definitions
@@ -45,7 +42,7 @@ workspace/
 
 Elicit, Read (sympathetic read), Diagnose, and Audit (adversarial audit) get no write access to any work's `manuscript/`. Propose writes only to `.review/`. Compose writes only to `drafts/`. Revise writes to `manuscript/`, and only through the controlled write: `tyf propose`, `tyf audit --record`, `tyf accept --evidence` with optional `--lines 2,5-8` for partial source-line acceptance or `--patch <diff>` for an exact reviewed unified diff, then `tyf write --decision`. The helper also updates and enforces `work.yaml` status: `structuring`/`ready-for-audit`, `drafting`, `audited`, `accepted`, and `written` are no longer labels only, because `tyf accept` refuses before `audited`, verifies the audit belongs to the same proposal, and `tyf write` refuses before `accepted`. Source captures and textual imports mint stable fragments in `sources/fragments/`; source-grounded proposals include them with `tyf propose --source-ref <id>`, and proposal, audit, decision, write-log, and doctor integrity checks carry those source refs forward. Fragments are workspace-owned: they preserve origin work/session, but later works may reuse them without duplicate capture. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`; `tyf write` and `tyf doctor` refuse mismatched seals instead of trusting edited JSON. Controlled writes also acquire a per-unit lock under `.review/locks/` before mutating a manuscript destination. If the author directly edits a manuscript unit, `tyf adopt <work> <unit> --evidence "<what happened>"` preserves the direct edit in `.review/author-revisions/` and records it as the new base before the next controlled write. In Claude Code this is real tool scoping on the subagent. In Desktop it is enforced by routing every edit through `controlling-manuscript-writes`.
 
-`tyf today [path]` is the public writing-session shortcut. It may run without a title, creates or reuses an active work, preserves an optional scaffold/chat/folder/zip through `sources/imports/`, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. Those files are prompts and working surfaces for the author; they are not manuscript. `tyf start` is the lower-level first-session setup command when the agent wants the source/interview packet under `sources/interviews/` without opening a draft runway. `tyf begin <id>` is the lower-level form when an agent already needs a stable work id. `tyf import <path>` preserves later material under `sources/imports/` and writes an orientation packet. Text imports can mint source fragments immediately; zip and folder arrivals are containment-first, listed and analyzed before anything is unpacked or merged into live workspace structure. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material to `sources/notes/`, `voice/exemplar-passages/`, `knowledge-base/claims/`, or `knowledge-base/open-questions/` respectively. None of these write to `works/<id>/manuscript/`.
+`tyf today [path]` is the public writing-session shortcut. It may run without a title, creates or reuses the root single work, preserves an optional scaffold/chat/folder/zip through `sources/imports/`, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. Those files are prompts and working surfaces for the author; they are not manuscript. `tyf start` is the lower-level first-session setup command when the agent wants the source/interview packet under `sources/interviews/` without opening a draft runway. `tyf begin <id>` is the lower-level form when an agent already needs a stable id. `tyf import <path>` preserves later material under `sources/imports/` and writes an orientation packet. Text imports can mint source fragments immediately; zip and folder arrivals are containment-first, listed and analyzed before anything is unpacked or merged into live workspace structure. `tyf capture work --kind source|voice|claim|question --text <text>` appends author-supplied material to `sources/notes/`, `voice/exemplar-passages/`, `knowledge-base/claims/`, or `knowledge-base/open-questions/` respectively. None of these write to `manuscript/`.
 
 ## Transparent reflexes and git recovery
 

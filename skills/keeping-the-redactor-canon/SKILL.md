@@ -29,7 +29,7 @@ The same integrity discipline runs at every zoom level.
 
 ## The running style sheet
 
-Each work carries `works/<id>/style-sheet.md`. It is the redactor's working instrument: a living record of every decision made about terminology, apparatus, and finish for that work. Every pass appends decisions to it and reads it before proposing. The style sheet is how a decision made in chapter two survives to chapter nine.
+Each book folder carries `style-sheet.md` for its single work. It is the redactor's working instrument: a living record of every decision made about terminology, apparatus, and finish for that work. Every pass appends decisions to it and reads it before proposing. The style sheet is how a decision made in chapter two survives to chapter nine.
 
 ## The disciplined move
 

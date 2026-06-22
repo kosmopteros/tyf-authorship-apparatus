@@ -65,7 +65,7 @@ Rejected or deferred changes:
 This is the highest-stakes skill: the only door into the work. Hold these beyond the happy path:
 
 - **Partial acceptance** ("take 1 and 3, not 2"): use `tyf accept --lines 1,3` when the accepted subset maps exactly to source lines. For semantic edits that do not map cleanly to source line ranges, split the accepted subset into its own draft before proposing.
-- **Exact hunk acceptance** ("apply this diff, not the whole rewrite"): put the reviewed unified diff under `works/<id>/.review/` and use `tyf accept --patch <diff>`. Do not combine it with `--lines`.
+- **Exact hunk acceptance** ("apply this diff, not the whole rewrite"): put the reviewed unified diff under `.review/` and use `tyf accept --patch <diff>`. Do not combine it with `--lines`.
 - **Source-grounded material:** if the draft is built from captured source material, include the fragment ids with `tyf propose --source-ref <id>`. A source ref is part of the Gate lineage, not decorative metadata.
 - **No prior acceptance at all:** the request to write is not itself approval. Require a decision record bound to a proposal; silence is never consent.
 - **Edited review records:** if a proposal, audit, or decision JSON changes after creation, stop. The seal mismatch means the Gate record is no longer trustworthy; re-propose, re-audit, or re-accept from the current material.

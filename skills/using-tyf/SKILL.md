@@ -19,7 +19,7 @@ When an author says "start my book", "new essay series", "set up TYF", or simila
 tyf today
 ```
 
-If the author brings a chat export, zip, folder, scaffold, or old workspace, run `tyf today <path>` so the arrival is preserved and the orientation packet is linked into today's runway. If there is no arrival, run `tyf today`. Do not block on title, final structure, or audit readiness. After the helper runs, tell the author what was created, confirm that no manuscript text was written, and begin from `drafts/today-draft.md` with only the questions needed for one candidate passage. Keep advanced commands such as `start`, `begin`, `capture`, `import`, `adopt`, `snapshot`, and `write` as agent tools, not as the author's first interface.
+If the author brings a chat export, zip, folder, scaffold, or prior project dump, run `tyf today <path>` so the arrival is preserved and the orientation packet is linked into today's runway. If there is no arrival, run `tyf today`. The book folder is the single work; do not make the author choose or manage work ids. Do not block on title, final structure, or audit readiness. After the helper runs, tell the author what was created, confirm that no manuscript text was written, and begin from `drafts/today-draft.md` with only the questions needed for one candidate passage. Keep advanced commands such as `start`, `begin`, `capture`, `import`, `adopt`, `snapshot`, and `write` as agent tools, not as the author's first interface.
 
 ## Selection order
 

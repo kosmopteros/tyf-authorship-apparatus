@@ -2,7 +2,7 @@
 
 *The Yours Faithfully. A faithful apparatus for authorship.*
 
-**v0.4.1 "Today Mode".**
+**v0.5.0 "Single Book Folder".**
 
 TYF is not a writing assistant. TYF is not a productivity system. TYF is not a knowledge-management tool.
 
@@ -89,7 +89,7 @@ For Codex specifically, TYF has two layers. Install the TYF skills once into `$C
 tyf today
 ```
 
-That creates or reuses an untitled work, opens `.review/today.md`, creates `drafts/today-draft.md`, and tells the agent where to start writing candidate prose. If the author brings a chat, folder, old workspace, or zip, use `tyf today <path>` so TYF preserves the arrival first and links the orientation packet into the writing runway. None of this writes manuscript text; it only makes a real writing session possible. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
+That treats the book folder as the single work, opens `.review/today.md`, creates `drafts/today-draft.md`, and tells the agent where to start writing candidate prose. If the author brings a chat, folder, scaffold, or zip, use `tyf today <path>` so TYF preserves the arrival first and links the orientation packet into the writing runway. None of this writes manuscript text; it only makes a real writing session possible. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
 
 Advanced commands for agents and maintainers:
 
@@ -115,7 +115,7 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf today [path]` is the low-friction way to start writing today without turning TYF into the writer. It can run without a title, creates or reuses an active work, preserves an optional cold-start scaffold through the import/orientation lane, writes a session runway at `works/<id>/.review/today.md`, and creates a candidate-prose file at `works/<id>/drafts/today-draft.md`. It explicitly treats title, final structure, and audit readiness as non-blocking for drafting. The Gate comes later, when candidate prose is ready to become manuscript.
+`tyf today [path]` is the low-friction way to start writing today without turning TYF into the writer. It can run without a title, treats the book folder as the active single work, preserves an optional cold-start scaffold through the import/orientation lane, writes a session runway at `.review/today.md`, and creates a candidate-prose file at `drafts/today-draft.md`. It explicitly treats title, final structure, and audit readiness as non-blocking for drafting. The Gate comes later, when candidate prose is ready to become manuscript.
 
 `tyf start` remains the lower-level first-session setup command. It can run without a title, creates an `untitled-...` work when needed, records `title_status: "unknown"` until the author has a working title, opens the work as active, records the writing language in `work.yaml`, and adds a source/interview packet in `sources/interviews/`, a seed outline in `outline/`, and a first-session runway in `.review/`. Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles fall back to stable generated ids, and TYF preserves UTF-8 source, draft, and manuscript text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
 
@@ -137,7 +137,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.4.1 alpha. The helper now prioritizes Today Mode for real author sessions: preserve the scaffold, keep uncertainty visible, and start candidate prose today. The semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/today-draft.md`. The semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 

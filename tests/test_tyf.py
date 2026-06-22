@@ -118,18 +118,37 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual((ws / "ASSUMPTIONS.md").read_text(encoding="utf-8"),
                          "CUSTOM CONTENT\n")
 
+    def test_init_creates_single_work_root_layout(self):
+        ws = self.ws()
+        for path in ("work.yaml", "style-sheet.md", "outline", "drafts", "manuscript", ".review"):
+            self.assertTrue((ws / path).exists(), f"{path} should live at the book folder root")
+        self.assertFalse((ws / "works").exists(), "beta launch workspaces should not make authors manage works/<id>")
+        state = (ws / "WORKSPACE_STATE.yaml").read_text(encoding="utf-8")
+        self.assertIn("active_work: work", state)
+        work_yaml = (ws / "work.yaml").read_text(encoding="utf-8")
+        self.assertIn("id: work", work_yaml)
+        self.assertIn('title_status: "unknown"', work_yaml)
+
     def test_init_creates_portable_workspace_marker(self):
         ws = self.ws()
         marker = json.loads((ws / "tyf.portable.json").read_text(encoding="utf-8"))
         self.assertEqual(marker["format"], "tyf-workspace")
-        self.assertEqual(marker["format_version"], "0.4.1")
+        self.assertEqual(marker["format_version"], "0.5.0")
         self.assertEqual(marker["git"], "optional")
+        self.assertTrue(marker["single_work"])
         self.assertIn("WORKSPACE_STATE.yaml", marker["canonical_text_state"])
+        self.assertIn("work.yaml", marker["canonical_text_state"])
         self.assertIn("manifest.yaml", marker["canonical_text_state"])
         self.assertIn("sources/", marker["canonical_text_state"])
+        self.assertIn("drafts/", marker["canonical_text_state"])
+        self.assertIn("manuscript/", marker["canonical_text_state"])
+        self.assertNotIn("works/", marker["canonical_text_state"])
         self.assertIn(".tyf/events.jsonl", marker["canonical_text_state"])
         self.assertIn(".tyf/ledger.db", marker["derived_disposable_state"])
         self.assertIn(".tyf/*.db-wal", marker["derived_disposable_state"])
+
+    def test_beta_portable_marker_declares_single_work_bundle(self):
+        self.test_init_creates_portable_workspace_marker()
 
     def test_write_refuses_without_decision(self):
         ws = self.ws()
@@ -715,6 +734,7 @@ class CLIBehaviour(unittest.TestCase):
         outside = self.tmp / "outside"
         (outside / "drafts").mkdir(parents=True)
         (outside / "drafts" / "c.md").write_text("x\n", encoding="utf-8")
+        (ws / "works").mkdir()
         os.symlink(outside, ws / "works" / "evil", target_is_directory=True)
         rc, out = run_tyf(["write", "evil", "--from", "works/evil/drafts/c.md", "--confirm"], ws)
         self.assertNotEqual(rc, 0, "a write into a symlinked work escaping works/ must be refused")
@@ -724,7 +744,6 @@ class CLIBehaviour(unittest.TestCase):
         ws = self.ws()
         if not _can_symlink(self.tmp):
             self.skipTest("platform/user cannot create symlinks")
-        shutil.rmtree(ws / "works")
         outside = self.tmp / "outside-works"
         outside.mkdir()
         os.symlink(outside, ws / "works", target_is_directory=True)
@@ -1140,9 +1159,10 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
         fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
-        self.assertTrue((ws / "works" / work_id / "work.yaml").is_file())
+        self.assertEqual(work_id, "work")
+        self.assertTrue((ws / "work.yaml").is_file())
         self.assertIn('title_status: "unknown"',
-                      (ws / "works" / work_id / "work.yaml").read_text(encoding="utf-8"))
+                      (ws / "work.yaml").read_text(encoding="utf-8"))
         imports = list((ws / "sources" / "imports").glob("*arrival-chat.txt"))
         self.assertEqual(len(imports), 1)
         self.assertIn("inherited silence", imports[0].read_text(encoding="utf-8"))
@@ -1151,7 +1171,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("No manuscript text was written", orientation[0].read_text(encoding="utf-8"))
         index = (ws / "sources" / "fragments.jsonl").read_text(encoding="utf-8")
         self.assertIn(fragment, index)
-        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_import_zip_preserves_bundle_without_manuscript_write(self):
         ws = self.ws()
@@ -1167,7 +1187,8 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(len(imports), 1)
         orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
         self.assertTrue(any("notes/opening.md" in p.read_text(encoding="utf-8") for p in orientation))
-        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+        self.assertEqual(work_id, "work")
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_import_folder_preserves_tree_and_lists_without_live_merge(self):
         ws = self.ws()
@@ -1190,7 +1211,8 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("works/old/manuscript/chapter.md", orientation_text)
         self.assertIn("organization plan", orientation_text)
         self.assertFalse((ws / "works" / "old").exists())
-        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+        self.assertEqual(work_id, "work")
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_import_tyf_shaped_zip_is_detected_without_merging(self):
         ws = self.ws()
@@ -1209,26 +1231,27 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("propose a merge plan", orientation_text)
         self.assertIn("works/old/manuscript/chapter.md", orientation_text)
         self.assertFalse((ws / "works" / "old").exists())
-        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+        self.assertEqual(work_id, "work")
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_today_without_arrival_opens_titleless_writing_runway(self):
         ws = self.ws()
         rc, out = run_tyf(["today"], ws)
         self.assertEqual(rc, 0, out)
-        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
-        base = ws / "works" / work_id
-        runway = base / ".review" / "today.md"
-        draft = base / "drafts" / "today-draft.md"
+        runway = ws / ".review" / "today.md"
+        draft = ws / "drafts" / "today-draft.md"
         self.assertTrue(runway.is_file())
         self.assertTrue(draft.is_file())
         self.assertIn("Today writing session", runway.read_text(encoding="utf-8"))
         self.assertIn("Do not wait for a title", runway.read_text(encoding="utf-8"))
         self.assertIn("Start drafting here", draft.read_text(encoding="utf-8"))
-        self.assertIn('title_status: "unknown"', (base / "work.yaml").read_text(encoding="utf-8"))
-        self.assertEqual(list((base / "manuscript").iterdir()), [])
+        self.assertIn('title_status: "unknown"', (ws / "work.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+        self.assertFalse((ws / "works").exists())
         self.assertIn("Today writing session", out)
         self.assertIn("No manuscript text was written", out)
         self.assertIn("Draft runway", out)
+        self.assertNotIn("Work id:", out)
 
     def test_today_with_folder_arrival_preserves_scaffold_and_opens_runway(self):
         ws = self.ws()
@@ -1240,22 +1263,24 @@ class CLIBehaviour(unittest.TestCase):
 
         rc, out = run_tyf(["today", str(scaffold), "--kind", "dump"], ws)
         self.assertEqual(rc, 0, out)
-        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
-        base = ws / "works" / work_id
         preserved = list((ws / "sources" / "imports").glob("*cold-start-scaffold"))
         self.assertEqual(len(preserved), 1)
         self.assertTrue((preserved[0] / "notes" / "voice.md").is_file())
         orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
         orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
         self.assertIn("notes/voice.md", orientation_text)
-        runway = (base / ".review" / "today.md").read_text(encoding="utf-8")
-        draft = (base / "drafts" / "today-draft.md").read_text(encoding="utf-8")
+        runway = (ws / ".review" / "today.md").read_text(encoding="utf-8")
+        draft = (ws / "drafts" / "today-draft.md").read_text(encoding="utf-8")
         self.assertIn("Arrival orientation", runway)
         self.assertIn("organization principle", runway)
         self.assertIn("Start drafting here", draft)
-        self.assertEqual(list((base / "manuscript").iterdir()), [])
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+        self.assertFalse((ws / "works").exists())
         self.assertIn("Arrival orientation", out)
         self.assertIn("Next: write in", out)
+
+    def test_beta_today_arrival_uses_root_book_folder(self):
+        self.test_today_with_folder_arrival_preserves_scaffold_and_opens_runway()
 
     def test_user_yaml_values_are_safely_quoted(self):
         ws = self.ws()
@@ -1277,6 +1302,9 @@ class CLIBehaviour(unittest.TestCase):
             text = (ws / name).read_text(encoding="utf-8")
             self.assertIn("TYF workspace", text)
             self.assertIn("tyf today", text)
+            self.assertIn("single work", text.lower())
+            self.assertIn("drafts/", text)
+            self.assertNotIn("works/*/drafts", text)
 
     def test_new_work_adds_event_log_entry(self):
         ws = self.ws()

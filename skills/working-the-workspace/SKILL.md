@@ -47,9 +47,9 @@ workspace/
 
 Before writing anything, name the pass you are in and check the table. If the pass has no write access to the target directory, you are in the wrong pass. Route the result to where that pass may write, or stop and go through the controlled write.
 
-The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
+The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; `tyf accept --lines 2,5-8` narrows the accepted subset when the author approves only selected source lines. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
 
-For a first writing session, `tyf start "Working Title"` creates a normal work plus a safe source/interview packet in `drafts/`, a seed outline, and a `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate. These commands are elicitation and setup paths; none writes to `manuscript/`.
+For a first writing session, `tyf start "Working Title" --language "<writing language>"` creates a normal work plus a safe source/interview packet in `drafts/`, a seed outline, and a `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate. These commands are elicitation and setup paths; none writes to `manuscript/`.
 
 ## Rationalization table
 
@@ -71,15 +71,17 @@ For a first writing session, `tyf start "Working Title"` creates a normal work p
 
 ```
 tyf status            # active work, band, open gates, write-zone reminder
-tyf start "Title"     # public first-session flow, no manuscript text
-tyf begin <work>       # lower-level first-session packet with explicit id
+tyf start "Title" --language "<writing language>"
+                     # public first-session flow, no manuscript text
+tyf begin <work> --language "<writing language>"
+                     # lower-level first-session packet with explicit id
 tyf capture <work>     # append author source, voice, claim, or question material
 tyf doctor            # read-only integrity check, including stray manuscript writes
 tyf reflexes          # show visible hooks and git recovery behavior
 tyf snapshot -m <msg> # explicit git recovery commit; never automatic
 tyf propose <work> --from <draft>
 tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered
-tyf accept <work> <proposal-id> --evidence "<author acceptance>"
+tyf accept <work> <proposal-id> [--lines 2,5-8] --evidence "<author acceptance>"
 tyf write <work> --decision <decision-id>
 ```
 

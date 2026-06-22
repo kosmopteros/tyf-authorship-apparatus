@@ -851,12 +851,13 @@ def cmd_new_work(args):
     _require_workspace()
     args.id = _safe_work_id(args.id)
     _confine_work(args.id)
-    base, _reg = _create_work(args.id, args.type, args.register, activate_if_none=True)
-    log_event(".", "new-work", args.id, f"type={args.type}")
-    print(f"Created work: {base} (type={args.type})")
+    base, _reg = _create_work(args.id, args.type, args.register,
+                              language=args.language, activate_if_none=True)
+    log_event(".", "new-work", args.id, f"type={args.type} language={_one_line(args.language, 'undetermined')}")
+    print(f"Created work: {base} (type={args.type}, language={_one_line(args.language, 'undetermined')})")
 
 def _create_work(work_id, work_type="book", register=None, title=None,
-                 activate_if_none=False, activate=False):
+                 language=None, activate_if_none=False, activate=False):
     base = os.path.join("works", work_id)
     if os.path.exists(base):
         sys.exit(f"work already exists: {base}")
@@ -869,11 +870,12 @@ def _create_work(work_id, work_type="book", register=None, title=None,
     reg = _one_line(register, "(elicit at least one register before composing)")
     work_type = _one_line(work_type, "book")
     title = _one_line(title)
+    language = _one_line(language, "undetermined")
     title_line = f"title: {_yaml_scalar(title)}\n" if title else ""
     write(os.path.join(base, "work.yaml"),
-          f"id: {work_id}\ntype: {_yaml_scalar(work_type)}\n{title_line}registers:\n  - {_yaml_scalar(reg)}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
+          f"id: {work_id}\ntype: {_yaml_scalar(work_type)}\n{title_line}language: {_yaml_scalar(language)}\nregisters:\n  - {_yaml_scalar(reg)}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
     write(os.path.join(base, "style-sheet.md"),
-          f"# Running style sheet: {work_id}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
+          f"# Running style sheet: {work_id}\n\nWriting language: {language}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing. Finish decisions are language-specific; do not apply English typography rules unless this work is in English.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
     write(os.path.join(base, ".review", "write-log.md"), f"# Write log: {work_id}\n\nThe only record of writes into manuscript/.\n")
     st = read_state("WORKSPACE_STATE.yaml")
     if activate or (activate_if_none and not get(st, "active_work")):
@@ -888,8 +890,9 @@ def _slugify_title(title):
         return "work-" + hashlib.sha256(title.encode("utf-8")).hexdigest()[:12]
     return slug[:64].strip("-")
 
-def _write_begin_packet(work_id, title=None):
+def _write_begin_packet(work_id, title=None, language=None):
     label = _one_line(title, work_id)
+    language = _one_line(language, "undetermined")
     base = os.path.join("works", work_id)
     starter = os.path.join(base, "drafts", "00-start-here.md")
     seed = os.path.join(base, "outline", "seed.md")
@@ -897,6 +900,8 @@ def _write_begin_packet(work_id, title=None):
     write(starter, f"""# Start here: {label}
 
 This is an author-owned first-session packet. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
+
+Writing language: {language}
 
 ## What is already true
 
@@ -955,6 +960,7 @@ Active work: `{work_id}`
 
 - Beginning is source elicitation, not book generation.
 - No silence counts as consent.
+- Honor the work's writing language before applying prose conventions.
 - Missing knowledge gets an `[AUTHOR: needed - what]` marker.
 - The manuscript stays empty until an explicit controlled write.
 """)
@@ -965,9 +971,10 @@ def cmd_begin(args):
     work_id = _safe_work_id(args.id)
     _confine_work(work_id)
     base, _reg = _create_work(work_id, args.type, args.register,
+                              language=args.language,
                               title=args.title, activate=True)
-    starter, seed, runway = _write_begin_packet(work_id, args.title)
-    log_event(".", "begin", work_id, f"starter={starter}")
+    starter, seed, runway = _write_begin_packet(work_id, args.title, args.language)
+    log_event(".", "begin", work_id, f"starter={starter} language={_one_line(args.language, 'undetermined')}")
     print(f"Begin: active work {work_id} at {base}")
     print(f"  first-session packet: {starter}")
     print(f"  seed outline         : {seed}")
@@ -983,11 +990,13 @@ def cmd_start(args):
     work_id = _safe_work_id(args.id or _slugify_title(title))
     _confine_work(work_id)
     base, _reg = _create_work(work_id, args.type, args.register,
+                              language=args.language,
                               title=title, activate=True)
-    starter, seed, runway = _write_begin_packet(work_id, title)
-    log_event(".", "start", work_id, f"starter={starter}")
+    starter, seed, runway = _write_begin_packet(work_id, title, args.language)
+    log_event(".", "start", work_id, f"starter={starter} language={_one_line(args.language, 'undetermined')}")
     print(f"I created the TYF workspace packet for {title!r}.")
     print(f"  Work id: {work_id}")
+    print(f"  Writing language: {_one_line(args.language, 'undetermined')}")
     print(f"  Start here: {starter}")
     print(f"  Seed outline: {seed}")
     print(f"  Session runway: {runway}")
@@ -1199,6 +1208,50 @@ def _read_json(path):
         sys.exit(f"Refused: invalid record {path}: {e}")
 
 
+def _source_lines(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read().splitlines(keepends=True)
+
+
+def _parse_line_ranges(spec, max_line):
+    if not spec:
+        return None, "whole-file"
+    ranges = []
+    parts = [p.strip() for p in spec.split(",") if p.strip()]
+    if not parts:
+        sys.exit("Refused: --lines must name at least one line or range.")
+    previous_end = 0
+    for part in parts:
+        if "-" in part:
+            left, sep, right = part.partition("-")
+            if not left.isdigit() or not right.isdigit():
+                sys.exit(f"Refused: invalid line range {part!r}. Use numbers like 2 or 2-5.")
+            start, end = int(left), int(right)
+        else:
+            if not part.isdigit():
+                sys.exit(f"Refused: invalid line number {part!r}.")
+            start = end = int(part)
+        if start < 1 or end < 1 or end < start:
+            sys.exit(f"Refused: invalid line range {part!r}; ranges must be positive and ascending.")
+        if end > max_line:
+            sys.exit(f"Refused: line range {part!r} exceeds proposal length ({max_line} line(s)).")
+        if start <= previous_end:
+            sys.exit("Refused: --lines must be strictly increasing and non-overlapping.")
+        ranges.append([start, end])
+        previous_end = end
+    normalized = ",".join(str(a) if a == b else f"{a}-{b}" for a, b in ranges)
+    return ranges, f"lines {normalized}"
+
+
+def _select_line_ranges(lines, ranges):
+    if ranges is None:
+        return "".join(lines)
+    out = []
+    for start, end in ranges:
+        out.extend(lines[start - 1:end])
+    return "".join(out)
+
+
 def _workspace_rel(path, label):
     if not path:
         sys.exit(f"Refused: missing {label}.")
@@ -1356,6 +1409,8 @@ def cmd_accept(args):
     src = proposal["src"]
     if _file_sha256(src) != proposal.get("src_sha256"):
         sys.exit("Refused: proposal source changed before acceptance.")
+    lines = _source_lines(src)
+    accepted_ranges, accepted_scope = _parse_line_ranges(getattr(args, "lines", None), len(lines))
     decision_id = _record_id("decision", work, args.proposal, proposal["src_sha256"])
     decision = {
         "id": decision_id,
@@ -1366,7 +1421,8 @@ def cmd_accept(args):
         "dest": proposal["dest"],
         "src_sha256": proposal["src_sha256"],
         "base_sha256": proposal.get("base_sha256"),
-        "accepted_scope": "whole-file",
+        "accepted_scope": accepted_scope,
+        "accepted_ranges": accepted_ranges,
         "accepted_by": _one_line(args.accepted_by, "author"),
         "acceptance_evidence": evidence,
         "decided_at": now(),
@@ -1377,6 +1433,7 @@ def cmd_accept(args):
     log_event(".", "accept", f"{work}/{decision_id}", f"proposal={args.proposal}")
     print(f"Decision: {decision_id}")
     print(f"  proposal: {args.proposal}")
+    print(f"  accepted scope: {accepted_scope}")
     print("Next: `tyf write <work> --decision <decision-id>` after a passing audit.")
 
 def cmd_write(args):
@@ -1418,12 +1475,12 @@ def cmd_write(args):
         rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
         if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
             sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
-    with open(src, encoding="utf-8") as f:
-        content = f.read()
+    content = _select_line_ranges(_source_lines(src), decision.get("accepted_ranges"))
     digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
     atomic_write(dest, content)
     log = os.path.join("works", work, ".review", "write-log.md")
     append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(dest)}\n- sha256: {digest}\n- Proposal: {decision['proposal_id']}\n- Decision: {decision['id']}\n- Audit: {audit['id']}\n")
+    append(log, f"- Accepted scope: {decision.get('accepted_scope', 'whole-file')}\n")
     log_event(".", "write", f"{work}/{os.path.basename(dest)}", f"{src} -> {dest} decision={decision['id']} sha256={digest[:12]}")
     print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
 
@@ -1736,18 +1793,20 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("init"); s.add_argument("name"); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
-    s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.set_defaults(fn=cmd_new_work)
+    s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.add_argument("--language", default=None); s.set_defaults(fn=cmd_new_work)
     s = sub.add_parser("start", help="plain-language first book/session entrypoint")
     s.add_argument("title")
     s.add_argument("--id", default=None, help="optional stable work id; otherwise slugged from title")
     s.add_argument("--type", default="book")
     s.add_argument("--register", default=None)
+    s.add_argument("--language", default=None, help="writing language label, for example English, Portuguese, Russian, or Japanese")
     s.set_defaults(fn=cmd_start)
     s = sub.add_parser("begin", help="create and open a first-session work packet")
     s.add_argument("id")
     s.add_argument("--type", default="book")
     s.add_argument("--register", default=None)
     s.add_argument("--title", default=None)
+    s.add_argument("--language", default=None, help="writing language label, for example English, Portuguese, Russian, or Japanese")
     s.set_defaults(fn=cmd_begin)
     s = sub.add_parser("capture", help="append author source, voice, claim, or question material")
     s.add_argument("work")
@@ -1775,6 +1834,7 @@ def main():
     s.add_argument("proposal")
     s.add_argument("--accepted-by", default="author")
     s.add_argument("--evidence", default=None, help="verbatim author acceptance text or a stable reference to it")
+    s.add_argument("--lines", default=None, help="accepted source line ranges, for example 2,5-8; omit for whole file")
     s.set_defaults(fn=cmd_accept)
     s = sub.add_parser("write")
     s.add_argument("work")

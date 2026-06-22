@@ -18,11 +18,11 @@ Nothing crosses into `manuscript/` on its own. For every change:
 1. **Identify** the candidate or proposal precisely.
 2. **Create** a proposal record from the draft: `tyf propose <work> --from <draft>`.
 3. **Record** an adversarial audit: `tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered`.
-4. **Record** explicit author acceptance: `tyf accept <work> <proposal-id> --evidence "<verbatim acceptance or stable reference>"`.
+4. **Record** explicit author acceptance: `tyf accept <work> <proposal-id> [--lines 2,5-8] --evidence "<verbatim acceptance or stable reference>"`.
 5. **Write** only through the decision: `tyf write <work> --decision <decision-id>`.
 6. **Preserve** rejected material only if the author asks.
 
-The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, and acceptance evidence. If either file hash changes before the write, the write is refused and the change must be re-proposed. Naked `--confirm` and `--force` are refused.
+The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, acceptance evidence, and accepted scope. `--lines` accepts strictly increasing, non-overlapping source line ranges; omitting it accepts the whole file. If either file hash changes before the write, the write is refused and the change must be re-proposed. Naked `--confirm` and `--force` are refused.
 
 ## Rationalization table
 
@@ -52,6 +52,7 @@ Audit:
 Applied file:
 Source sha256:
 Manuscript base sha256:
+Accepted scope:
 Rejected or deferred changes:
 ```
 
@@ -59,7 +60,7 @@ Rejected or deferred changes:
 
 This is the highest-stakes skill: the only door into the work. Hold these beyond the happy path:
 
-- **Partial acceptance** ("take 1 and 3, not 2"): apply exactly the accepted subset. If the helper only supports whole-file acceptance for that change, split the accepted subset into its own draft before proposing.
+- **Partial acceptance** ("take 1 and 3, not 2"): use `tyf accept --lines 1,3` when the accepted subset maps exactly to source lines. For semantic edits that do not map cleanly to source line ranges, split the accepted subset into its own draft before proposing.
 - **No prior acceptance at all:** the request to write is not itself approval. Require a decision record bound to a proposal; silence is never consent.
 - **The draft changed or vanished between proposal and write:** the source hash must still match the proposal and decision; never write stale or empty content.
 - **Concurrent writes** (a scheduled task and a manual write touch one file): every write is logged; `tyf doctor` surfaces a manuscript file whose log is inconsistent, rather than letting last-write-wins clobber silently.

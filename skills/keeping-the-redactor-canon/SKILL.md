@@ -15,7 +15,7 @@ The Canon is read and updated by every Diagnose, Propose, Revise, and Audit pass
 
 The same integrity discipline runs at every zoom level.
 
-- **micro** (glyph, sentence): punctuation, em-dash discipline, cadence, the typographic finish. The lower-band typographer canon lives here and is shared across registers.
+- **micro** (glyph, sentence): punctuation, dash discipline, cadence, and typographic finish for the work's writing language. The lower-band typographer canon lives here and is shared across registers.
 - **macro** (section, architecture, argument): terminology consistency, kept promises, compositional balance, logical coherence, no orphaned or circular claims, sound transitions.
 - **meta** (the whole work, across sessions): the canon itself plus the running style sheet, the persistent record every pass reads before touching prose and writes to after.
 
@@ -25,7 +25,7 @@ The same integrity discipline runs at every zoom level.
 - **Logic rules:** the claim graph must not contradict itself; every load-bearing claim resolves; assumptions are stated.
 - **Composition rules:** each part makes a promise the work keeps; sequence is deliberate.
 - **Apparatus rules:** citation style, cross-reference format, note conventions, index discipline. Cross-references must resolve to real targets. Documentation that routes behavior is apparatus too: when structure or naming changes, the routing docs must stay true. See `keeping-documentation-honest`.
-- **Typographic finish:** the five-scale typographer canon, including em-dash discipline. Shared across all registers.
+- **Typographic finish:** the five-scale typographer canon, including dash and punctuation discipline. Shared across all registers, but never treated as language-neutral.
 
 ## The running style sheet
 

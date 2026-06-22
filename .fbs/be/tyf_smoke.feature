@@ -15,6 +15,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py gate"
     Then Exit code is 0
 
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper applies only accepted source line ranges
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_line_ranges_writes_only_selected_lines CLIBehaviour.test_accept_line_ranges_refuses_invalid_or_out_of_range_selection -v"
+    Then Exit code is 0
+
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper refuses unsafe or out-of-workspace writes
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_without_decision CLIBehaviour.test_new_work_refuses_symlinked_works_root_escape CLIBehaviour.test_propose_refuses_symlinked_manuscript_escape CLIBehaviour.test_snapshot_scopes_commit_to_workspace_inside_parent_repo -v"
@@ -23,6 +28,11 @@ Feature: TYF helper smoke suite
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper keeps first-day setup source-first and recoverable
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_plain_language_front_door_for_new_book CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper records explicit writing language for multilingual works
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
     Then Exit code is 0
 
   @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli

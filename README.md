@@ -92,13 +92,13 @@ That creates the first-session packet, seed outline, and review runway, then tel
 Advanced commands for agents and maintainers:
 
 ```
-tyf init <name>          tyf start "<working title>" [--id <id>]
-tyf begin <id> --title <t> --register <r>
+tyf init <name>          tyf start "<working title>" [--id <id>] [--language <language>]
+tyf begin <id> --title <t> --register <r> [--language <language>]
 tyf capture <work> --kind source|voice|claim|question --text <text>
 tyf status               tyf open <work>          tyf mark-ready <work> <unit>
 tyf propose <work> --from <draft> [--dest <file>]
 tyf audit <work> <unit> --record --proposal <id> --verdict pass --findings-answered
-tyf accept <work> <proposal-id> --evidence "<author accepted this>"
+tyf accept <work> <proposal-id> [--lines 2,5-8] --evidence "<author accepted this>"
 tyf write <work> --decision <decision-id>
 tyf doctor [--repair]    # workspace integrity check; --repair heals missing structure
 tyf reflexes             # show TYF's visible hooks and recovery behavior
@@ -110,9 +110,9 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It creates the work from a human title, opens it as active, and adds a source/interview packet in `drafts/`, a seed outline in `outline/`, and a first-session runway in `.review/`. `tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. None of these commands write to `manuscript/`; that remains behind the Gate chain: `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision`.
+`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It creates the work from a human title, opens it as active, records the writing language in `work.yaml`, and adds a source/interview packet in `drafts/`, a seed outline in `outline/`, and a first-session runway in `.review/`. `tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. None of these commands write to `manuscript/`; that remains behind the Gate chain: `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision`.
 
-The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash and the current manuscript base hash. An audit record must pass with findings answered. A decision record names the proposal the author accepted and records acceptance evidence. `tyf write --decision <id>` verifies that the draft and manuscript base have not changed, refuses symlink escapes, writes atomically, and logs the proposal, decision, audit, and content hash. Naked `--confirm` is refused.
+The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash and the current manuscript base hash. An audit record must pass with findings answered. A decision record names the proposal the author accepted, records acceptance evidence, and can optionally narrow acceptance to strictly increasing source line ranges with `--lines 2,5-8`; omitting `--lines` means whole-file acceptance. `tyf write --decision <id>` verifies that the draft and manuscript base have not changed, refuses symlink escapes, writes atomically, applies only the accepted range, and logs the proposal, decision, audit, accepted scope, and content hash. Naked `--confirm` is refused.
 
 `tyf reflexes` shows the apparatus behavior that would otherwise be easy to forget: the documentation-honesty tail hook, the attentive-amanuensis notice hook after controlled writes, the doctor integrity check, and the git recovery path. If a workspace is also a git repository, mutating commands surface changed-path counts and point to `tyf snapshot`. `tyf snapshot --message "..."` stages and commits the current workspace as an explicit recovery point. TYF never commits silently.
 

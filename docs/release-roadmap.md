@@ -2,8 +2,9 @@
 
 ## 0.3.0 hardening
 
-- Keep tightening the Gate around partial acceptance, hunk-level decisions, and concurrent write locking.
+- Keep tightening the Gate: source-line partial acceptance is implemented, while semantic hunk-level decisions and concurrent write locking remain next.
 - Promote acceptance evidence conventions into templates for Codex, Claude Cowork, and Gemini.
+- Add optional per-language notice detectors on top of the explicit writing-language metadata now stored per work.
 - Keep release metadata aligned across Python, Claude, Codex, Cursor, Gemini, and packaged plugin surfaces.
 
 ## v0.4 provenance engine

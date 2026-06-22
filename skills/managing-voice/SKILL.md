@@ -18,7 +18,7 @@ Every Diagnose, Propose, and Revise pass at every band reads the relevant regist
 - **Anti-patterns:** cadences and phrases the author never uses. This list grows when the author rejects a phrasing more than once.
 - **Exemplar passages:** annotated samples of the author's own prose in the register.
 
-The lower-band component (punctuation discipline, em-dash rules, the typographer canon) is shared across all registers, so a line-level pass never proposes something the glyph-level rules forbid.
+The lower-band component (punctuation discipline, dash rules, the typographer canon) is shared across all registers for a work and must honor that work's writing language, so a line-level pass never proposes something the glyph-level rules forbid.
 
 ## The disciplined move
 

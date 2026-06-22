@@ -26,14 +26,14 @@ Two substrates are read at every band, micro, macro, and meta: the voice registe
 
 - Compose writes to `works/<id>/drafts/` only.
 - Propose and Audit write to `works/<id>/.review/` only.
-- The manuscript at `works/<id>/manuscript/` is written only by `tyf write --decision <id>` after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`.
+- The manuscript at `works/<id>/manuscript/` is written only by `tyf write --decision <id>` after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; use `tyf accept --lines 2,5-8` when the author accepts only selected source lines.
 - Read, Diagnose, and Audit write nothing to any manuscript.
 
 If a pass has no write access to a target, you are in the wrong pass. Route the result, or go through the controlled write.
 
 ## Prose conventions
 
-No em-dashes in prose; use a colon, a semicolon, or a comma. No stacked-negation triads. No "Not X. Y." fragments. No generic AI-writing language. The sign-off badge is **Authored with TYF**.
+Follow the writing language recorded in `works/<id>/work.yaml` before applying line-level rules. For English prose, avoid em-dashes; use a colon, a semicolon, or a comma. No stacked-negation triads. No "Not X. Y." fragments. No generic AI-writing language. The sign-off badge is **Authored with TYF**.
 
 ## Helper
 

@@ -18,7 +18,7 @@ Scaffold first, then elicit, then write the substrate. Do not draft, and do not 
 1. **Scaffold.** Create the `workspace/` tree (see `working-the-workspace`). Prefer the helper: `tyf init <name>`. Init is idempotent: it creates only missing structure and never overwrites existing files, so it safely heals a partial workspace. It also initializes the apparatus memory database `.tyf/ledger.db` (stdlib SQLite). Run `tyf doctor --repair` any time to restore missing structure. Write `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, and the router/standing-instructions file.
 2. **Run intake.** Invoke `ingesting-sources` for any material the author brings, then `interviewing-the-author` for tacit knowledge, thesis, and registers.
 3. **Seed the substrate.** Write at least one register to the voice registers via `managing-voice`, seed the knowledge base via `structuring-knowledge`, and start the redactor canon and the running style sheet via `keeping-the-redactor-canon`.
-4. **Start the first work.** For a book that needs to start today, prefer `tyf start "Working Title"`. It creates `works/<id>/`, marks it active, and writes the first-session source packet, seed outline, and review runway. It also prints the first source questions the agent should ask. Use `tyf begin <id>` only when a stable id is already required.
+4. **Start the first work.** For a book that needs to start today, prefer `tyf start "Working Title" --language "<writing language>"`. It creates `works/<id>/`, marks it active, records the writing language in `work.yaml`, and writes the first-session source packet, seed outline, and review runway. It also prints the first source questions the agent should ask. Use `tyf begin <id>` only when a stable id is already required.
 5. **Set state.** Record the active work and band in `WORKSPACE_STATE.yaml`, gates closed. If the author wants recoverability and recall, initialize git for the workspace and use `tyf snapshot --message "..."` at session boundaries. TYF may report git status, but it never commits silently.
 
 Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and `WORKSPACE_STATE.yaml` honest about what is done and what is still open.
@@ -43,7 +43,8 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 
 ```
 tyf init <workspace-name>       # scaffold the tree and state files
-tyf start "Working Title"       # create the first-session packet and ask source questions
+tyf start "Working Title" --language "<writing language>"
+                               # create the first-session packet and ask source questions
 tyf status                      # confirm what exists
 tyf reflexes                    # show hooks and git recovery behavior
 tyf snapshot -m "first session" # explicit git recovery point

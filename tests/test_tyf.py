@@ -139,6 +139,56 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("ch1.md", log)
         self.assertIn(decision, log)
 
+    def test_accept_line_ranges_writes_only_selected_lines(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(
+            ws, name="chapter.md",
+            text="keep opening\nreject this\nkeep middle\nkeep end\nreject tail\n",
+        )
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "1,3-4",
+             "--evidence", "Alexander: accept lines 1, 3, and 4"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertEqual(rc, 0, out)
+        manuscript = (ws / "works/demo/manuscript/chapter.md").read_text(encoding="utf-8")
+        self.assertEqual(manuscript, "keep opening\nkeep middle\nkeep end\n")
+        log = (ws / "works/demo/.review/write-log.md").read_text(encoding="utf-8")
+        self.assertIn("Accepted scope: lines 1,3-4", log)
+
+    def test_accept_line_ranges_refuses_invalid_or_out_of_range_selection(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="one\ntwo\nthree\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "2-1",
+             "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "line ranges must be ascending")
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "1,9",
+             "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "line ranges must fit the proposal source")
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "1,1-2",
+             "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "line ranges must not overlap or duplicate text")
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "3,2",
+             "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "line ranges must preserve source order")
+
     def test_doctor_flags_unlogged_manuscript_file(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
@@ -445,6 +495,19 @@ class CLIBehaviour(unittest.TestCase):
         self.assertRegex(work_id, r"^work-[0-9a-f]{12}$")
         self.assertTrue((ws / "works" / work_id / "work.yaml").is_file())
 
+    def test_start_records_explicit_writing_language(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "Livro Novo", "--language", "Portuguese"], ws)
+        self.assertEqual(rc, 0, out)
+        base = ws / "works" / "livro-novo"
+        work_yaml = (base / "work.yaml").read_text(encoding="utf-8")
+        starter = (base / "drafts" / "00-start-here.md").read_text(encoding="utf-8")
+        style = (base / "style-sheet.md").read_text(encoding="utf-8")
+        self.assertIn('language: "Portuguese"', work_yaml)
+        self.assertIn("Writing language: Portuguese", starter)
+        self.assertIn("Writing language: Portuguese", style)
+        self.assertIn("Writing language: Portuguese", out)
+
     def test_user_yaml_values_are_safely_quoted(self):
         ws = self.ws()
         rc, out = run_tyf(
@@ -456,6 +519,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn('- "voice: one"', raw)
         parsed = tyf.read_state(str(ws / "works" / "yaml-demo" / "work.yaml"))
         self.assertEqual(parsed["type"], "book: essay")
+        self.assertEqual(parsed["language"], "undetermined")
         self.assertEqual(parsed["registers"], ["voice: one"])
 
     def test_init_creates_workspace_context_contracts(self):

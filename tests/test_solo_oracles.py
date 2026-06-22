@@ -31,6 +31,8 @@ def check_helper() -> None:
                     "cmd_snapshot", "cmd_propose", "cmd_accept"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
+    assert "--language" in source, "work creation must expose writing-language metadata"
+    assert "language:" in source, "work.yaml must store writing-language metadata"
 
 
 def check_gate() -> None:
@@ -38,14 +40,18 @@ def check_gate() -> None:
     tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
     controlling = (ROOT / "skills" / "controlling-manuscript-writes" / "SKILL.md").read_text(encoding="utf-8")
 
-    for token in ("cmd_propose", "cmd_accept", "--decision", "base_sha256",
-                  "src_sha256", "acceptance_evidence", "_passing_audit_for", "atomic_write"):
+    for token in ("cmd_propose", "cmd_accept", "--decision", "--lines", "base_sha256",
+                  "src_sha256", "acceptance_evidence", "accepted_ranges",
+                  "_passing_audit_for", "atomic_write"):
         assert token in source, f"Gate runtime missing {token}"
     assert "naked --confirm is retired" in source
     assert "test_write_refuses_without_decision" in tests
     assert "test_write_decision_refuses_out_of_band_edit_after_acceptance" in tests
+    assert "test_accept_line_ranges_writes_only_selected_lines" in tests
+    assert "test_accept_line_ranges_refuses_invalid_or_out_of_range_selection" in tests
     assert "proposal record" in controlling.lower()
     assert "decision record" in controlling.lower()
+    assert "--lines" in controlling
 
 
 def check_plugin() -> None:
@@ -74,6 +80,8 @@ def check_onboarding() -> None:
     assert "do not hand them a command list" in using.lower()
     assert 'tyf start "Working Title"' in init
     assert "Use TYF to start my new book" in cowork
+    assert "writing language" in start_here.lower()
+    assert "writing language" in init.lower()
 
 
 def check_onboarding_entry() -> None:

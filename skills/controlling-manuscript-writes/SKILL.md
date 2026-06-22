@@ -22,7 +22,7 @@ Nothing crosses into `manuscript/` on its own. For every change:
 5. **Write** only through the decision: `tyf write <work> --decision <decision-id>`.
 6. **Preserve** rejected material only if the author asks.
 
-The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, acceptance evidence, and accepted scope. `--lines` accepts strictly increasing, non-overlapping source line ranges; omitting it accepts the whole file. If either file hash changes before the write, the write is refused and the change must be re-proposed. Naked `--confirm` and `--force` are refused.
+The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, acceptance evidence, and accepted scope. `--lines` accepts strictly increasing, non-overlapping source line ranges; omitting it accepts the whole file. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`; if a record no longer matches its seal, `tyf write` and `tyf doctor` refuse it. If either file hash changes before the write, the write is refused and the change must be re-proposed. Naked `--confirm` and `--force` are refused.
 
 ## Rationalization table
 
@@ -62,6 +62,7 @@ This is the highest-stakes skill: the only door into the work. Hold these beyond
 
 - **Partial acceptance** ("take 1 and 3, not 2"): use `tyf accept --lines 1,3` when the accepted subset maps exactly to source lines. For semantic edits that do not map cleanly to source line ranges, split the accepted subset into its own draft before proposing.
 - **No prior acceptance at all:** the request to write is not itself approval. Require a decision record bound to a proposal; silence is never consent.
+- **Edited review records:** if a proposal, audit, or decision JSON changes after creation, stop. The seal mismatch means the Gate record is no longer trustworthy; re-propose, re-audit, or re-accept from the current material.
 - **The draft changed or vanished between proposal and write:** the source hash must still match the proposal and decision; never write stale or empty content.
 - **Concurrent writes** (a scheduled task and a manual write touch one file): every write is logged; `tyf doctor` surfaces a manuscript file whose log is inconsistent, rather than letting last-write-wins clobber silently.
 - **The author hand-edited the manuscript outside the gate:** detect the out-of-band change or base-hash mismatch and reconcile with the author; do not assume the apparatus owns the file and overwrite their work.

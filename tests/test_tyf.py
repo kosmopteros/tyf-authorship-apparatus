@@ -20,6 +20,7 @@ import tempfile
 import shutil
 import unittest
 import re
+import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -188,6 +189,83 @@ class CLIBehaviour(unittest.TestCase):
             ["accept", "demo", proposal, "--lines", "3,2",
              "--evidence", "Alexander: accept this"], ws)
         self.assertNotEqual(rc, 0, "line ranges must preserve source order")
+
+    def test_write_refuses_tampered_decision_record(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(
+            ws, name="chapter.md",
+            text="accepted line\nrejected line\n",
+        )
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "1",
+             "--evidence", "Alexander: accept only line 1"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        decision_path = ws / "works/demo/.review/decisions" / f"{decision}.json"
+        data = json.loads(decision_path.read_text(encoding="utf-8"))
+        data["accepted_ranges"] = None
+        data["accepted_scope"] = "whole-file"
+        decision_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "tampered decision records must not write manuscript text")
+        self.assertFalse((ws / "works/demo/manuscript/chapter.md").exists())
+
+    def test_write_refuses_tampered_audit_record(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="draft\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "fail"], ws)
+        self.assertEqual(rc, 0, out)
+        audit = re.search(r"Audit:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        audit_path = ws / "works/demo/.review/audits" / f"{audit}.json"
+        data = json.loads(audit_path.read_text(encoding="utf-8"))
+        data["verdict"] = "pass"
+        data["findings_answered"] = True
+        audit_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "tampered audit records must not satisfy the Gate")
+        self.assertFalse((ws / "works/demo/manuscript/chapter.md").exists())
+
+    def test_doctor_flags_tampered_gate_record(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        decision = self.gate_decision(ws, src=src)
+        decision_path = ws / "works/demo/.review/decisions" / f"{decision}.json"
+        data = json.loads(decision_path.read_text(encoding="utf-8"))
+        data["acceptance_evidence"] = "rewritten after the fact"
+        decision_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag tampered Gate records")
+        self.assertIn("decision", out.lower())
+        self.assertRegex(out.lower(), r"tamper|seal|integrity")
+
+    def test_doctor_flags_missing_gate_record_seal(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        self.gate_decision(ws, src=src)
+        (ws / "works/demo/.review/record-seals.jsonl").unlink()
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag unsealed Gate records")
+        self.assertRegex(out.lower(), r"no seal|integrity")
 
     def test_doctor_flags_unlogged_manuscript_file(self):
         ws = self.ws()

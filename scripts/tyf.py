@@ -1198,6 +1198,77 @@ def _write_json(path, data):
     atomic_write(path, json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
 
 
+def _record_seal_path(work):
+    _safe_work_id(work)
+    _confine_work(work)
+    _require_work(work)
+    return os.path.join("works", work, ".review", "record-seals.jsonl")
+
+
+def _read_record_seals(work):
+    path = _record_seal_path(work)
+    if not os.path.exists(path):
+        return [], []
+    entries, problems = [], []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for i, raw in enumerate(f, 1):
+                if not raw.strip():
+                    continue
+                try:
+                    entry = json.loads(raw)
+                except json.JSONDecodeError as e:
+                    problems.append(f"{work}: invalid record seal line {i}: {e}")
+                    continue
+                entries.append(entry)
+    except OSError as e:
+        problems.append(f"{work}: could not read record seals: {e}")
+    return entries, problems
+
+
+def _append_record_seal(work, kind, record_id, data):
+    path = _record_seal_path(work)
+    _reject_symlink_components(os.path.dirname(path), "review record directory")
+    entry = {
+        "sealed_at": now(),
+        "kind": kind,
+        "id": record_id,
+        "sha256": _canonical_hash(data),
+    }
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, sort_keys=True, ensure_ascii=False) + "\n")
+
+
+def _record_integrity_problem(work, kind, record_id, data):
+    entries, problems = _read_record_seals(work)
+    if problems:
+        return problems[0]
+    matches = [e for e in entries
+               if e.get("kind") == kind and e.get("id") == record_id]
+    if not matches:
+        return f"{work}: {kind} record {record_id} has no seal; integrity cannot be verified"
+    digest = _canonical_hash(data)
+    if digest not in {e.get("sha256") for e in matches}:
+        return f"{work}: {kind} record {record_id} seal mismatch; record may be tampered"
+    return None
+
+
+def _require_record_integrity(work, kind, record_id, data):
+    problem = _record_integrity_problem(work, kind, record_id, data)
+    if problem:
+        sys.exit("Refused: " + problem)
+
+
+def _write_review_record(work, folder, kind, record_id, data):
+    path = _review_path(work, folder, record_id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if os.path.exists(path):
+        sys.exit(f"Refused: review record already exists: {path}")
+    _write_json(path, data)
+    _append_record_seal(work, kind, record_id, data)
+    return path
+
+
 def _read_json(path):
     try:
         with open(path, encoding="utf-8") as f:
@@ -1295,6 +1366,7 @@ def _load_proposal(work, proposal_id):
     proposal = _read_json(path)
     if proposal.get("id") != proposal_id or proposal.get("work") != work:
         sys.exit(f"Refused: proposal {proposal_id} does not belong to work {work}.")
+    _require_record_integrity(work, "proposal", proposal_id, proposal)
     return proposal
 
 
@@ -1304,6 +1376,7 @@ def _load_decision(work, decision_id):
     decision = _read_json(path)
     if decision.get("id") != decision_id or decision.get("work") != work:
         sys.exit(f"Refused: decision {decision_id} does not belong to work {work}.")
+    _require_record_integrity(work, "decision", decision_id, decision)
     return decision
 
 
@@ -1315,11 +1388,15 @@ def _passing_audit_for(work, proposal_id, proposal_hash):
         if not name.endswith(".json"):
             continue
         audit = _read_json(os.path.join(audit_dir, name))
+        audit_id = os.path.splitext(name)[0]
+        if audit.get("id") != audit_id or audit.get("work") != work:
+            sys.exit(f"Refused: audit record {audit_id} does not belong to work {work}.")
         if (audit.get("proposal_id") == proposal_id
-                and audit.get("proposal_hash") == proposal_hash
-                and audit.get("verdict") == "pass"
-                and audit.get("findings_answered") is True):
-            return audit
+                and audit.get("proposal_hash") == proposal_hash):
+            _require_record_integrity(work, "audit", audit_id, audit)
+            if (audit.get("verdict") == "pass"
+                    and audit.get("findings_answered") is True):
+                return audit
     return None
 
 
@@ -1347,9 +1424,7 @@ def cmd_propose(args):
         "created_at": now(),
         "accepted_scope": "whole-file",
     }
-    path = _review_path(work, "proposals", proposal_id)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    _write_json(path, proposal)
+    _write_review_record(work, "proposals", "proposal", proposal_id, proposal)
     log_event(".", "propose", f"{work}/{proposal_id}", src)
     print(f"Proposal: {proposal_id}")
     print(f"  source: {proposal['src']}")
@@ -1382,9 +1457,7 @@ def cmd_audit(args):
             "findings_answered": bool(getattr(args, "findings_answered", False)),
             "recorded_at": now(),
         }
-        path = _review_path(args.work, "audits", audit_id)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        _write_json(path, audit)
+        _write_review_record(args.work, "audits", "audit", audit_id, audit)
         log_event(".", "audit", f"{args.work}/{audit_id}", f"proposal={args.proposal} verdict={args.verdict}")
         print(f"Audit: {audit_id}")
         print(f"  verdict: {args.verdict}")
@@ -1427,9 +1500,7 @@ def cmd_accept(args):
         "acceptance_evidence": evidence,
         "decided_at": now(),
     }
-    path = _review_path(work, "decisions", decision_id)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    _write_json(path, decision)
+    _write_review_record(work, "decisions", "decision", decision_id, decision)
     log_event(".", "accept", f"{work}/{decision_id}", f"proposal={args.proposal}")
     print(f"Decision: {decision_id}")
     print(f"  proposal: {args.proposal}")
@@ -1498,6 +1569,33 @@ def _logged_hashes(log_text):
     return latest
 
 
+def _review_record_integrity_problems(work):
+    problems = []
+    _entries, seal_problems = _read_record_seals(work)
+    problems.extend(seal_problems)
+    for folder, kind in (("proposals", "proposal"), ("audits", "audit"), ("decisions", "decision")):
+        d = os.path.join("works", work, ".review", folder)
+        if not os.path.isdir(d):
+            continue
+        for name in sorted(os.listdir(d)):
+            if not name.endswith(".json"):
+                continue
+            record_id = os.path.splitext(name)[0]
+            path = os.path.join(d, name)
+            try:
+                data = json.loads(_read(path))
+            except json.JSONDecodeError as e:
+                problems.append(f"{work}: invalid {kind} record {record_id}: {e}")
+                continue
+            if data.get("id") != record_id or data.get("work") != work:
+                problems.append(f"{work}: {kind} record {record_id} has mismatched id or work")
+                continue
+            problem = _record_integrity_problem(work, kind, record_id, data)
+            if problem and problem not in problems:
+                problems.append(problem)
+    return problems
+
+
 def cmd_doctor(args):
     problems, notes = [], []
     if not os.path.isfile("WORKSPACE_STATE.yaml"):
@@ -1526,6 +1624,7 @@ def cmd_doctor(args):
                 continue
             if not os.path.isfile(os.path.join(wd, "style-sheet.md")):
                 problems.append(f"{w}: missing running style sheet")
+            problems.extend(_review_record_integrity_problems(w))
             man = os.path.join(wd, "manuscript")
             gl = os.path.join(wd, ".review", "write-log.md")
             man_files = [f for f in os.listdir(man)] if os.path.isdir(man) else []

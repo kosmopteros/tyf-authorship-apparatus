@@ -18,11 +18,11 @@ Nothing crosses into `manuscript/` on its own. For every change:
 1. **Identify** the candidate or proposal precisely.
 2. **Create** a proposal record from the draft: `tyf propose <work> --from <draft>`, adding `--source-ref <id>` for any preserved source fragments that ground the proposal.
 3. **Record** an adversarial audit: `tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered`.
-4. **Record** explicit author acceptance: `tyf accept <work> <proposal-id> [--lines 2,5-8] --evidence "<verbatim acceptance or stable reference>"`.
+4. **Record** explicit author acceptance: `tyf accept <work> <proposal-id> [--lines 2,5-8 | --patch <diff>] --evidence "<verbatim acceptance or stable reference>"`.
 5. **Write** only through the decision: `tyf write <work> --decision <decision-id>`.
 6. **Preserve** rejected material only if the author asks.
 
-The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, source refs, acceptance evidence, and accepted scope. `--source-ref` binds a proposal to source fragments minted by `tyf capture`; proposal, audit, decision, and write records carry those refs forward, and `tyf write`/`tyf doctor` refuse missing or changed fragment files. `--lines` accepts strictly increasing, non-overlapping source line ranges; omitting it accepts the whole file. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`; if a record no longer matches its seal, `tyf write` and `tyf doctor` refuse it. Each controlled write acquires a unit lock in `.review/locks/` before mutating the manuscript destination and releases it afterward; an outstanding lock makes a write refuse and `tyf doctor` report it. If either file hash changes before the write, the write is refused and the change must be re-proposed. Naked `--confirm` and `--force` are refused.
+The controlled write promotes a file under the work's `drafts/` only. To apply an accepted proposal that lives in `.review/`, copy the accepted text into `drafts/` first, then create a proposal, audit, decision, and write record, so every manuscript change has one inspectable source. The runtime stores the source hash, current manuscript base hash, source refs, acceptance evidence, and accepted scope. `--source-ref` binds a proposal to source fragments minted by `tyf capture`; proposal, audit, decision, and write records carry those refs forward, and `tyf write`/`tyf doctor` refuse missing or changed fragment files. `--lines` accepts strictly increasing, non-overlapping source line ranges; `--patch` accepts an exact unified diff stored under `.review/` and applies only that diff against the recorded manuscript base; omitting both accepts the whole file. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`; if a record no longer matches its seal, `tyf write` and `tyf doctor` refuse it. Each controlled write acquires a unit lock in `.review/locks/` before mutating the manuscript destination and releases it afterward; an outstanding lock makes a write refuse and `tyf doctor` report it. If either file hash changes before the write, or if an accepted patch file changes or disappears, the write is refused and the change must be re-proposed or re-accepted. Naked `--confirm` and `--force` are refused.
 
 ## Rationalization table
 
@@ -54,6 +54,7 @@ Source sha256:
 Manuscript base sha256:
 Source refs:
 Accepted scope:
+Accepted patch:
 Rejected or deferred changes:
 ```
 
@@ -62,6 +63,7 @@ Rejected or deferred changes:
 This is the highest-stakes skill: the only door into the work. Hold these beyond the happy path:
 
 - **Partial acceptance** ("take 1 and 3, not 2"): use `tyf accept --lines 1,3` when the accepted subset maps exactly to source lines. For semantic edits that do not map cleanly to source line ranges, split the accepted subset into its own draft before proposing.
+- **Exact hunk acceptance** ("apply this diff, not the whole rewrite"): put the reviewed unified diff under `works/<id>/.review/` and use `tyf accept --patch <diff>`. Do not combine it with `--lines`.
 - **Source-grounded material:** if the draft is built from captured source material, include the fragment ids with `tyf propose --source-ref <id>`. A source ref is part of the Gate lineage, not decorative metadata.
 - **No prior acceptance at all:** the request to write is not itself approval. Require a decision record bound to a proposal; silence is never consent.
 - **Edited review records:** if a proposal, audit, or decision JSON changes after creation, stop. The seal mismatch means the Gate record is no longer trustworthy; re-propose, re-audit, or re-accept from the current material.

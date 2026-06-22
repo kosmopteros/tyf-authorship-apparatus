@@ -30,6 +30,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_line_ranges_writes_only_selected_lines CLIBehaviour.test_accept_line_ranges_refuses_invalid_or_out_of_range_selection -v"
     Then Exit code is 0
 
+  @covers:tyf-patch-acceptance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper applies an exact accepted patch
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_patch_applies_exact_unified_diff_to_manuscript_base -v"
+    Then Exit code is 0
+
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses mixed line and patch acceptance
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_patch_refuses_mixed_line_scope -v"
+    Then Exit code is 0
+
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses malformed accepted patch hunk counts
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_patch_refuses_hunk_count_mismatch -v"
+    Then Exit code is 0
+
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses accepted patch tampering at write time
+    When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_tampered_accepted_patch_file -v"
+    Then Exit code is 0
+
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper doctor reports missing accepted patch files
+    When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_missing_accepted_patch_file -v"
+    Then Exit code is 0
+
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper refuses unsafe or out-of-workspace writes
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_without_decision CLIBehaviour.test_new_work_refuses_symlinked_works_root_escape CLIBehaviour.test_propose_refuses_symlinked_manuscript_escape CLIBehaviour.test_snapshot_scopes_commit_to_workspace_inside_parent_repo -v"
@@ -42,7 +67,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: helper records explicit writing language for multilingual works
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_accepts_non_latin_title_with_stable_generated_id CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_gate_preserves_utf8_manuscript_text_for_declared_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
     Then Exit code is 0
 
   @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @bind-file:skills/controlling-manuscript-writes/SKILL.md @tool-check:cli

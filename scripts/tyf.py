@@ -1496,6 +1496,133 @@ def _select_line_ranges(lines, ranges):
     return "".join(out)
 
 
+def _require_patch_file(work, patch):
+    rel = _workspace_rel(patch, "accepted patch")
+    real = os.path.realpath(rel)
+    review = os.path.realpath(os.path.join("works", work, ".review"))
+    if not os.path.isfile(real):
+        sys.exit(f"Refused: accepted patch not found: {patch}")
+    if os.path.islink(os.path.abspath(patch)):
+        sys.exit(f"Refused: accepted patch is a symlink: {patch}")
+    if not _within(review, real):
+        sys.exit(f"Refused: accepted patch must live under works/{work}/.review/.")
+    return rel.replace(os.sep, "/")
+
+
+def _accepted_patch_problems(work, record):
+    patch = record.get("accepted_patch") if isinstance(record, dict) else None
+    if not patch:
+        return []
+    rel = patch.get("path")
+    if not rel:
+        return [f"{work}: accepted patch record has no path"]
+    if os.path.isabs(rel):
+        return [f"{work}: accepted patch uses an absolute path"]
+    try:
+        _reject_symlink_components(rel, "accepted patch")
+    except SystemExit as e:
+        return [str(e)]
+    root = os.path.realpath(".")
+    real = os.path.realpath(rel)
+    review = os.path.realpath(os.path.join("works", work, ".review"))
+    if not _within(root, real):
+        return [f"{work}: accepted patch resolves outside the workspace: {rel}"]
+    if not _within(review, real):
+        return [f"{work}: accepted patch is outside works/{work}/.review/: {rel}"]
+    if not os.path.isfile(real):
+        return [f"{work}: missing accepted patch file: {rel}"]
+    expected = patch.get("sha256")
+    if expected and _file_sha256(real) != expected:
+        return [f"{work}: accepted patch hash mismatch; patch may be tampered: {rel}"]
+    return []
+
+
+def _patch_header_filename(line):
+    parts = line.strip().split()
+    if len(parts) < 2 or parts[1] == "/dev/null":
+        return None
+    name = parts[1].replace("\\", "/")
+    if name.startswith("a/") or name.startswith("b/"):
+        name = name[2:]
+    return os.path.basename(name)
+
+
+def _apply_unified_patch(base_text, patch_text, unit):
+    base = base_text.splitlines(keepends=True)
+    out = []
+    pos = 0
+    saw_hunk = False
+    old_target = new_target = None
+    lines = patch_text.splitlines(keepends=True)
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("--- "):
+            if saw_hunk:
+                sys.exit("Refused: accepted patch must contain exactly one file.")
+            old_target = _patch_header_filename(line)
+            i += 1
+            if i < len(lines) and lines[i].startswith("+++ "):
+                new_target = _patch_header_filename(lines[i])
+                i += 1
+            target = new_target or old_target
+            if target and target != unit:
+                sys.exit(f"Refused: accepted patch targets {target!r}, expected {unit!r}.")
+            continue
+        m = re.match(r"@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@", line)
+        if not m:
+            i += 1
+            continue
+        saw_hunk = True
+        old_start = int(m.group(1))
+        old_count = int(m.group(2) or "1")
+        new_count = int(m.group(4) or "1")
+        target_pos = old_start - 1 if old_start > 0 else 0
+        if target_pos < pos or target_pos > len(base):
+            sys.exit("Refused: accepted patch hunk location does not match the manuscript base.")
+        out.extend(base[pos:target_pos])
+        pos = target_pos
+        i += 1
+        old_seen = 0
+        new_seen = 0
+        while i < len(lines):
+            hline = lines[i]
+            if hline.startswith("@@ "):
+                break
+            if hline.startswith("--- "):
+                break
+            if hline.startswith("\\"):
+                i += 1
+                continue
+            if not hline:
+                sys.exit("Refused: accepted patch has an empty hunk line without a prefix.")
+            prefix, text = hline[0], hline[1:]
+            if prefix == " ":
+                if pos >= len(base) or base[pos] != text:
+                    sys.exit("Refused: accepted patch context does not match the manuscript base.")
+                out.append(base[pos])
+                pos += 1
+                old_seen += 1
+                new_seen += 1
+            elif prefix == "-":
+                if pos >= len(base) or base[pos] != text:
+                    sys.exit("Refused: accepted patch deletion does not match the manuscript base.")
+                pos += 1
+                old_seen += 1
+            elif prefix == "+":
+                out.append(text)
+                new_seen += 1
+            else:
+                sys.exit(f"Refused: accepted patch hunk line has invalid prefix {prefix!r}.")
+            i += 1
+        if old_seen != old_count or new_seen != new_count:
+            sys.exit("Refused: accepted patch hunk line counts do not match the unified-diff header.")
+    if not saw_hunk:
+        sys.exit("Refused: accepted patch has no unified-diff hunk.")
+    out.extend(base[pos:])
+    return "".join(out)
+
+
 def _unit_lock_path(work, unit):
     if os.path.basename(unit) != unit or unit in ("", ".", ".."):
         sys.exit(f"Refused: unsafe manuscript unit for lock: {unit!r}.")
@@ -1693,8 +1820,25 @@ def cmd_accept(args):
     if _file_sha256(src) != proposal.get("src_sha256"):
         sys.exit("Refused: proposal source changed before acceptance.")
     _require_source_ref_integrity(work, proposal.get("source_refs", []))
-    lines = _source_lines(src)
-    accepted_ranges, accepted_scope = _parse_line_ranges(getattr(args, "lines", None), len(lines))
+    if getattr(args, "lines", None) and getattr(args, "patch", None):
+        sys.exit("Refused: choose either --lines or --patch for one author decision, not both.")
+    accepted_patch = None
+    if getattr(args, "patch", None):
+        patch_rel = _require_patch_file(work, args.patch)
+        dest = proposal["dest"].replace("/", os.sep)
+        if _dest_base_hash(dest) != proposal.get("base_sha256"):
+            sys.exit("Refused: manuscript base changed before patch acceptance. Re-propose from the current file.")
+        base_text = _read(dest) if os.path.isfile(dest) else ""
+        _apply_unified_patch(base_text, _read(patch_rel), proposal["unit"])
+        accepted_ranges, accepted_scope = None, f"patch {patch_rel}"
+        accepted_patch = {
+            "path": patch_rel,
+            "sha256": _file_sha256(patch_rel),
+            "unit": proposal["unit"],
+        }
+    else:
+        lines = _source_lines(src)
+        accepted_ranges, accepted_scope = _parse_line_ranges(getattr(args, "lines", None), len(lines))
     decision_id = _record_id("decision", work, args.proposal, proposal["src_sha256"])
     decision = {
         "id": decision_id,
@@ -1708,6 +1852,7 @@ def cmd_accept(args):
         "source_refs": proposal.get("source_refs", []),
         "accepted_scope": accepted_scope,
         "accepted_ranges": accepted_ranges,
+        "accepted_patch": accepted_patch,
         "accepted_by": _one_line(args.accepted_by, "author"),
         "acceptance_evidence": evidence,
         "decided_at": now(),
@@ -1762,7 +1907,15 @@ def cmd_write(args):
             rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
             if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
                 sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
-        content = _select_line_ranges(_source_lines(src), decision.get("accepted_ranges"))
+        if decision.get("accepted_patch"):
+            patch = decision["accepted_patch"]
+            patch_path = _require_patch_file(work, patch.get("path"))
+            if _file_sha256(patch_path) != patch.get("sha256"):
+                sys.exit("Refused: accepted patch changed after the author decision.")
+            base_text = _read(dest) if os.path.isfile(dest) else ""
+            content = _apply_unified_patch(base_text, _read(patch_path), patch.get("unit") or unit)
+        else:
+            content = _select_line_ranges(_source_lines(src), decision.get("accepted_ranges"))
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         atomic_write(dest, content)
         log = os.path.join("works", work, ".review", "write-log.md")
@@ -1814,6 +1967,7 @@ def _review_record_integrity_problems(work):
             if problem and problem not in problems:
                 problems.append(problem)
             problems.extend(_source_ref_problems(work, data.get("source_refs", [])))
+            problems.extend(_accepted_patch_problems(work, data))
     return problems
 
 
@@ -2179,6 +2333,7 @@ def main():
     s.add_argument("--accepted-by", default="author")
     s.add_argument("--evidence", default=None, help="verbatim author acceptance text or a stable reference to it")
     s.add_argument("--lines", default=None, help="accepted source line ranges, for example 2,5-8; omit for whole file")
+    s.add_argument("--patch", default=None, help="accepted unified diff under works/<work>/.review/; mutually exclusive with --lines")
     s.set_defaults(fn=cmd_accept)
     s = sub.add_parser("write")
     s.add_argument("work")

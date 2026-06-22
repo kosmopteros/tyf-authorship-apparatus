@@ -2,10 +2,10 @@
 
 ## 0.3.0 hardening
 
-- Keep tightening the Gate: source-line partial acceptance and per-unit write locks are implemented, while semantic hunk-level decisions remain next.
+- Keep tightening the Gate: source-line partial acceptance, exact accepted patch application, and per-unit write locks are implemented; richer visual review and stale-lock recovery remain next.
 - Promote sealed Gate records toward a canonical event stream so the tamper-evident seal log and SQLite event index converge rather than becoming parallel truths.
 - Promote acceptance evidence conventions into templates for Codex, Claude Cowork, and Gemini.
-- Add optional per-language notice detectors on top of the explicit writing-language metadata now stored per work.
+- Add optional per-language notice detectors on top of the explicit writing-language metadata and UTF-8 text path now stored and tested per work.
 - Keep release metadata aligned across Python, Claude, Codex, Cursor, Gemini, and packaged plugin surfaces.
 
 ## v0.4 provenance engine

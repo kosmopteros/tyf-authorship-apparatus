@@ -33,6 +33,9 @@ def check_helper() -> None:
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
     assert "--language" in source, "work creation must expose writing-language metadata"
     assert "language:" in source, "work.yaml must store writing-language metadata"
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    assert "test_start_accepts_non_latin_title_with_stable_generated_id" in tests
+    assert "test_gate_preserves_utf8_manuscript_text_for_declared_language" in tests
 
 
 def check_gate() -> None:
@@ -42,6 +45,8 @@ def check_gate() -> None:
 
     for token in ("cmd_propose", "cmd_accept", "--decision", "--lines", "base_sha256",
                   "src_sha256", "acceptance_evidence", "accepted_ranges",
+                  "--patch", "accepted_patch", "_apply_unified_patch",
+                  "_require_patch_file", "_accepted_patch_problems",
                   "_passing_audit_for", "_require_record_integrity",
                   "record-seals.jsonl", "_acquire_unit_lock", "_release_unit_lock",
                   ".lock.json", "atomic_write"):
@@ -51,6 +56,11 @@ def check_gate() -> None:
     assert "test_write_decision_refuses_out_of_band_edit_after_acceptance" in tests
     assert "test_accept_line_ranges_writes_only_selected_lines" in tests
     assert "test_accept_line_ranges_refuses_invalid_or_out_of_range_selection" in tests
+    assert "test_accept_patch_applies_exact_unified_diff_to_manuscript_base" in tests
+    assert "test_accept_patch_refuses_mixed_line_scope" in tests
+    assert "test_accept_patch_refuses_hunk_count_mismatch" in tests
+    assert "test_write_refuses_tampered_accepted_patch_file" in tests
+    assert "test_doctor_flags_missing_accepted_patch_file" in tests
     assert "test_write_refuses_tampered_decision_record" in tests
     assert "test_write_refuses_tampered_audit_record" in tests
     assert "test_doctor_flags_tampered_gate_record" in tests
@@ -62,6 +72,7 @@ def check_gate() -> None:
     assert "record-seals.jsonl" in controlling
     assert "lock" in controlling.lower()
     assert "--lines" in controlling
+    assert "--patch" in controlling
 
 
 def check_provenance() -> None:

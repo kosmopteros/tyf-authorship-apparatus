@@ -191,6 +191,158 @@ class CLIBehaviour(unittest.TestCase):
              "--evidence", "Alexander: accept this"], ws)
         self.assertNotEqual(rc, 0, "line ranges must preserve source order")
 
+    def test_accept_patch_applies_exact_unified_diff_to_manuscript_base(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="Alpha\nBeta\nGamma\n")
+        first = self.gate_decision(ws, src=src, unit="chapter.md")
+        self.assertEqual(run_tyf(["write", "demo", "--decision", first], ws)[0], 0)
+
+        (ws / "works/demo/drafts/chapter.md").write_text(
+            "Alpha\nBeta revised\nGamma\nDelta\n", encoding="utf-8")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        patches = ws / "works/demo/.review/patches"
+        patches.mkdir(parents=True, exist_ok=True)
+        patch_path = patches / "chapter.patch"
+        patch_path.write_text(
+            "--- a/chapter.md\n"
+            "+++ b/chapter.md\n"
+            "@@ -1,3 +1,4 @@\n"
+            " Alpha\n"
+            "-Beta\n"
+            "+Beta revised\n"
+            " Gamma\n"
+            "+Delta\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
+             "--evidence", "Alexander: accept this exact patch"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        decision_data = json.loads(
+            (ws / "works/demo/.review/decisions" / f"{decision}.json").read_text(encoding="utf-8"))
+        self.assertEqual(decision_data["accepted_scope"], "patch works/demo/.review/patches/chapter.patch")
+        self.assertEqual(decision_data["accepted_patch"]["path"], "works/demo/.review/patches/chapter.patch")
+
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertEqual(rc, 0, out)
+        manuscript = (ws / "works/demo/manuscript/chapter.md").read_text(encoding="utf-8")
+        self.assertEqual(manuscript, "Alpha\nBeta revised\nGamma\nDelta\n")
+        log = (ws / "works/demo/.review/write-log.md").read_text(encoding="utf-8")
+        self.assertIn("Accepted scope: patch works/demo/.review/patches/chapter.patch", log)
+
+    def test_accept_patch_refuses_mixed_line_scope(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="one\ntwo\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        patches = ws / "works/demo/.review/patches"
+        patches.mkdir(parents=True, exist_ok=True)
+        (patches / "chapter.patch").write_text(
+            "--- a/chapter.md\n+++ b/chapter.md\n@@ -0,0 +1,1 @@\n+one\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--lines", "1",
+             "--patch", "works/demo/.review/patches/chapter.patch",
+             "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "patch acceptance and line-range acceptance must be mutually exclusive")
+        self.assertRegex(out.lower(), r"patch|lines|exclusive|choose")
+
+    def test_accept_patch_refuses_hunk_count_mismatch(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="one\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        patches = ws / "works/demo/.review/patches"
+        patches.mkdir(parents=True, exist_ok=True)
+        (patches / "chapter.patch").write_text(
+            "--- a/chapter.md\n+++ b/chapter.md\n@@ -0,0 +1,3 @@\n+one\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
+             "--evidence", "Alexander: accept this exact patch"], ws)
+        self.assertNotEqual(rc, 0, "patch acceptance must reject malformed hunk counts")
+        self.assertRegex(out.lower(), r"hunk|count|patch")
+
+    def test_write_refuses_tampered_accepted_patch_file(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="Alpha\nBeta\n")
+        first = self.gate_decision(ws, src=src, unit="chapter.md")
+        self.assertEqual(run_tyf(["write", "demo", "--decision", first], ws)[0], 0)
+        (ws / "works/demo/drafts/chapter.md").write_text("Alpha\nBeta revised\n", encoding="utf-8")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        patches = ws / "works/demo/.review/patches"
+        patches.mkdir(parents=True, exist_ok=True)
+        patch_path = patches / "chapter.patch"
+        patch_path.write_text(
+            "--- a/chapter.md\n+++ b/chapter.md\n@@ -1,2 +1,2 @@\n Alpha\n-Beta\n+Beta revised\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
+             "--evidence", "Alexander: accept this patch"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        patch_path.write_text(
+            "--- a/chapter.md\n+++ b/chapter.md\n@@ -1,2 +1,2 @@\n Alpha\n-Beta\n+Different edit\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "write must refuse a patch file changed after acceptance")
+        self.assertRegex(out.lower(), r"patch|changed|hash|tamper")
+        self.assertEqual((ws / "works/demo/manuscript/chapter.md").read_text(encoding="utf-8"),
+                         "Alpha\nBeta\n")
+
+    def test_doctor_flags_missing_accepted_patch_file(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="Alpha\nBeta\n")
+        first = self.gate_decision(ws, src=src, unit="chapter.md")
+        self.assertEqual(run_tyf(["write", "demo", "--decision", first], ws)[0], 0)
+        (ws / "works/demo/drafts/chapter.md").write_text("Alpha\nBeta revised\n", encoding="utf-8")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        patches = ws / "works/demo/.review/patches"
+        patches.mkdir(parents=True, exist_ok=True)
+        patch_path = patches / "chapter.patch"
+        patch_path.write_text(
+            "--- a/chapter.md\n+++ b/chapter.md\n@@ -1,2 +1,2 @@\n Alpha\n-Beta\n+Beta revised\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
+             "--evidence", "Alexander: accept this patch"], ws)
+        self.assertEqual(rc, 0, out)
+        patch_path.unlink()
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag accepted patch files that vanish after the decision")
+        self.assertRegex(out.lower(), r"patch|missing|integrity")
+
     def test_write_refuses_tampered_decision_record(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
@@ -744,6 +896,20 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Writing language: Portuguese", starter)
         self.assertIn("Writing language: Portuguese", style)
         self.assertIn("Writing language: Portuguese", out)
+
+    def test_gate_preserves_utf8_manuscript_text_for_declared_language(self):
+        ws = self.ws()
+        rc, out = run_tyf(["new-work", "demo", "--language", "Japanese"], ws)
+        self.assertEqual(rc, 0, out)
+        text = "第一章\n声はここにある。\nРусская строка тоже жива.\n"
+        src = self.make_draft(ws, name="chapter.md", text=text)
+        decision = self.gate_decision(ws, src=src, unit="chapter.md")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn('language: "Japanese"',
+                      (ws / "works/demo/work.yaml").read_text(encoding="utf-8"))
+        self.assertEqual((ws / "works/demo/manuscript/chapter.md").read_text(encoding="utf-8"),
+                         text)
 
     def test_user_yaml_values_are_safely_quoted(self):
         ws = self.ws()

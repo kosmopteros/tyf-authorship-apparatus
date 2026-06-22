@@ -8,7 +8,8 @@ Release label: "Today Mode".
 - Today Mode creates or reuses a titleless active work, writes `.review/today.md`, creates `drafts/today-draft.md`, and confirms no manuscript text was written.
 - `tyf today <path>` preserves a cold-start scaffold, chat, folder, old workspace, or zip through the existing import/orientation lane before opening the writing runway.
 - Re-centered public docs and Cowork prompts around truthful drafting today: title, final structure, and audit readiness are non-blocking for candidate prose.
-- Expanded the helper smoke suite to 98 tests and SOLO Be coverage to 58 scenarios.
+- Added a proper Codex book-repo skill surface: Codex installs target `$CODEX_HOME/skills` or `~/.codex/skills`, `using-tyf` has Codex UI metadata, and root/generated `AGENTS.md` contexts route new-book work through `tyf today`.
+- Expanded the helper smoke suite to 100 tests and SOLO Be coverage to 62 scenarios.
 
 ## 0.4.0
 

@@ -20,7 +20,7 @@ This means Markdown, YAML, and JSONL are the durable truth. SQLite is an index, 
 | Harness | Plugin / extension file | Context file | Skills directory |
 |---|---|---|---|
 | Claude Code | `.claude-plugin/plugin.json` (+ `marketplace.json`) | `CLAUDE.md` | `~/.claude/skills/` |
-| Codex | `.codex-plugin/plugin.json` | `AGENTS.md` | `~/.agents/skills/` |
+| Codex | `.codex-plugin/plugin.json` | `AGENTS.md` | `$CODEX_HOME/skills` or `~/.codex/skills/` |
 | Cursor | `.cursor-plugin/plugin.json` | `AGENTS.md` | Cursor skills dir |
 | Gemini CLI | `gemini-extension.json` | `GEMINI.md` | extension dir |
 | OpenCode | `.opencode/INSTALL.md` | `AGENTS.md` | OpenCode skills dir |
@@ -48,6 +48,14 @@ tyf
 ```
 
 Then select Install Plugin.
+
+For manual Codex use, copy the TYF skills into `$CODEX_HOME/skills` or `~/.codex/skills/`:
+
+```
+bash scripts/install.sh codex
+```
+
+That installs the global dispatcher skill (`using-tyf`). A book repository still needs its local workspace context: run `tyf init <workspace-name>` in or near the book repo, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf today` rather than a title-gated setup.
 
 **Cursor** (agent chat):
 

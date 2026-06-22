@@ -447,6 +447,19 @@ def run_doc_check(root=None):
             if "machinist" in line.lower():
                 problems.append(f"{rel}:{i}: stale role terminology 'machinist' (canon role: amanuensis)")
 
+    # 9. Today Mode is now the author-facing writing-session front door. Routing
+    #    surfaces must not quietly restore the old title-gated setup.
+    for p in _iter_files(root, (".md", ".json", ".sh")):
+        rel = os.path.relpath(p, root)
+        if rel in _dead_ref_exempt:
+            continue
+        for i, line in _iter_pack_lines(p):
+            if 'tyf start "Working Title"' in line or "after getting a title" in line:
+                problems.append(
+                    f"{rel}:{i}: title-gated Today Mode drift "
+                    "(use `tyf today` or `tyf today <path>` before drafting)"
+                )
+
     return problems, notes
 
 def _print_check(problems, notes, quiet=False):

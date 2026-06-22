@@ -3,7 +3,7 @@
 # Usage:
 #   bash scripts/install.sh                 # interactive: pick a harness
 #   bash scripts/install.sh claude          # ~/.claude/skills
-#   bash scripts/install.sh codex           # ~/.agents/skills
+#   bash scripts/install.sh codex           # ${CODEX_HOME:-~/.codex}/skills
 #   bash scripts/install.sh cursor          # ~/.cursor/skills
 #   bash scripts/install.sh /custom/path    # any explicit skills directory
 #
@@ -18,7 +18,7 @@ BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 resolve_target() {
   case "${1:-}" in
     claude)  echo "$HOME/.claude/skills" ;;
-    codex)   echo "$HOME/.agents/skills" ;;
+    codex)   echo "${CODEX_HOME:-$HOME/.codex}/skills" ;;
     cursor)  echo "$HOME/.cursor/skills" ;;
     "")      echo "" ;;
     *)       echo "$1" ;;

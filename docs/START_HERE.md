@@ -7,7 +7,7 @@ TYF is for people writing books, essays, talks, courses, or newsletters with an 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
 
-Install or load the TYF skills for Codex, read `using-tyf`, and help me start writing my new book today. Set up the workspace, but do not block on a title or writing language; ask if either matters now, then keep moving. If I bring existing material, preserve it first. Run `tyf today` or `tyf today <path>` for my scaffold/chat/folder/zip, show me the orientation and writing runway, then ask only the questions needed to begin one candidate passage. Do not write manuscript text yet; candidate prose belongs in `drafts/today-draft.md`. If you use git, make recovery points explicit and never commit silently.
+Install or load the TYF skills for Codex into `$CODEX_HOME/skills` or `~/.codex/skills`, read `using-tyf`, and help me start writing my new book today. Set up the workspace so this repo has its local `AGENTS.md`, but do not block on a title or writing language; ask if either matters now, then keep moving. If I bring existing material, preserve it first. Run `tyf today` or `tyf today <path>` for my scaffold/chat/folder/zip, show me the orientation and writing runway, then ask only the questions needed to begin one candidate passage. Do not write manuscript text yet; candidate prose belongs in `drafts/today-draft.md`. If you use git, make recovery points explicit and never commit silently.
 ```
 
 ## Paste Into Claude Cowork

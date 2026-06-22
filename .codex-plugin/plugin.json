@@ -1,7 +1,7 @@
 {
   "name": "tyf",
   "version": "0.4.1",
-  "description": "A faithful apparatus for authorship. Skills install into the Codex agent skills directory (~/.agents/skills/). The author is the source; TYF never becomes the writer.",
+  "description": "A faithful apparatus for authorship. Skills install into $CODEX_HOME/skills or ~/.codex/skills for Codex. The author is the source; TYF never becomes the writer.",
   "author": {
     "name": "TYF",
     "url": "https://github.com/kosmopteros/tyf-authorship-apparatus"

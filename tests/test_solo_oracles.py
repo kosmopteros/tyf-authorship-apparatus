@@ -195,6 +195,30 @@ def check_plugin() -> None:
     assert (ROOT / "skills").is_dir()
 
 
+def check_codex_skill() -> None:
+    manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    install = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
+    portability = (ROOT / "docs" / "PORTABILITY.md").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    openai_yaml = ROOT / "skills" / "using-tyf" / "agents" / "openai.yaml"
+    contexts = [(ROOT / name).read_text(encoding="utf-8") for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md")]
+
+    assert manifest["version"] == "0.4.1"
+    assert manifest["skills"] == "./skills/"
+    assert '${CODEX_HOME:-$HOME/.codex}/skills' in install
+    assert "~/.codex/skills/" in portability
+    assert "$CODEX_HOME/skills" in portability
+    assert openai_yaml.is_file()
+    metadata = openai_yaml.read_text(encoding="utf-8")
+    assert "display_name:" in metadata
+    assert "default_prompt:" in metadata
+    assert "$using-tyf" in metadata
+    assert "tyf today" in using
+    assert all("tyf today" in text for text in contexts)
+    assert not any('tyf start "Working Title"' in text for text in contexts)
+    assert not any("after getting a title" in text for text in contexts)
+
+
 def check_onboarding() -> None:
     start_here = (ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -229,13 +253,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "today-mode", "portability"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "today-mode", "portability"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
         check_helper()
     elif args.oracle == "plugin":
         check_plugin()
+    elif args.oracle == "codex-skill":
+        check_codex_skill()
     elif args.oracle == "provenance":
         check_provenance()
     elif args.oracle == "amanuensis-entry":

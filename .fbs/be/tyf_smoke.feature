@@ -289,3 +289,23 @@ Feature: TYF helper smoke suite
   Scenario: Codex plugin remains installable as a writing apparatus
     When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
     Then Exit code is 0
+
+  @covers:tyf-codex-skill-book-repo @bind-file:.codex-plugin/plugin.json @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @bind-file:scripts/install.sh @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:docs/PORTABILITY.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: Codex skill surface routes book repos through Today Mode
+    When Run "python tests/test_solo_oracles.py codex-skill"
+    Then Exit code is 0
+
+  @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Codex skill doc honesty catches stale install and title routing
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_title_gated_today_mode_drift Installer.test_codex_install_targets_current_skill_root -v"
+    Then Exit code is 0
+
+  @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @tool-check:cli
+  Scenario: Codex dispatcher skill validates as a skill
+    When Run "python C:/Users/maste/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/using-tyf"
+    Then Exit code is 0
+
+  @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Codex book-repo contexts stay Today Mode aligned
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_workspace_context_contracts DocCheck.test_repo_pack_is_clean -v"
+    Then Exit code is 0

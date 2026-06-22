@@ -79,6 +79,8 @@ bash scripts/install.sh claude     # or: codex | cursor | <explicit path>
 
 Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) where your harness reads session context.
 
+For Codex specifically, TYF has two layers. Install the TYF skills once into `$CODEX_HOME/skills` or `~/.codex/skills` so `$using-tyf` is available. Then, inside each book repo, `tyf init` writes the local `AGENTS.md` workspace contract so Codex entering that repo knows to run `tyf today` or `tyf today <path>` before drafting.
+
 ## The helper
 
 `tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. The public entrypoint for an author who wants to write today is simple:

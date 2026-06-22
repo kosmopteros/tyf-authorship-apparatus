@@ -1,6 +1,6 @@
 {
   "name": "tyf",
-  "version": "0.3.0",
+  "version": "0.4.1",
   "description": "A faithful apparatus for authorship. Contextual, portable authorship skills akin to Superpowers. The author is the source; TYF never becomes the writer.",
   "license": "MIT",
   "keywords": ["authorship", "writing", "editing", "voice", "claude", "codex", "cursor", "gemini", "opencode", "skills"],

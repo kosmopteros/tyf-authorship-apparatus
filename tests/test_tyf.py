@@ -1530,6 +1530,20 @@ class DocCheck(unittest.TestCase):
                             or "typographer" in p.lower() for p in problems),
                         f"expected a terminology-drift problem, got {problems}")
 
+    def test_check_flags_title_gated_today_mode_drift(self):
+        root = self.min_pack()
+        stale = (
+            "# Context\n\n"
+            "If the author says start my book, run `tyf start \"Working Title\"` "
+            "after getting a title.\n"
+        )
+        for name in ("CLAUDE.md", "AGENTS.md", "GEMINI.md"):
+            (root / name).write_text(stale, encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("today mode" in p.lower() or "title-gated" in p.lower()
+                            for p in problems),
+                        f"expected a title-gated Today Mode drift problem, got {problems}")
+
 
 class PackRoot(unittest.TestCase):
     def test_pack_root_env_override(self):
@@ -1562,6 +1576,11 @@ class Installer(unittest.TestCase):
         out = p.stdout + p.stderr
         self.assertEqual(p.returncode, 0, out)
         self.assertIn("skill directories", out)
+
+    def test_codex_install_targets_current_skill_root(self):
+        script = (REPO / "scripts" / "install.sh").read_text(encoding="utf-8")
+        self.assertIn('${CODEX_HOME:-$HOME/.codex}/skills', script)
+        self.assertNotIn('$HOME/.agents/skills', script)
 
 
 class UpdateCheck(unittest.TestCase):

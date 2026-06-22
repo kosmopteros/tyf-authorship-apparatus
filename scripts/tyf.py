@@ -9,7 +9,7 @@ Commands:
                                           only missing structure, never clobbers)
   tyf status                              active work, band, write control, write zones
   tyf new-work <id> [--type T] [--register R]
-  tyf start ["Working Title"] [--id work-id]
+  tyf start ["Working Title"] [--id work-id]   advanced compatibility setup
                                           writer-facing first book/session entrypoint
   tyf today [path]                       open today's writing runway, optionally
                                           preserving an arrival first
@@ -442,6 +442,29 @@ def run_doc_check(root=None):
                     _json.load(f)
             except Exception as e:
                 problems.append(f"{j}: invalid JSON ({e})")
+
+    manifest_versions = {}
+    for p in _iter_files(root, (".json",)):
+        rel = os.path.relpath(p, root).replace(os.sep, "/")
+        if not rel.endswith("plugin.json"):
+            continue
+        if not ("/.claude-plugin/" in f"/{rel}" or "/.codex-plugin/" in f"/{rel}"
+                or "/.cursor-plugin/" in f"/{rel}" or rel.startswith("plugin/")):
+            continue
+        try:
+            with open(p, encoding="utf-8") as f:
+                data = _json.load(f)
+        except Exception:
+            continue
+        version = data.get("version")
+        if version:
+            manifest_versions.setdefault(str(version), []).append(rel)
+    if len(manifest_versions) > 1:
+        detail = "; ".join(
+            f"{version}: {', '.join(paths)}"
+            for version, paths in sorted(manifest_versions.items())
+        )
+        problems.append(f"plugin manifest version divergence ({detail})")
 
     # 6. no em-dash in prose except the canonical [AUTHOR: needed — what] token
     for p in _iter_files(root, (".md",)):
@@ -1086,6 +1109,70 @@ def cmd_new_work(args):
     log_event(".", "new-work", args.id, f"type={args.type} language={_one_line(args.language, 'undetermined')}")
     print(f"Created work: {base} (type={args.type}, language={_one_line(args.language, 'undetermined')})")
 
+
+def _update_work_metadata(work_id, work_type=None, title=None, language=None):
+    work_path = _work_path(work_id, "work.yaml")
+    if not os.path.isfile(work_path):
+        return
+    title = _one_line(title)
+    language = _one_line(language)
+    work_type = _one_line(work_type)
+    if not (title or language or work_type):
+        return
+    current = read_state(work_path)
+    raw = open(work_path, encoding="utf-8").read().splitlines()
+    out = []
+    saw_title = saw_title_status = saw_language = saw_type = False
+    for ln in raw:
+        if ln.startswith("title:"):
+            out.append(f"title: {_yaml_scalar(title)}" if title else ln)
+            saw_title = True
+        elif ln.startswith("title_status:"):
+            status = "working" if title else get(current, "title_status", default="unknown")
+            out.append(f"title_status: {_yaml_scalar(status)}")
+            saw_title_status = True
+        elif ln.startswith("language:"):
+            out.append(f"language: {_yaml_scalar(language or get(current, 'language', default='undetermined'))}")
+            saw_language = True
+        elif ln.startswith("type:"):
+            out.append(f"type: {_yaml_scalar(work_type)}" if work_type else ln)
+            saw_type = True
+        else:
+            out.append(ln)
+    insert_at = 2 if len(out) >= 2 else len(out)
+    if work_type and not saw_type:
+        out.insert(1 if out else 0, f"type: {_yaml_scalar(work_type)}")
+        insert_at += 1
+    if title and not saw_title:
+        out.insert(insert_at, f"title: {_yaml_scalar(title)}")
+        insert_at += 1
+    if not saw_title_status:
+        out.insert(insert_at, f"title_status: {_yaml_scalar('working' if title else 'unknown')}")
+        insert_at += 1
+    if not saw_language:
+        out.insert(insert_at, f"language: {_yaml_scalar(language or 'undetermined')}")
+    atomic_write(work_path, "\n".join(out) + "\n")
+
+    if language:
+        style_path = _work_path(work_id, "style-sheet.md")
+        if os.path.isfile(style_path):
+            lines = open(style_path, encoding="utf-8").read().splitlines()
+            refreshed = []
+            changed = False
+            for ln in lines:
+                if ln.startswith("Writing language:"):
+                    refreshed.append(f"Writing language: {language}")
+                    changed = True
+                else:
+                    refreshed.append(ln)
+            if not changed:
+                refreshed.insert(2 if len(refreshed) >= 2 else len(refreshed),
+                                 f"Writing language: {language}")
+                changed = True
+            if changed:
+                atomic_write(style_path, "\n".join(refreshed) + "\n")
+
+
 def _create_work(work_id, work_type="book", register=None, title=None,
                  language=None, activate_if_none=False, activate=False):
     if work_id == ROOT_WORK_ID and os.path.isfile("work.yaml"):
@@ -1098,35 +1185,7 @@ def _create_work(work_id, work_type="book", register=None, title=None,
         language = _one_line(language, None)
         title = _one_line(title)
         if title or language:
-            current = read_state("work.yaml")
-            raw = open("work.yaml", encoding="utf-8").read().splitlines()
-            out = []
-            saw_title = saw_title_status = saw_language = False
-            for ln in raw:
-                if ln.startswith("title:"):
-                    if title:
-                        out.append(f"title: {_yaml_scalar(title)}")
-                    else:
-                        out.append(ln)
-                    saw_title = True
-                elif ln.startswith("title_status:"):
-                    out.append(f"title_status: {_yaml_scalar('working' if title else get(current, 'title_status', default='unknown'))}")
-                    saw_title_status = True
-                elif ln.startswith("language:"):
-                    out.append(f"language: {_yaml_scalar(language or get(current, 'language', default='undetermined'))}")
-                    saw_language = True
-                elif ln.startswith("type:"):
-                    out.append(f"type: {_yaml_scalar(work_type)}")
-                else:
-                    out.append(ln)
-            if title and not saw_title:
-                insert = 2 if len(out) >= 2 else len(out)
-                out.insert(insert, f"title: {_yaml_scalar(title)}")
-            if not saw_title_status:
-                out.append(f"title_status: {_yaml_scalar('working' if title else 'unknown')}")
-            if not saw_language:
-                out.append(f"language: {_yaml_scalar(language or 'undetermined')}")
-            atomic_write("work.yaml", "\n".join(out) + "\n")
+            _update_work_metadata(work_id, work_type=work_type, title=title, language=language)
         if activate or activate_if_none:
             _set_active(work_id)
         return ".", _one_line(register, "(elicit at least one register before composing)")
@@ -1251,6 +1310,85 @@ Active work: `{work_id}`
 - The manuscript stays empty until an explicit controlled write.
 """)
     return starter, seed, runway
+
+
+def _ensure_first_session_packet(work_id, title=None, language=None):
+    wy = read_state(_work_path(work_id, "work.yaml"))
+    label = _one_line(title, get(wy, "title") or work_id)
+    language = _one_line(language, get(wy, "language") or "undetermined")
+    base = _work_base(work_id)
+    _ensure_real_dir(os.path.join("sources", "interviews"), "sources/interviews/")
+    _ensure_real_dir(os.path.join(base, "outline"), "outline/")
+    starter = os.path.join("sources", "interviews", f"{work_id}-first-session.md")
+    seed = os.path.join(base, "outline", "seed.md")
+    if not os.path.exists(starter):
+        write(starter, f"""# First-session evidence: {label}
+
+This is an author-owned first-session packet. It is source/interview evidence, not candidate prose. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
+
+Writing language: {language}
+
+## What is already true
+
+- [PROMPT: name the lived pressure, question, or image that makes this book necessary]
+
+## Source fragments
+
+- [PROMPT: paste notes, memories, observations, phrases, or cited material]
+
+## Voice samples
+
+- [PROMPT: lines that sound like the book, even if they are rough]
+
+## Open questions
+
+- [PROMPT: what must be elicited before drafting]
+
+## Candidate draft target
+
+- No manuscript text here yet. Candidate prose may be drafted later in `drafts/` only after source, register, and structure are present.
+""")
+    else:
+        lines = open(starter, encoding="utf-8").read().splitlines()
+        refreshed = []
+        changed = False
+        saw_language = False
+        for ln in lines:
+            if ln.startswith("Writing language:"):
+                saw_language = True
+                replacement = f"Writing language: {language}"
+                refreshed.append(replacement)
+                changed = changed or ln != replacement
+            else:
+                refreshed.append(ln)
+        if not saw_language:
+            refreshed.insert(2 if len(refreshed) >= 2 else len(refreshed),
+                             f"Writing language: {language}")
+            changed = True
+        if changed:
+            atomic_write(starter, "\n".join(refreshed) + "\n")
+    if not os.path.exists(seed):
+        write(seed, f"""# Seed outline: {label}
+
+## Working promise
+
+- [PROMPT: what this book is trying to make thinkable or feelable]
+
+## Central pressure
+
+- [PROMPT: the tension, contradiction, wound, demand, or question]
+
+## Source inventory
+
+- [PROMPT: sources already available]
+- [PROMPT: sources still missing]
+
+## Possible first unit
+
+- [PROMPT: scene, argument, vignette, letter, chapter, or fragment]
+""")
+    return starter, seed
+
 
 def cmd_begin(args):
     _require_workspace()
@@ -1507,19 +1645,22 @@ def _active_work_id():
 
 
 def _work_for_arrival(args):
+    title = _one_line(getattr(args, "title", None))
+    language = getattr(args, "language", None)
     if getattr(args, "work", None):
         work_id = _safe_work_id(args.work)
         _confine_work(work_id)
         _require_work(work_id)
+        _update_work_metadata(work_id, title=title, language=language)
         return work_id, False
     active = _active_work_id()
     if active:
+        _update_work_metadata(active, title=title, language=language)
         return active, False
-    title = _one_line(getattr(args, "title", None))
     work_id = ROOT_WORK_ID if os.path.isfile("work.yaml") else _safe_work_id(_slugify_title(title) if title else _untitled_work_id())
     _confine_work(work_id)
-    _create_work(work_id, "book", title=title, language=getattr(args, "language", None), activate=True)
-    _write_begin_packet(work_id, title, getattr(args, "language", None))
+    _create_work(work_id, "book", title=title, language=language, activate=True)
+    _write_begin_packet(work_id, title, language)
     return work_id, True
 
 
@@ -1698,19 +1839,22 @@ def cmd_import(args):
 
 
 def _work_for_today(args):
+    title = _one_line(getattr(args, "title", None))
+    language = getattr(args, "language", None)
     if getattr(args, "work", None):
         work_id = _safe_work_id(args.work)
         _confine_work(work_id)
         _require_work(work_id)
+        _update_work_metadata(work_id, title=title, language=language)
         return work_id, False, None
     active = _active_work_id()
     if active:
+        _update_work_metadata(active, title=title, language=language)
         return active, False, None
-    title = _one_line(getattr(args, "title", None))
     work_id = ROOT_WORK_ID if os.path.isfile("work.yaml") else _safe_work_id(_slugify_title(title) if title else _untitled_work_id())
     _confine_work(work_id)
-    _create_work(work_id, "book", title=title, language=getattr(args, "language", None), activate=True)
-    _write_begin_packet(work_id, title, getattr(args, "language", None))
+    _create_work(work_id, "book", title=title, language=language, activate=True)
+    _write_begin_packet(work_id, title, language)
     return work_id, True, None
 
 
@@ -1726,6 +1870,7 @@ def _write_today_runway(work_id, arrival=None):
     runway, draft = _today_paths(work_id)
     orientation = arrival.get("orientation") if arrival else ""
     preserved = arrival.get("preserved") if arrival else ""
+    starter, _seed = _ensure_first_session_packet(work_id)
     write(runway, f"""# Today writing session
 
 Work: `{work_id}`
@@ -1740,13 +1885,15 @@ certainty.
 
 {f"- Arrival orientation: `{orientation.replace(os.sep, '/')}`" if orientation else "- No arrival was provided in this command."}
 {f"- Raw material preserved at: `{preserved.replace(os.sep, '/')}`" if preserved else "- Use the first-session packet and any existing sources."}
+- First-session evidence: `{starter.replace(os.sep, '/')}`
 
 ## Today's Move
 
 1. If there is an arrival orientation, read it first and pick a simple
    organization principle: chronology, voice, scene, question, chapter, or
    source type.
-2. Ask only the questions needed to begin one passage.
+2. Ask only the questions needed to begin one passage, and store the answers in
+   `{starter.replace(os.sep, '/')}`.
 3. Write candidate prose in `{draft.replace(os.sep, "/")}`.
 4. Keep uncertainty visible in brackets rather than solving it silently.
 5. Leave `manuscript/` empty until the author later chooses to pass material
@@ -1897,9 +2044,16 @@ def cmd_open(args):
 def cmd_status(args):
     _require_workspace()
     st = read_state("WORKSPACE_STATE.yaml")
-    print(f"active_work : {get(st,'active_work') or '(none)'}")
+    active = _active_work_id()
+    wy = read_state(_work_path(active, "work.yaml")) if active else {}
+    print(f"active_work : {get(st,'active_work') or active or '(none)'}")
     print(f"active_band : {get(st,'active_band')}")
-    print(f"status      : {get(st,'status')}")
+    print(f"workspace.status : {get(st,'status')}")
+    if active:
+        print(f"work.title      : {get(wy,'title') or '(unknown)'}")
+        print(f"work.title_status: {get(wy,'title_status') or 'unknown'}")
+        print(f"work.language    : {get(wy,'language') or 'undetermined'}")
+        print(f"work.status      : {get(wy,'status') or 'unknown'}")
     print(f"write.compose: {get(st,'write_control','compose')}")
     print(f"write.revise : {get(st,'write_control','revise')}")
     works = [ROOT_WORK_ID] if os.path.isfile("work.yaml") else []
@@ -2400,6 +2554,72 @@ def cmd_propose(args):
     print("Next: record an audit and author decision before writing.")
 
 
+def _review_rel(path):
+    rel = path.replace(os.sep, "/")
+    return rel[2:] if rel.startswith("./") else rel
+
+
+def _write_audit_report(work, audit_id, audit, proposal):
+    report_path = _work_path(work, ".review", "audits", f"{audit_id}.md")
+    _ensure_real_dir(os.path.dirname(report_path), ".review/audits/")
+    src_refs = audit.get("source_refs", [])
+    src_ref_lines = "\n".join(
+        f"- `{ref.get('id')}` from `{ref.get('path')}`"
+        for ref in src_refs
+    ) or "- No source refs were attached to this proposal."
+    findings = (
+        "- No blocking findings recorded by this helper invocation."
+        if audit.get("verdict") == "pass" and audit.get("findings_answered")
+        else "- Add findings here before this audit can support acceptance."
+    )
+    dispositions = (
+        "- Blocking findings disposition: answered, fixed, or explicitly accepted with reason."
+        if audit.get("findings_answered")
+        else "- Blocking findings disposition: not answered."
+    )
+    write(report_path, f"""# Audit report: {audit_id}
+
+Work: `{work}`
+Unit: `{audit.get('unit')}`
+Proposal: `{audit.get('proposal_id')}`
+Verdict: `{audit.get('verdict')}`
+Recorded: `{audit.get('recorded_at')}`
+
+This is the inspectable editorial audit note. The JSON record carries the Gate facts; this note carries the author-readable review shape.
+
+## Proposal
+
+- Draft: `{proposal.get('src')}`
+- Destination: `{proposal.get('dest')}`
+- Proposal hash: `{audit.get('proposal_hash')}`
+
+## Source refs
+
+{src_ref_lines}
+
+## Checks
+
+- [x] Source fidelity: compare candidate prose against preserved source and attached source refs.
+- [x] Voice/register: compare candidate prose against the work style sheet and voice evidence.
+- [x] Unsupported claims: identify facts, citations, or interpretations not grounded in source.
+- [x] Open gaps: keep unresolved knowledge visible instead of smoothing it away.
+
+## Findings
+
+{findings}
+
+## Limitations
+
+- The helper records that this audit shape exists; the agent and author remain responsible for the editorial judgment inside it.
+- If later review finds an issue, record it here or in a superseding audit note before acceptance.
+
+## Dispositions
+
+{dispositions}
+""")
+    return _review_rel(report_path)
+
+
 def cmd_audit(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
@@ -2427,11 +2647,13 @@ def cmd_audit(args):
             "findings_answered": bool(getattr(args, "findings_answered", False)),
             "recorded_at": now(),
         }
+        audit["report"] = _write_audit_report(args.work, audit_id, audit, proposal)
         _write_review_record(args.work, "audits", "audit", audit_id, audit)
         _set_work_status(args.work, "audited" if args.verdict == "pass" else "needs-revision")
         log_event(".", "audit", f"{args.work}/{audit_id}", f"proposal={args.proposal} verdict={args.verdict}")
         print(f"Audit: {audit_id}")
         print(f"  verdict: {args.verdict}")
+        print(f"  report: {audit['report']}")
         return
     print(f"Audit checklist for {args.work} / {args.unit} (read-only; write findings to .review/):")
     for item in ["frame-lock", "unsupported claims (check claims index)", "hidden assumptions",
@@ -3016,7 +3238,7 @@ def main():
     s = sub.add_parser("init"); s.add_argument("name"); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
     s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.add_argument("--language", default=None); s.set_defaults(fn=cmd_new_work)
-    s = sub.add_parser("start", help="plain-language first book/session entrypoint")
+    s = sub.add_parser("start", help="advanced first-session compatibility setup")
     s.add_argument("title", nargs="?")
     s.add_argument("--id", default=None, help="optional stable work id; otherwise slugged from title")
     s.add_argument("--type", default="book")
@@ -3027,8 +3249,8 @@ def main():
     s.add_argument("path", nargs="?", help="optional chat, folder, old workspace, or zip to preserve before writing")
     s.add_argument("--kind", choices=("auto", "source", "chat", "bundle", "dump", "transcript", "note"), default="auto")
     s.add_argument("--work", default=None, help="existing work id; defaults to active work or creates an untitled work")
-    s.add_argument("--title", default=None, help="working title if a new work must be created")
-    s.add_argument("--language", default=None, help="writing language label if a new work must be created")
+    s.add_argument("--title", default=None, help="working title to record on the active or newly created work")
+    s.add_argument("--language", default=None, help="writing language label to record on the active or newly created work")
     s.set_defaults(fn=cmd_today)
     s = sub.add_parser("begin", help="create and open a first-session work packet")
     s.add_argument("id")
@@ -3041,8 +3263,8 @@ def main():
     s.add_argument("path")
     s.add_argument("--kind", choices=("auto", "source", "chat", "bundle", "dump", "transcript", "note"), default="auto")
     s.add_argument("--work", default=None, help="existing work id; defaults to active work or creates an untitled work")
-    s.add_argument("--title", default=None, help="working title if a new work must be created")
-    s.add_argument("--language", default=None, help="writing language label if a new work must be created")
+    s.add_argument("--title", default=None, help="working title to record on the active or newly created work")
+    s.add_argument("--language", default=None, help="writing language label to record on the active or newly created work")
     s.set_defaults(fn=cmd_import)
     s = sub.add_parser("capture", help="append author source, voice, claim, or question material")
     s.add_argument("work")

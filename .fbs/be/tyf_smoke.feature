@@ -2,7 +2,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper happy path supports first writing session
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_plain_language_front_door_for_new_book CLIBehaviour.test_write_with_decision_copies_and_logs -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_advanced_first_session_compatibility_path CLIBehaviour.test_write_with_decision_copies_and_logs -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
@@ -18,6 +18,16 @@ Feature: TYF helper smoke suite
   @covers:tyf-work-state-machine-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: helper advances work status through proposal audit accept write
     When Run "python tests/test_tyf.py CLIBehaviour.test_gate_updates_work_status_across_transitions -v"
+    Then Exit code is 0
+
+  @covers:tyf-work-state-machine-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: status reports the active work state from work yaml
+    When Run "python tests/test_tyf.py CLIBehaviour.test_status_reports_active_work_status_from_work_yaml -v"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: audit record writes an inspectable editorial note
+    When Run "python tests/test_tyf.py CLIBehaviour.test_audit_record_writes_inspectable_editorial_note -v"
     Then Exit code is 0
 
   @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
@@ -100,6 +110,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_today_without_arrival_opens_titleless_writing_runway -v"
     Then Exit code is 0
 
+  @covers:tyf-today-mode-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: today mode preserves title language and first-session evidence
+    When Run "python tests/test_tyf.py CLIBehaviour.test_today_updates_root_title_language_and_evidence_packet -v"
+    Then Exit code is 0
+
   @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
   Scenario: today mode preserves a cold-start scaffold before drafting
     When Run "python tests/test_tyf.py CLIBehaviour.test_today_with_folder_arrival_preserves_scaffold_and_opens_runway -v"
@@ -140,6 +155,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py single-work"
     Then Exit code is 0
 
+  @covers:tyf-single-work-beta-contract @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: start remains an advanced compatibility path not the public beta front door
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_advanced_first_session_compatibility_path -v"
+    Then Exit code is 0
+
   @covers:tyf-doc-drift-command-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check accepts the current repo pack
     When Run "python tests/test_tyf.py DocCheck.test_repo_pack_is_clean -v"
@@ -158,6 +178,11 @@ Feature: TYF helper smoke suite
   @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check flags stale role terminology
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_role_terminology_drift -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags plugin manifest version divergence
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_plugin_manifest_version_divergence -v"
     Then Exit code is 0
 
   @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
@@ -217,7 +242,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper keeps first-day setup source-first and recoverable
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_plain_language_front_door_for_new_book CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_advanced_first_session_compatibility_path CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli

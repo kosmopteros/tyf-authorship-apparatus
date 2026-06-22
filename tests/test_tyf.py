@@ -199,6 +199,26 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertEqual(self.work_status(ws), "written")
 
+    def test_audit_record_writes_inspectable_editorial_note(self):
+        ws = self.ws()
+        (ws / "drafts" / "chapter.md").write_text("A candidate passage from preserved source.\n", encoding="utf-8")
+        rc, out = run_tyf(["propose", "work", "--from", "drafts/chapter.md"], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+
+        rc, out = run_tyf(
+            ["audit", "work", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        audit = re.search(r"Audit:\s+(\S+)", out).group(1)
+        note = ws / ".review" / "audits" / f"{audit}.md"
+        self.assertTrue(note.is_file(), "audit --record should create a human-readable editorial note")
+        text = note.read_text(encoding="utf-8")
+        for label in ("Source fidelity", "Voice/register", "Unsupported claims", "Open gaps", "Findings", "Dispositions"):
+            self.assertIn(label, text)
+        record = json.loads((ws / ".review" / "audits" / f"{audit}.json").read_text(encoding="utf-8"))
+        self.assertEqual(record.get("report"), f".review/audits/{audit}.md")
+
     def test_accept_refuses_before_passing_audit_state(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)
@@ -1069,7 +1089,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertNotEqual(rc, 0, "capture must bind source to an existing work")
         self.assertFalse((ws / "sources" / "notes" / "missing.md").exists())
 
-    def test_start_is_plain_language_front_door_for_new_book(self):
+    def test_start_is_advanced_first_session_compatibility_path(self):
         ws = self.ws()
         rc, out = run_tyf(["start", "The New Book"], ws)
         self.assertEqual(rc, 0, out)
@@ -1084,7 +1104,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("I created the TYF workspace packet", out)
         self.assertIn("Next, ask the author", out)
         self.assertIn("No manuscript text was written", out)
-        self.assertNotIn("tyf capture", out, "public start should not hand users a command list")
+        self.assertNotIn("tyf capture", out, "advanced start should still avoid handing authors a command list")
 
     def test_start_allows_no_title_and_keeps_intake_non_blocking(self):
         ws = self.ws()
@@ -1188,6 +1208,9 @@ class CLIBehaviour(unittest.TestCase):
         orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
         self.assertTrue(any("notes/opening.md" in p.read_text(encoding="utf-8") for p in orientation))
         self.assertEqual(work_id, "work")
+        work_yaml = (ws / "work.yaml").read_text(encoding="utf-8")
+        self.assertIn('title: "Imported Kin"', work_yaml)
+        self.assertIn('title_status: "working"', work_yaml)
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_import_folder_preserves_tree_and_lists_without_live_merge(self):
@@ -1244,14 +1267,32 @@ class CLIBehaviour(unittest.TestCase):
         self.assertTrue(draft.is_file())
         self.assertIn("Today writing session", runway.read_text(encoding="utf-8"))
         self.assertIn("Do not wait for a title", runway.read_text(encoding="utf-8"))
+        self.assertIn("sources/interviews/work-first-session.md", runway.read_text(encoding="utf-8"))
         self.assertIn("Start drafting here", draft.read_text(encoding="utf-8"))
         self.assertIn('title_status: "unknown"', (ws / "work.yaml").read_text(encoding="utf-8"))
+        starter = ws / "sources" / "interviews" / "work-first-session.md"
+        self.assertTrue(starter.is_file())
+        self.assertIn("author-owned first-session packet", starter.read_text(encoding="utf-8"))
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
         self.assertFalse((ws / "works").exists())
         self.assertIn("Today writing session", out)
         self.assertIn("No manuscript text was written", out)
         self.assertIn("Draft runway", out)
         self.assertNotIn("Work id:", out)
+
+    def test_today_updates_root_title_language_and_evidence_packet(self):
+        ws = self.ws()
+        rc, out = run_tyf(["today", "--title", "My Great Book", "--language", "English"], ws)
+        self.assertEqual(rc, 0, out)
+        work_yaml = (ws / "work.yaml").read_text(encoding="utf-8")
+        self.assertIn('title: "My Great Book"', work_yaml)
+        self.assertIn('title_status: "working"', work_yaml)
+        self.assertIn('language: "English"', work_yaml)
+        starter = (ws / "sources" / "interviews" / "work-first-session.md").read_text(encoding="utf-8")
+        self.assertIn("Writing language: English", starter)
+        runway = (ws / ".review" / "today.md").read_text(encoding="utf-8")
+        self.assertIn("sources/interviews/work-first-session.md", runway)
+        self.assertIn("No manuscript text was written", out)
 
     def test_today_with_folder_arrival_preserves_scaffold_and_opens_runway(self):
         ws = self.ws()
@@ -1272,12 +1313,23 @@ class CLIBehaviour(unittest.TestCase):
         runway = (ws / ".review" / "today.md").read_text(encoding="utf-8")
         draft = (ws / "drafts" / "today-draft.md").read_text(encoding="utf-8")
         self.assertIn("Arrival orientation", runway)
+        self.assertIn("sources/interviews/work-first-session.md", runway)
         self.assertIn("organization principle", runway)
         self.assertIn("Start drafting here", draft)
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
         self.assertFalse((ws / "works").exists())
         self.assertIn("Arrival orientation", out)
         self.assertIn("Next: write in", out)
+
+    def test_status_reports_active_work_status_from_work_yaml(self):
+        ws = self.ws()
+        raw = (ws / "work.yaml").read_text(encoding="utf-8")
+        (ws / "work.yaml").write_text(raw.replace("status: structuring", "status: written"), encoding="utf-8")
+        rc, out = run_tyf(["status"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("workspace.status : intake", out)
+        self.assertIn("work.status      : written", out)
+        self.assertIn("work.language    : undetermined", out)
 
     def test_beta_today_arrival_uses_root_book_folder(self):
         self.test_today_with_folder_arrival_preserves_scaffold_and_opens_runway()
@@ -1571,6 +1623,20 @@ class DocCheck(unittest.TestCase):
         self.assertTrue(any("today mode" in p.lower() or "title-gated" in p.lower()
                             for p in problems),
                         f"expected a title-gated Today Mode drift problem, got {problems}")
+
+    def test_check_flags_plugin_manifest_version_divergence(self):
+        root = self.min_pack()
+        for rel, version in (
+                (".claude-plugin/plugin.json", "0.5.0"),
+                (".codex-plugin/plugin.json", "0.5.0"),
+                ("plugin/.claude-plugin/plugin.json", "0.3.0")):
+            path = root / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"name": "tyf", "version": version}) + "\n", encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("manifest version" in p.lower() or "version divergence" in p.lower()
+                            for p in problems),
+                        f"expected manifest version divergence, got {problems}")
 
 
 class PackRoot(unittest.TestCase):

@@ -60,7 +60,7 @@ def check_gate() -> None:
                   "src_sha256", "acceptance_evidence", "accepted_ranges",
                   "--patch", "accepted_patch", "_apply_unified_patch",
                   "_require_patch_file", "_accepted_patch_problems",
-                  "_passing_audit_for", "_require_record_integrity",
+                  "_passing_audit_for", "_require_record_integrity", "_write_audit_report",
                   "record-seals.jsonl", "_acquire_unit_lock", "_release_unit_lock",
                   ".lock.json", "atomic_write", "_set_work_status",
                   "_require_work_status", "ready-for-audit", "needs-revision",
@@ -84,6 +84,7 @@ def check_gate() -> None:
     assert "test_write_refuses_existing_manuscript_unit_lock" in tests
     assert "test_doctor_flags_manuscript_unit_lock" in tests
     assert "test_gate_updates_work_status_across_transitions" in tests
+    assert "test_audit_record_writes_inspectable_editorial_note" in tests
     assert "test_accept_refuses_before_passing_audit_state" in tests
     assert "test_accept_refuses_after_failed_audit_state" in tests
     assert "test_accept_requires_audit_for_the_same_proposal" in tests
@@ -155,10 +156,11 @@ def check_today_mode() -> None:
 
     for token in ("cmd_today", "_write_today_runway", "Today writing session",
                   "today-draft.md", "No manuscript text was written",
-                  "let the Gate come later"):
+                  "let the Gate come later", "sources/interviews"):
         assert token in source, f"today mode runtime missing {token}"
     assert '"today"' in source, "today must be event-journal protected"
     assert "test_today_without_arrival_opens_titleless_writing_runway" in tests
+    assert "test_today_updates_root_title_language_and_evidence_packet" in tests
     assert "test_today_with_folder_arrival_preserves_scaffold_and_opens_runway" in tests
     assert "tyf today" in using
     assert "tyf today" in readme

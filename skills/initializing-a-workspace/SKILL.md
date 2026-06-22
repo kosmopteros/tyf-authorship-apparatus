@@ -18,7 +18,7 @@ Scaffold first, then elicit, then write the substrate. Do not draft, and do not 
 1. **Scaffold.** Create the `workspace/` tree (see `working-the-workspace`). Prefer the helper: `tyf init <name>`. Init is idempotent: it creates only missing structure and never overwrites existing files, so it safely heals a partial workspace. It also initializes apparatus memory: `.tyf/events.jsonl` for the hash-chained action journal and `.tyf/ledger.db` for the derived notice index. Run `tyf doctor --repair` any time to restore missing structure. Write `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, and the router/standing-instructions file.
 2. **Run intake.** Invoke `ingesting-sources` for any material the author brings, then `interviewing-the-author` for tacit knowledge, thesis, and registers.
 3. **Seed the substrate.** Write at least one register to the voice registers via `managing-voice`, seed the knowledge base via `structuring-knowledge`, and start the redactor canon and the running style sheet via `keeping-the-redactor-canon`.
-4. **Open Today Mode.** For a book that needs to start today, prefer `tyf today`; if the author brings existing material, run `tyf today <path>`. The helper creates or reuses the root single work, keeps unknown title/language non-blocking, preserves arrivals through the import lane, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. Use `tyf start` only when you need the lower-level first-session packet without opening a draft runway.
+4. **Open Today Mode.** For a book that needs to start today, prefer `tyf today`; if the author brings existing material, run `tyf today <path>`. The helper creates or reuses the root single work, records any supplied title/language, creates or reuses `sources/interviews/work-first-session.md`, preserves arrivals through the import lane, writes `.review/today.md`, and creates `drafts/today-draft.md` for candidate prose. Use `tyf start` only as an advanced compatibility setup command.
 5. **Preserve arrivals.** Today Mode already preserves a provided path. If material arrives later, run `tyf import <path>` before analyzing it. Text/chat imports preserve the raw file and can mint source fragments. Zip and folder imports are containment-first: read the orientation packet, classify contents, propose an organization principle, and ask before moving anything into sources, knowledge, voice, drafts, or manuscript.
 6. **Set state.** Record the active work and band in `WORKSPACE_STATE.yaml`, gates closed. If the author wants recoverability and recall, initialize git for the workspace and use `tyf snapshot --message "..."` at session boundaries. TYF may report git status, but it never commits silently.
 
@@ -46,7 +46,7 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 tyf init <workspace-name>       # scaffold the tree and state files
 tyf today [path]                # preserve an optional arrival and open today's writing runway
 tyf start ["Working Title"] --language "<writing language>"
-                               # create the first-session packet and ask source questions
+                               # advanced compatibility setup, not the public front door
 tyf import <path>               # preserve existing material and create an orientation packet
 tyf resume                      # recover active work, state, prompts, and next move
 tyf status                      # confirm what exists

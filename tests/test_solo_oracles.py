@@ -19,7 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 def check_helper() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     required = {
-        "start", "today", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
+        "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
         "audit", "accept", "adopt", "write", "doctor", "check",
     }
     missing = sorted(
@@ -27,7 +27,7 @@ def check_helper() -> None:
         if f'add_parser("{command}"' not in source
     )
     assert not missing, f"missing TYF commands: {missing}"
-    for handler in ("cmd_start", "cmd_today", "cmd_begin", "cmd_import", "cmd_capture", "cmd_resume",
+    for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_accept",
                     "cmd_adopt"):
         assert f"def {handler}(" in source, f"missing {handler}"
@@ -38,7 +38,7 @@ def check_helper() -> None:
                   "previous_hash", "hash chain"):
         assert token in source, f"canonical event journal missing {token}"
     tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
-    assert "test_start_accepts_non_latin_title_with_stable_generated_id" in tests
+    assert "test_start_records_non_latin_title_without_id_gate" in tests
     assert "test_start_allows_no_title_and_keeps_intake_non_blocking" in tests
     assert "test_init_creates_portable_workspace_marker" in tests
     assert "test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment" in tests
@@ -148,22 +148,26 @@ def check_amanuensis_entry() -> None:
     assert "organization principle" in ingesting.lower()
 
 
-def check_today_mode() -> None:
+def check_writing_runway() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
     using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    for token in ("cmd_today", "_write_today_runway", "Today writing session",
-                  "today-draft.md", "No manuscript text was written",
+    for token in ("cmd_start", "_write_start_runway", "Writing runway",
+                  "candidate-draft.md", "No manuscript text was written",
                   "let the Gate come later", "sources/interviews"):
-        assert token in source, f"today mode runtime missing {token}"
-    assert '"today"' in source, "today must be event-journal protected"
-    assert "test_today_without_arrival_opens_titleless_writing_runway" in tests
-    assert "test_today_updates_root_title_language_and_evidence_packet" in tests
-    assert "test_today_with_folder_arrival_preserves_scaffold_and_opens_runway" in tests
-    assert "tyf today" in using
-    assert "tyf today" in readme
+        assert token in source, f"writing runway runtime missing {token}"
+    assert "cmd_today" not in source, "today command must not survive as an alias"
+    assert '"today"' not in source.replace('"tyf today"', ""), "today must not be event-journal protected"
+    assert "test_start_without_arrival_opens_titleless_writing_runway" in tests
+    assert "test_start_updates_root_title_language_and_evidence_packet" in tests
+    assert "test_start_with_folder_arrival_preserves_scaffold_and_opens_runway" in tests
+    assert "test_today_command_is_removed" in tests
+    assert "tyf start" in using
+    assert "tyf start" in readme
+    assert "tyf today" not in using
+    assert "tyf today" not in readme
     assert "write today" in readme.lower() or "writing today" in readme.lower()
 
 
@@ -205,14 +209,14 @@ def check_single_work() -> None:
         '"manuscript/"',
         "ROOT_WORK_ID",
         "test_init_creates_single_work_root_layout",
-        "test_today_without_arrival_opens_titleless_writing_runway",
+        "test_start_without_arrival_opens_titleless_writing_runway",
     ):
         assert token in source or token in tests, f"single-work runtime/test missing {token}"
 
     for path in public_files:
         text = path.read_text(encoding="utf-8")
         assert "single work" in text.lower() or "book folder" in text.lower(), f"{path} does not describe the single-work beta surface"
-        assert "drafts/today-draft.md" in text or "drafts/" in text, f"{path} does not point to root drafts"
+        assert "drafts/candidate-draft.md" in text or "drafts/" in text, f"{path} does not point to root drafts"
         assert "works/<id>" not in text, f"{path} still exposes works/<id> as public beta shape"
         assert "works/*/drafts" not in text, f"{path} still exposes multi-work draft glob"
 
@@ -247,8 +251,10 @@ def check_codex_skill() -> None:
     assert "display_name:" in metadata
     assert "default_prompt:" in metadata
     assert "$using-tyf" in metadata
-    assert "tyf today" in using
-    assert all("tyf today" in text for text in contexts)
+    assert "tyf start" in using
+    assert all("tyf start" in text for text in contexts)
+    assert "tyf today" not in using
+    assert not any("tyf today" in text for text in contexts)
     assert not any('tyf start "Working Title"' in text for text in contexts)
     assert not any("after getting a title" in text for text in contexts)
 
@@ -263,10 +269,10 @@ def check_onboarding() -> None:
     assert "## Paste Into Codex" in start_here
     assert "## Paste Into Claude Cowork" in start_here
     assert "do not block on a title" in start_here.lower()
-    assert "tyf today <path>" in start_here
+    assert "tyf start <path>" in start_here
     assert "[docs/START_HERE.md]" in readme
     assert "do not hand them a command list" in using.lower()
-    assert "tyf today" in init
+    assert "tyf start" in init
     assert "tyf import <path>" in init
     assert "Use TYF to help me start writing my new book today" in cowork
     assert "writing language" in start_here.lower()
@@ -287,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "today-mode", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -300,8 +306,8 @@ def main(argv: list[str] | None = None) -> int:
         check_provenance()
     elif args.oracle == "amanuensis-entry":
         check_amanuensis_entry()
-    elif args.oracle == "today-mode":
-        check_today_mode()
+    elif args.oracle == "writing-runway":
+        check_writing_runway()
     elif args.oracle == "portability":
         check_portability()
     elif args.oracle == "single-work":

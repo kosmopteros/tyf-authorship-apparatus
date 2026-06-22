@@ -30,8 +30,8 @@
     ],
     "websiteURL": "https://github.com/kosmopteros/tyf-authorship-apparatus",
     "defaultPrompt": [
-      "Start writing today with TYF, even without a title: set up the workspace, run `tyf today`, and open the candidate draft runway.",
-      "Bring in a scaffold, chat, folder, or zip with `tyf today <path>` so it is preserved before drafting.",
+      "Start writing today with TYF, even without a title: set up the workspace, run `tyf start`, and open the candidate draft runway.",
+      "Bring in a scaffold, chat, folder, or zip with `tyf start <path>` so it is preserved before drafting.",
       "Audit a chapter before manuscript."
     ],
     "brandColor": "#415A77"

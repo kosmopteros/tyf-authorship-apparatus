@@ -16,10 +16,10 @@ Do not jump to drafting when the work is still source, knowledge, voice, structu
 When an author says "start my book", "new essay series", "set up TYF", or similar, do not hand them a command list. Load `initializing-a-workspace`, create or enter the workspace, and run the helper yourself. Prefer:
 
 ```
-tyf today
+tyf start
 ```
 
-If the author brings a chat export, zip, folder, scaffold, or prior project dump, run `tyf today <path>` so the arrival is preserved and the orientation packet is linked into today's runway. If there is no arrival, run `tyf today`. The book folder is the single work; do not make the author choose or manage work ids. Do not block on title, final structure, or audit readiness. After the helper runs, tell the author what was created, confirm that no manuscript text was written, and begin from `drafts/today-draft.md` with only the questions needed for one candidate passage. Keep advanced commands such as `start`, `begin`, `capture`, `import`, `adopt`, `snapshot`, and `write` as agent tools, not as the author's first interface.
+If the author brings a chat export, zip, folder, scaffold, or prior project dump, run `tyf start <path>` so the arrival is preserved and the orientation packet is linked into the writing runway. If there is no arrival, run `tyf start`. The book folder is the single work; do not make the author choose or manage work ids. Do not block on title, final structure, or audit readiness. After the helper runs, tell the author what was created, confirm that no manuscript text was written, and begin from `drafts/candidate-draft.md` with only the questions needed for one candidate passage. Keep commands such as `begin`, `capture`, `import`, `adopt`, `snapshot`, and `write` as agent tools, not as the author's first interface.
 
 ## Selection order
 

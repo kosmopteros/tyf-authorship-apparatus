@@ -9,9 +9,7 @@ Commands:
                                           only missing structure, never clobbers)
   tyf status                              active work, band, write control, write zones
   tyf new-work <id> [--type T] [--register R]
-  tyf start ["Working Title"] [--id work-id]   advanced compatibility setup
-                                          writer-facing first book/session entrypoint
-  tyf today [path]                       open today's writing runway, optionally
+  tyf start [path] [--title T]           open the writing runway, optionally
                                           preserving an arrival first
   tyf begin <id> [--title T] [--register R]
                                           create a first-session packet for a book
@@ -48,7 +46,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
   docs/ATTENTIVENESS.md.
 
 Documentation-honesty hook
-  Every mutating command (init, new-work, start, today, begin, import, capture,
+  Every mutating command (init, new-work, start, begin, import, capture,
   propose, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
@@ -281,7 +279,7 @@ def _confine_work(work):
 def _require_work(work):
     """Refuse a command that operates on a work that does not exist."""
     if not os.path.isfile(_work_path(work, "work.yaml")):
-        sys.exit(f"Refused: no work {work!r} ({_work_display_path(work, 'work.yaml')} not found). Run `tyf today` in the book folder first.")
+        sys.exit(f"Refused: no work {work!r} ({_work_display_path(work, 'work.yaml')} not found). Run `tyf start` in the book folder first.")
 
 
 def _work_yaml_path(work):
@@ -330,7 +328,7 @@ _DEAD_SKILL_IDS = [
 ]
 
 # CLI commands that were renamed. A live reference is drift.
-_DEAD_COMMANDS = ["tyf gate", "--apply <draft>", "fire-devils-reader", "tyf write --confirm"]
+_DEAD_COMMANDS = ["tyf gate", "--apply <draft>", "fire-devils-reader", "tyf write --confirm", "tyf today"]
 
 def _pack_root():
     """The pack root. Honors TYF_PACK_ROOT (set this when the helper is installed
@@ -406,6 +404,7 @@ def run_doc_check(root=None):
         "VALIDATION.md",
         os.path.join("scripts", "tyf.py"),
         os.path.join("tests", "test_tyf.py"),
+        os.path.join("tests", "test_solo_oracles.py"),
     }
     for p in _iter_files(root, (".md", ".sh", ".yaml", ".yml", ".py", ".json")):
         rel = os.path.relpath(p, root)
@@ -497,17 +496,21 @@ def run_doc_check(root=None):
             if "machinist" in line.lower():
                 problems.append(f"{rel}:{i}: stale role terminology 'machinist' (canon role: amanuensis)")
 
-    # 9. Today Mode is now the author-facing writing-session front door. Routing
-    #    surfaces must not quietly restore the old title-gated setup.
+    # 9. The writing runway is the author-facing session front door. Routing
+    #    surfaces must not quietly restore the accidental Today Mode name or
+    #    the old title-gated setup.
     for p in _iter_files(root, (".md", ".json", ".sh")):
         rel = os.path.relpath(p, root)
         if rel in _dead_ref_exempt:
             continue
         for i, line in _iter_pack_lines(p):
-            if 'tyf start "Working Title"' in line or "after getting a title" in line:
+            low = line.lower()
+            if ("tyf today" in line or "Today Mode" in line or "today-draft.md" in line
+                    or ".review/today.md" in line or 'tyf start "Working Title"' in line
+                    or "after getting a title" in line):
                 problems.append(
-                    f"{rel}:{i}: title-gated Today Mode drift "
-                    "(use `tyf today` or `tyf today <path>` before drafting)"
+                    f"{rel}:{i}: stale writing-runway routing "
+                    "(use `tyf start` or `tyf start <path>` before drafting)"
                 )
 
     return problems, notes
@@ -982,8 +985,8 @@ def _required_structure(root):
 
 This is an author-owned TYF workspace. This book folder is the single work.
 
-- If the author says "start my book" or wants to write today, use `tyf today`; a title can stay unknown.
-- If the author brings existing material, use `tyf today <path>` to preserve it and open the writing runway before drafting.
+- If the author says "start my book" or wants a first writing session, use `tyf start`; a title can stay unknown.
+- If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; pass relevant ids to `tyf propose --source-ref <id>`.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
@@ -1098,7 +1101,7 @@ def cmd_init(args):
     else:
         print("  structure already complete; nothing to create")
     if not existed:
-        print("Next: run `tyf today` to open the writing runway in this book folder.")
+        print("Next: run `tyf start` to open the writing runway in this book folder.")
 
 def cmd_new_work(args):
     _require_workspace()
@@ -1239,7 +1242,7 @@ def _write_begin_packet(work_id, title=None, language=None):
     _ensure_real_dir(os.path.join("sources", "interviews"), "sources/interviews/")
     starter = os.path.join("sources", "interviews", f"{work_id}-first-session.md")
     seed = os.path.join(base, "outline", "seed.md")
-    runway = os.path.join(base, ".review", "today.md")
+    runway = os.path.join(base, ".review", "first-session.md")
     if os.path.exists(starter):
         sys.exit(f"Refused: first-session packet already exists: {starter}")
     write(starter, f"""# Start here: {label}
@@ -1291,7 +1294,7 @@ Writing language: {language}
 
 Active work: `{work_id}`
 
-## Today's loop
+## First-session loop
 
 1. Fill `{starter.replace(os.sep, "/")}` with the author's material.
 2. Capture short source, voice, claim, or question notes with `tyf capture`.
@@ -1408,28 +1411,23 @@ def cmd_begin(args):
 
 def cmd_start(args):
     _require_workspace()
-    title = _one_line(args.title)
-    work_id = _safe_work_id(args.id or (_slugify_title(title) if title else _untitled_work_id()))
-    _confine_work(work_id)
-    base, _reg = _create_work(work_id, args.type, args.register,
-                              language=args.language,
-                              title=title, activate=True)
-    starter, seed, runway = _write_begin_packet(work_id, title, args.language)
-    log_event(".", "start", work_id, f"starter={starter} language={_one_line(args.language, 'undetermined')}")
-    label = title if title else "an untitled work"
-    print(f"I created the TYF workspace packet for {label!r}.")
-    print(f"  Work id: {work_id}")
-    print(f"  Title status: {'working' if title else 'unknown'}")
-    print(f"  Writing language: {_one_line(args.language, 'undetermined')}")
-    print(f"  Start here: {starter}")
-    print(f"  Seed outline: {seed}")
-    print(f"  Session runway: {runway}")
+    arrival = None
+    if getattr(args, "path", None):
+        arrival = _import_arrival(args, announce=False)
+        work_id = arrival["work_id"]
+    else:
+        work_id, _created, _unused = _work_for_start(args)
+    runway, draft = _write_start_runway(work_id, arrival)
+    log_event(".", "start", work_id, f"runway={runway} draft={draft}")
+    print("Writing runway opened.")
+    print("  Work: this book folder")
+    if arrival:
+        print(f"  Preserved arrival: {arrival['preserved']}")
+        print(f"  Arrival orientation: {arrival['orientation']}")
+    print(f"  Runway: {runway}")
+    print(f"  Draft runway: {draft}")
     print("No manuscript text was written.")
-    print("Next, ask the author:")
-    print("  1. What pressure, question, image, or wound makes this book necessary?")
-    print("  2. What source material should we preserve before drafting?")
-    print("  3. What lines or writers sound close to the desired voice?")
-    print("Keep answers in the source/interview packet. Draft candidates only after source and register are present.")
+    print(f"Next: write in {draft.replace(os.sep, '/')}; keep uncertainty visible, and let the Gate come later.")
 
 _CAPTURE_TARGETS = {
     "source": ("sources", "notes"),
@@ -1838,7 +1836,7 @@ def cmd_import(args):
     _import_arrival(args, announce=True)
 
 
-def _work_for_today(args):
+def _work_for_start(args):
     title = _one_line(getattr(args, "title", None))
     language = getattr(args, "language", None)
     if getattr(args, "work", None):
@@ -1858,26 +1856,26 @@ def _work_for_today(args):
     return work_id, True, None
 
 
-def _today_paths(work_id):
+def _start_paths(work_id):
     return (
-        _work_path(work_id, ".review", "today.md"),
-        _work_path(work_id, "drafts", "today-draft.md"),
+        _work_path(work_id, ".review", "writing-runway.md"),
+        _work_path(work_id, "drafts", "candidate-draft.md"),
     )
 
 
-def _write_today_runway(work_id, arrival=None):
+def _write_start_runway(work_id, arrival=None):
     _require_work(work_id)
-    runway, draft = _today_paths(work_id)
+    runway, draft = _start_paths(work_id)
     orientation = arrival.get("orientation") if arrival else ""
     preserved = arrival.get("preserved") if arrival else ""
     starter, _seed = _ensure_first_session_packet(work_id)
-    write(runway, f"""# Today writing session
+    write(runway, f"""# Writing runway
 
 Work: `{work_id}`
 
 ## Purpose
 
-Start writing today from the author's actual material. Do not wait for a title,
+Start writing from the author's actual material. Do not wait for a title,
 complete outline, perfect classification, audit readiness, or publication-grade
 certainty.
 
@@ -1887,7 +1885,7 @@ certainty.
 {f"- Raw material preserved at: `{preserved.replace(os.sep, '/')}`" if preserved else "- Use the first-session packet and any existing sources."}
 - First-session evidence: `{starter.replace(os.sep, '/')}`
 
-## Today's Move
+## Session Move
 
 1. If there is an arrival orientation, read it first and pick a simple
    organization principle: chronology, voice, scene, question, chapter, or
@@ -1904,37 +1902,16 @@ certainty.
 - Unknown title is acceptable.
 - Unknown final structure is acceptable.
 - Imperfect scaffold organization is acceptable.
-- Drafting today is allowed; manuscript publication is later.
+- Drafting is allowed; manuscript publication is later.
 """)
     if not os.path.exists(draft):
-        write(draft, f"""# Today draft
+        write(draft, f"""# Candidate draft
 
 [Start drafting here. Use the preserved scaffold, source packet, interview
 answers, or one remembered image. Keep unresolved facts in brackets.]
 
 """)
     return runway, draft
-
-
-def cmd_today(args):
-    _require_workspace()
-    arrival = None
-    if getattr(args, "path", None):
-        arrival = _import_arrival(args, announce=False)
-        work_id = arrival["work_id"]
-    else:
-        work_id, _created, _unused = _work_for_today(args)
-    runway, draft = _write_today_runway(work_id, arrival)
-    log_event(".", "today", work_id, f"runway={runway} draft={draft}")
-    print("Today writing session opened.")
-    print("  Work: this book folder")
-    if arrival:
-        print(f"  Preserved arrival: {arrival['preserved']}")
-        print(f"  Arrival orientation: {arrival['orientation']}")
-    print(f"  Runway: {runway}")
-    print(f"  Draft runway: {draft}")
-    print("No manuscript text was written.")
-    print(f"Next: write in {draft.replace(os.sep, '/')}; keep uncertainty visible, and let the Gate come later.")
 
 def _git(args):
     import subprocess
@@ -2070,7 +2047,7 @@ def cmd_resume(args):
         work = _active_work_id()
     if not work:
         print("No active work yet.")
-        print("Next useful move: run `tyf today` for an untitled work, or `tyf today <path>` to preserve existing material and open a writing runway.")
+        print("Next useful move: run `tyf start` for an untitled work, or `tyf start <path>` to preserve existing material and open a writing runway.")
         return
     _confine_work(work)
     _require_work(work)
@@ -3217,7 +3194,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "today", "begin", "import", "capture", "open", "mark-ready",
+        "new-work", "start", "begin", "import", "capture", "open", "mark-ready",
         "propose", "accept", "adopt", "write", "snapshot", "dismiss",
     }
 
@@ -3238,20 +3215,13 @@ def main():
     s = sub.add_parser("init"); s.add_argument("name"); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
     s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.add_argument("--language", default=None); s.set_defaults(fn=cmd_new_work)
-    s = sub.add_parser("start", help="advanced first-session compatibility setup")
-    s.add_argument("title", nargs="?")
-    s.add_argument("--id", default=None, help="optional stable work id; otherwise slugged from title")
-    s.add_argument("--type", default="book")
-    s.add_argument("--register", default=None)
-    s.add_argument("--language", default=None, help="writing language label, for example English, Portuguese, Russian, or Japanese")
-    s.set_defaults(fn=cmd_start)
-    s = sub.add_parser("today", help="open today's writing runway, optionally preserving an arrival first")
+    s = sub.add_parser("start", help="open the writing runway, optionally preserving an arrival first")
     s.add_argument("path", nargs="?", help="optional chat, folder, old workspace, or zip to preserve before writing")
     s.add_argument("--kind", choices=("auto", "source", "chat", "bundle", "dump", "transcript", "note"), default="auto")
     s.add_argument("--work", default=None, help="existing work id; defaults to active work or creates an untitled work")
     s.add_argument("--title", default=None, help="working title to record on the active or newly created work")
     s.add_argument("--language", default=None, help="writing language label to record on the active or newly created work")
-    s.set_defaults(fn=cmd_today)
+    s.set_defaults(fn=cmd_start)
     s = sub.add_parser("begin", help="create and open a first-session work packet")
     s.add_argument("id")
     s.add_argument("--type", default="book")
@@ -3341,7 +3311,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "today", "begin", "import", "capture", "propose", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "propose", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

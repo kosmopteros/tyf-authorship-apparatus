@@ -32,7 +32,7 @@ The three context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`) carry identical 
 
 If you use more than one harness, install separately for each.
 
-For non-technical authors, use the paste prompts in `docs/START_HERE.md`. They tell Codex or Claude Cowork to install or load TYF, set up the workspace, run `tyf today` even when the title is unknown, preserve existing material with `tyf today <path>` when it arrives, and open a candidate draft runway before any manuscript write.
+For non-technical authors, use the paste prompts in `docs/START_HERE.md`. They tell Codex or Claude Cowork to install or load TYF, set up the workspace, run `tyf start` even when the title is unknown, preserve existing material with `tyf start <path>` when it arrives, and open a candidate draft runway before any manuscript write.
 
 **Claude Code** (plugin marketplace):
 
@@ -56,7 +56,7 @@ For manual Codex use, copy the TYF skills into `$CODEX_HOME/skills` or `~/.codex
 bash scripts/install.sh codex
 ```
 
-That installs the global dispatcher skill (`using-tyf`). A book repository still needs its local workspace context: run `tyf init <workspace-name>` in or near the book repo, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf today` rather than a title-gated setup.
+That installs the global dispatcher skill (`using-tyf`). A book repository still needs its local workspace context: run `tyf init <workspace-name>` in or near the book repo, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf start` rather than a title-gated setup.
 
 **Cursor** (agent chat):
 

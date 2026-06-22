@@ -79,23 +79,22 @@ bash scripts/install.sh claude     # or: codex | cursor | <explicit path>
 
 Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) where your harness reads session context.
 
-For Codex specifically, TYF has two layers. Install the TYF skills once into `$CODEX_HOME/skills` or `~/.codex/skills` so `$using-tyf` is available. Then, inside each book repo, `tyf init` writes the local `AGENTS.md` workspace contract so Codex entering that repo knows to run `tyf today` or `tyf today <path>` before drafting.
+For Codex specifically, TYF has two layers. Install the TYF skills once into `$CODEX_HOME/skills` or `~/.codex/skills` so `$using-tyf` is available. Then, inside each book repo, `tyf init` writes the local `AGENTS.md` workspace contract so Codex entering that repo knows to run `tyf start` or `tyf start <path>` before drafting.
 
 ## The helper
 
 `tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. The public entrypoint for an author who wants to write today is simple:
 
 ```
-tyf today
+tyf start
 ```
 
-That treats the book folder as the single work, records any supplied working title or writing language, creates `sources/interviews/work-first-session.md`, opens `.review/today.md`, creates `drafts/today-draft.md`, and tells the agent where to start writing candidate prose. If the author brings a chat, folder, scaffold, or zip, use `tyf today <path>` so TYF preserves the arrival first and links the orientation packet into the writing runway. None of this writes manuscript text; it only makes a real writing session possible. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
+That treats the book folder as the single work, records any supplied working title or writing language, creates `sources/interviews/work-first-session.md`, opens `.review/writing-runway.md`, creates `drafts/candidate-draft.md`, and tells the agent where to start writing candidate prose. If the author brings a chat, folder, scaffold, or zip, use `tyf start <path>` so TYF preserves the arrival first and links the orientation packet into the writing runway. None of this writes manuscript text; it only makes a real writing session possible. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
 
 Advanced commands for agents and maintainers:
 
 ```
-tyf init <name>          tyf today [<path>] [--kind dump|chat|bundle|source] [--title <t>] [--language <language>]
-tyf start ["<working title>"] [--id <id>] [--language <language>]  # advanced compatibility
+tyf init <name>          tyf start [<path>] [--kind dump|chat|bundle|source] [--title <t>] [--language <language>]
 tyf begin <id> --title <t> --register <r> [--language <language>]
 tyf import <path> [--kind auto|source|chat|bundle|dump|transcript|note] [--work <id>]
 tyf capture <work> --kind source|voice|claim|question --text <text>
@@ -115,9 +114,9 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf today [path]` is the low-friction way to start writing today without turning TYF into the writer. It can run without a title, treats the book folder as the active single work, records any supplied title or writing language in `work.yaml`, preserves an optional cold-start scaffold through the import/orientation lane, creates or reuses `sources/interviews/work-first-session.md`, writes a session runway at `.review/today.md`, and creates a candidate-prose file at `drafts/today-draft.md`. It explicitly treats title, final structure, and audit readiness as non-blocking for drafting. The Gate comes later, when candidate prose is ready to become manuscript.
+`tyf start [path]` is the low-friction way to start writing today without turning TYF into the writer. It can run without a title, treats the book folder as the active single work, records any supplied title or writing language in `work.yaml`, preserves an optional cold-start scaffold through the import/orientation lane, creates or reuses `sources/interviews/work-first-session.md`, writes a session runway at `.review/writing-runway.md`, and creates a candidate-prose file at `drafts/candidate-draft.md`. It explicitly treats title, final structure, and audit readiness as non-blocking for drafting. The Gate comes later, when candidate prose is ready to become manuscript.
 
-`tyf start` remains an advanced compatibility setup command. It can run without a title, creates an `untitled-...` work when needed, records `title_status: "unknown"` until the author has a working title, opens the work as active, records the writing language in `work.yaml`, and adds a source/interview packet in `sources/interviews/`, a seed outline in `outline/`, and a first-session runway in `.review/`. It may create the advanced multi-work compatibility area, so it is not the public beta front door. Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles fall back to stable generated ids, and TYF preserves UTF-8 source, draft, and manuscript text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
+Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles and UTF-8 source, draft, and manuscript text are preserved as authored text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
 
 `tyf import <path>` is the arrival lane for projects that do not start from zero. Text files and chat exports are preserved under `sources/imports/`, get an orientation packet, and mint source fragments when appropriate. If `--title` or `--language` is supplied while the root work is active, `work.yaml` is updated instead of dropping the answer. Zip and folder arrivals are containment-first: TYF preserves the raw bundle, writes an orientation/triage packet with a listing and analysis questions, and does not unpack or merge it into live workspace directories until the author accepts an organization plan. A TYF-shaped archive is recognized as such in the orientation packet, but it is still reviewed before merging. `tyf status` shows both workspace state and active work title/language/status; `tyf resume` shows the active work, first-session evidence, pending proposals and decisions, open prompts, and the next useful move.
 
@@ -137,7 +136,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/today-draft.md`. The semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. The semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 

@@ -2,7 +2,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper happy path supports first writing session
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_advanced_first_session_compatibility_path CLIBehaviour.test_write_with_decision_copies_and_logs -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway CLIBehaviour.test_write_with_decision_copies_and_logs -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
@@ -100,39 +100,39 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_resume_reports_active_work_state_and_next_useful_move -v"
     Then Exit code is 0
 
-  @covers:tyf-today-mode-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
-  Scenario: today mode structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py today-mode"
+  @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: writing runway structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py writing-runway"
     Then Exit code is 0
 
-  @covers:tyf-today-mode-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
-  Scenario: today mode opens a titleless writing runway
-    When Run "python tests/test_tyf.py CLIBehaviour.test_today_without_arrival_opens_titleless_writing_runway -v"
+  @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: start opens a titleless writing runway
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway -v"
     Then Exit code is 0
 
-  @covers:tyf-today-mode-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: today mode preserves title language and first-session evidence
-    When Run "python tests/test_tyf.py CLIBehaviour.test_today_updates_root_title_language_and_evidence_packet -v"
+  @covers:tyf-writing-runway-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: start preserves title language and first-session evidence
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_updates_root_title_language_and_evidence_packet -v"
     Then Exit code is 0
 
-  @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
-  Scenario: today mode preserves a cold-start scaffold before drafting
-    When Run "python tests/test_tyf.py CLIBehaviour.test_today_with_folder_arrival_preserves_scaffold_and_opens_runway -v"
+  @covers:tyf-writing-runway-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  Scenario: start preserves a cold-start scaffold before drafting
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_with_folder_arrival_preserves_scaffold_and_opens_runway -v"
     Then Exit code is 0
 
-  @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: today mode inherits titleless nonblocking start
+  @covers:tyf-writing-runway-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: writing runway inherits titleless nonblocking start
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_allows_no_title_and_keeps_intake_non_blocking -v"
     Then Exit code is 0
 
-  @covers:tyf-today-mode-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: today mode inherits containment for unorganized arrivals
+  @covers:tyf-writing-runway-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: writing runway inherits containment for unorganized arrivals
     When Run "python tests/test_tyf.py CLIBehaviour.test_import_folder_preserves_tree_and_lists_without_live_merge CLIBehaviour.test_import_tyf_shaped_zip_is_detected_without_merging -v"
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: beta book folder is the single work
-    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_single_work_root_layout CLIBehaviour.test_today_without_arrival_opens_titleless_writing_runway -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_single_work_root_layout CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway -v"
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -141,8 +141,8 @@ Feature: TYF helper smoke suite
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: beta Today Mode keeps cold-start arrivals in the root book folder
-    When Run "python tests/test_tyf.py CLIBehaviour.test_beta_today_arrival_uses_root_book_folder CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment -v"
+  Scenario: beta start keeps cold-start arrivals in the root book folder
+    When Run "python tests/test_tyf.py CLIBehaviour.test_beta_start_arrival_uses_root_book_folder CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment -v"
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -156,8 +156,8 @@ Feature: TYF helper smoke suite
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: start remains an advanced compatibility path not the public beta front door
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_advanced_first_session_compatibility_path -v"
+  Scenario: today command is removed and start is the public beta front door
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_is_not_a_compatibility_alias CLIBehaviour.test_today_command_is_removed -v"
     Then Exit code is 0
 
   @covers:tyf-doc-drift-command-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -242,12 +242,12 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: helper keeps first-day setup source-first and recoverable
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_is_advanced_first_session_compatibility_path CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_positional_title_is_not_a_compatibility_alias CLIBehaviour.test_today_command_is_removed CLIBehaviour.test_capture_records_author_source_without_touching_manuscript CLIBehaviour.test_snapshot_commits_workspace_changes_when_git_repo -v"
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: helper records explicit writing language for multilingual works
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_accepts_non_latin_title_with_stable_generated_id CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_gate_preserves_utf8_manuscript_text_for_declared_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_records_non_latin_title_without_id_gate CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_gate_preserves_utf8_manuscript_text_for_declared_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
     Then Exit code is 0
 
   @covers:tyf-canonical-event-journal-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
@@ -341,13 +341,13 @@ Feature: TYF helper smoke suite
     Then Exit code is 0
 
   @covers:tyf-codex-skill-book-repo @bind-file:.codex-plugin/plugin.json @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @bind-file:scripts/install.sh @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:docs/PORTABILITY.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
-  Scenario: Codex skill surface routes book repos through Today Mode
+  Scenario: Codex skill surface routes book repos through the writing runway
     When Run "python tests/test_solo_oracles.py codex-skill"
     Then Exit code is 0
 
   @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: Codex skill doc honesty catches stale install and title routing
-    When Run "python tests/test_tyf.py DocCheck.test_check_flags_title_gated_today_mode_drift Installer.test_codex_install_targets_current_skill_root -v"
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_stale_writing_runway_routing Installer.test_codex_install_targets_current_skill_root -v"
     Then Exit code is 0
 
   @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @tool-check:cli
@@ -356,6 +356,6 @@ Feature: TYF helper smoke suite
     Then Exit code is 0
 
   @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: Codex book-repo contexts stay Today Mode aligned
+  Scenario: Codex book-repo contexts stay writing-runway aligned
     When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_workspace_context_contracts DocCheck.test_repo_pack_is_clean -v"
     Then Exit code is 0

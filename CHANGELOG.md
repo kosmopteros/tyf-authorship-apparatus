@@ -5,8 +5,8 @@
 Release label: "Single Book Folder".
 
 - Reshaped the beta launch workspace so one folder equals one work: `tyf init` now creates root-level `work.yaml`, `style-sheet.md`, `outline/`, `drafts/`, `manuscript/`, and `.review/` instead of making first-time authors manage `works/<id>`.
-- Updated Today Mode so `tyf today [path]` records supplied title/language metadata, creates or reuses `sources/interviews/work-first-session.md`, opens `.review/today.md`, and creates `drafts/today-draft.md` at the book-folder root, including cold-start folder/chat/zip arrivals.
-- Demoted `tyf start`, `tyf begin`, and `tyf new-work` to advanced compatibility commands rather than the public beta front door.
+- Updated writing runway so `tyf start [path]` records supplied title/language metadata, creates or reuses `sources/interviews/work-first-session.md`, opens `.review/writing-runway.md`, and creates `drafts/candidate-draft.md` at the book-folder root, including cold-start folder/chat/zip arrivals.
+- Removed the accidental today-named public command rather than keeping a compatibility alias; `tyf start [path]` is the single public beta front door.
 - Added inspectable Markdown audit notes beside audit JSON records, active-work status output in `tyf status`, and manifest-version drift detection in `tyf check`; aligned the nested Claude plugin manifest with the active release version.
 - Updated `tyf.portable.json` to `format_version: "0.5.0"` with `single_work: true` and root-level canonical text state.
 - Aligned public onboarding, generated context files, Codex/Claude/Gemini repo contexts, and workspace skills around the single-work beta surface.
@@ -14,13 +14,13 @@ Release label: "Single Book Folder".
 
 ## 0.4.1
 
-Release label: "Today Mode".
+Release label: "writing runway".
 
-- Added `tyf today [path]`, the public writing-session command for authors who need to start today rather than operate the apparatus.
-- Today Mode creates or reuses a titleless active work, writes `.review/today.md`, creates `drafts/today-draft.md`, and confirms no manuscript text was written.
-- `tyf today <path>` preserves a cold-start scaffold, chat, folder, old workspace, or zip through the existing import/orientation lane before opening the writing runway.
+- Added `tyf start [path]`, the public writing-session command for authors who need to start today rather than operate the apparatus.
+- writing runway creates or reuses a titleless active work, writes `.review/writing-runway.md`, creates `drafts/candidate-draft.md`, and confirms no manuscript text was written.
+- `tyf start <path>` preserves a cold-start scaffold, chat, folder, old workspace, or zip through the existing import/orientation lane before opening the writing runway.
 - Re-centered public docs and Cowork prompts around truthful drafting today: title, final structure, and audit readiness are non-blocking for candidate prose.
-- Added a proper Codex book-repo skill surface: Codex installs target `$CODEX_HOME/skills` or `~/.codex/skills`, `using-tyf` has Codex UI metadata, and root/generated `AGENTS.md` contexts route new-book work through `tyf today`.
+- Added a proper Codex book-repo skill surface: Codex installs target `$CODEX_HOME/skills` or `~/.codex/skills`, `using-tyf` has Codex UI metadata, and root/generated `AGENTS.md` contexts route new-book work through `tyf start`.
 - Expanded the helper smoke suite to 100 tests and SOLO Be coverage to 62 scenarios.
 
 ## 0.4.0

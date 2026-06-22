@@ -758,6 +758,7 @@ def _required_structure(root):
     and doctor's repair check."""
     dirs = [
         "sources/uploads", "sources/transcripts", "sources/interviews", "sources/notes",
+        "sources/fragments",
         "knowledge-base/concepts", "knowledge-base/claims", "knowledge-base/examples",
         "knowledge-base/contradictions", "knowledge-base/open-questions",
         "voice/registers", "voice/exemplar-passages",
@@ -769,6 +770,7 @@ This is an author-owned TYF workspace.
 
 - If the author says "start my book" or gives a title, use `tyf start "<working title>"`.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `works/*/drafts/`.
+- `tyf capture --kind source` mints source fragments in `sources/fragments/`; pass relevant ids to `tyf propose --source-ref <id>`.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
 - Use `tyf notice --peek` for read-only inspection and `tyf snapshot --message "..."` only when the author wants an explicit git recovery point.
@@ -1017,6 +1019,172 @@ _CAPTURE_TARGETS = {
 def _capture_path(work_id, kind):
     return os.path.join(*_CAPTURE_TARGETS[kind], f"{work_id}.md")
 
+def _source_text_hash(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _source_fragment_id(text):
+    stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    return f"src-{stamp}-{_source_text_hash(text)[:8]}"
+
+
+def _source_fragment_text_from_file(path):
+    body = _read(path)
+    marker = "\n## Text\n\n"
+    if marker not in body:
+        return None
+    text = body.split(marker, 1)[1]
+    if text.endswith("\n"):
+        text = text[:-1]
+    return text
+
+
+def _source_fragment_integrity_problem(ref, work=None):
+    if not isinstance(ref, dict):
+        return "invalid source fragment reference"
+    frag_id = ref.get("id")
+    if not frag_id or not re.fullmatch(r"src-[A-Za-z0-9._-]+", frag_id):
+        return f"invalid source fragment id: {frag_id!r}"
+    if work and ref.get("work") and ref.get("work") != work:
+        return f"source fragment {frag_id} belongs to {ref.get('work')}, not {work}"
+    rel = ref.get("path") or f"sources/fragments/{frag_id}.md"
+    if os.path.isabs(rel):
+        return f"source fragment {frag_id} uses an absolute path"
+    try:
+        _reject_symlink_components(rel, "source fragment")
+    except SystemExit as e:
+        return str(e)
+    root = os.path.realpath(".")
+    real = os.path.realpath(rel)
+    if not _within(root, real):
+        return f"source fragment {frag_id} resolves outside the workspace"
+    if not os.path.isfile(real):
+        return f"missing source fragment {frag_id}: {rel}"
+    text = _source_fragment_text_from_file(real)
+    if text is None:
+        return f"source fragment {frag_id} has no text section"
+    actual = _source_text_hash(text)
+    suffix = frag_id.rsplit("-", 1)[-1]
+    if re.fullmatch(r"[0-9a-f]{8}", suffix) and actual[:8] != suffix:
+        return f"source fragment {frag_id} id hash mismatch; provenance may be tampered"
+    expected = ref.get("text_sha256")
+    if expected and actual != expected:
+        return f"source fragment {frag_id} hash mismatch; provenance may be tampered"
+    return None
+
+
+def _load_source_fragment_index():
+    path = os.path.join("sources", "fragments.jsonl")
+    entries, problems = {}, []
+    if not os.path.exists(path):
+        return entries, problems
+    try:
+        with open(path, encoding="utf-8") as f:
+            for i, raw in enumerate(f, 1):
+                if not raw.strip():
+                    continue
+                try:
+                    entry = json.loads(raw)
+                except json.JSONDecodeError as e:
+                    problems.append(f"invalid source fragment index line {i}: {e}")
+                    continue
+                frag_id = entry.get("id")
+                if frag_id:
+                    entries[frag_id] = entry
+    except OSError as e:
+        problems.append(f"could not read source fragment index: {e}")
+    return entries, problems
+
+
+def _mint_source_fragment(work_id, kind, title, text):
+    if kind != "source":
+        return None
+    _ensure_real_dir(os.path.join("sources", "fragments"), "source fragments/")
+    frag_id = _source_fragment_id(text)
+    rel = os.path.join("sources", "fragments", f"{frag_id}.md")
+    digest = _source_text_hash(text)
+    title = _one_line(title, kind)
+    captured_at = now()
+    content = (
+        f"# Source fragment: {frag_id}\n\n"
+        f"Work: `{work_id}`\n"
+        f"Kind: `{kind}`\n"
+        f"Title: {title}\n"
+        f"Captured: {captured_at}\n"
+        f"Text sha256: `{digest}`\n\n"
+        "## Text\n\n"
+        f"{text}\n"
+    )
+    atomic_write(rel, content)
+    entry = {
+        "id": frag_id,
+        "work": work_id,
+        "kind": kind,
+        "title": title,
+        "path": rel.replace(os.sep, "/"),
+        "text_sha256": digest,
+        "captured_at": captured_at,
+    }
+    index = os.path.join("sources", "fragments.jsonl")
+    append(index, json.dumps(entry, sort_keys=True, ensure_ascii=False) + "\n")
+    return entry
+
+
+def _normalize_source_ref_ids(values):
+    ids = []
+    for raw in values or []:
+        for part in str(raw).split(","):
+            part = part.strip()
+            if part:
+                ids.append(part)
+    return ids
+
+
+def _resolve_source_refs(work, values):
+    refs = []
+    ids = _normalize_source_ref_ids(values)
+    if not ids:
+        return refs
+    index, problems = _load_source_fragment_index()
+    if problems:
+        sys.exit("Refused: source fragment provenance index is invalid: " + problems[0])
+    seen = set()
+    for frag_id in ids:
+        if frag_id in seen:
+            sys.exit(f"Refused: duplicate source fragment reference: {frag_id}")
+        seen.add(frag_id)
+        if not re.fullmatch(r"src-[A-Za-z0-9._-]+", frag_id):
+            sys.exit(f"Refused: unsafe source fragment id {frag_id!r}.")
+        entry = index.get(frag_id)
+        if entry is None:
+            sys.exit(f"Refused: missing source fragment provenance: {frag_id}")
+        problem = _source_fragment_integrity_problem(entry, work=work)
+        if problem:
+            sys.exit("Refused: " + problem)
+        refs.append({
+            "id": entry["id"],
+            "work": entry.get("work", work),
+            "path": entry["path"],
+            "text_sha256": entry["text_sha256"],
+            "title": entry.get("title", ""),
+        })
+    return refs
+
+
+def _source_ref_problems(work, refs):
+    problems = []
+    for ref in refs or []:
+        problem = _source_fragment_integrity_problem(ref, work=work)
+        if problem:
+            problems.append(f"{work}: {problem}")
+    return problems
+
+
+def _require_source_ref_integrity(work, refs):
+    problems = _source_ref_problems(work, refs)
+    if problems:
+        sys.exit("Refused: " + problems[0])
+
 def cmd_capture(args):
     _require_workspace()
     work_id = _safe_work_id(args.work)
@@ -1029,9 +1197,14 @@ def cmd_capture(args):
     if not os.path.isfile(path):
         write(path, f"# {args.kind.title()} captures: {work_id}\n\n")
     title = _one_line(args.title, args.kind)
+    fragment = _mint_source_fragment(work_id, args.kind, title, text)
     append(path, f"## {now()} - {title}\n\nWork: `{work_id}`\nKind: `{args.kind}`\n\n{text}\n\n")
+    if fragment:
+        append(path, f"Source fragment: `{fragment['id']}` ({fragment['path']})\n\n")
     log_event(".", "capture", f"{work_id}/{args.kind}", path)
     print(f"Captured {args.kind} for {work_id}: {path}")
+    if fragment:
+        print(f"Source fragment: {fragment['id']}")
     print("Next: preserve source, structure knowledge, and keep candidates in drafts/.")
 
 def _git(args):
@@ -1443,6 +1616,7 @@ def cmd_propose(args):
     man = os.path.join("works", work, "manuscript")
     _ensure_real_dir(man, "manuscript/")
     dest = os.path.join(man, dest_name)
+    source_refs = _resolve_source_refs(work, getattr(args, "source_refs", None))
     proposal_id = _record_id("proposal", work, src, _file_sha256(src))
     proposal = {
         "id": proposal_id,
@@ -1454,12 +1628,15 @@ def cmd_propose(args):
         "base_sha256": _dest_base_hash(dest),
         "created_at": now(),
         "accepted_scope": "whole-file",
+        "source_refs": source_refs,
     }
     _write_review_record(work, "proposals", "proposal", proposal_id, proposal)
     log_event(".", "propose", f"{work}/{proposal_id}", src)
     print(f"Proposal: {proposal_id}")
     print(f"  source: {proposal['src']}")
     print(f"  destination: {proposal['dest']}")
+    if source_refs:
+        print("  source refs: " + ", ".join(ref["id"] for ref in source_refs))
     print("Next: record an audit and author decision before writing.")
 
 
@@ -1477,6 +1654,7 @@ def cmd_audit(args):
         proposal_hash = _canonical_hash(proposal)
         if _file_sha256(proposal["src"]) != proposal.get("src_sha256"):
             sys.exit("Refused: proposal source changed before audit.")
+        _require_source_ref_integrity(args.work, proposal.get("source_refs", []))
         audit_id = _record_id("audit", args.work, args.proposal, args.verdict)
         audit = {
             "id": audit_id,
@@ -1484,6 +1662,7 @@ def cmd_audit(args):
             "unit": args.unit,
             "proposal_id": args.proposal,
             "proposal_hash": proposal_hash,
+            "source_refs": proposal.get("source_refs", []),
             "verdict": args.verdict,
             "findings_answered": bool(getattr(args, "findings_answered", False)),
             "recorded_at": now(),
@@ -1513,6 +1692,7 @@ def cmd_accept(args):
     src = proposal["src"]
     if _file_sha256(src) != proposal.get("src_sha256"):
         sys.exit("Refused: proposal source changed before acceptance.")
+    _require_source_ref_integrity(work, proposal.get("source_refs", []))
     lines = _source_lines(src)
     accepted_ranges, accepted_scope = _parse_line_ranges(getattr(args, "lines", None), len(lines))
     decision_id = _record_id("decision", work, args.proposal, proposal["src_sha256"])
@@ -1525,6 +1705,7 @@ def cmd_accept(args):
         "dest": proposal["dest"],
         "src_sha256": proposal["src_sha256"],
         "base_sha256": proposal.get("base_sha256"),
+        "source_refs": proposal.get("source_refs", []),
         "accepted_scope": accepted_scope,
         "accepted_ranges": accepted_ranges,
         "accepted_by": _one_line(args.accepted_by, "author"),
@@ -1560,6 +1741,7 @@ def cmd_write(args):
     src = _require_draft_source(work, src)
     if _file_sha256(src) != decision.get("src_sha256"):
         sys.exit("Refused: accepted source changed after the author decision.")
+    _require_source_ref_integrity(work, decision.get("source_refs", []))
     audit = _passing_audit_for(work, decision["proposal_id"], proposal_hash)
     if audit is None:
         sys.exit("Refused: no passing audit record with answered findings for this proposal.")
@@ -1586,6 +1768,8 @@ def cmd_write(args):
         log = os.path.join("works", work, ".review", "write-log.md")
         append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(dest)}\n- sha256: {digest}\n- Proposal: {decision['proposal_id']}\n- Decision: {decision['id']}\n- Audit: {audit['id']}\n")
         append(log, f"- Accepted scope: {decision.get('accepted_scope', 'whole-file')}\n")
+        if decision.get("source_refs"):
+            append(log, "- Source refs: " + ", ".join(ref["id"] for ref in decision["source_refs"]) + "\n")
         log_event(".", "write", f"{work}/{os.path.basename(dest)}", f"{src} -> {dest} decision={decision['id']} sha256={digest[:12]}")
         print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
     finally:
@@ -1629,6 +1813,7 @@ def _review_record_integrity_problems(work):
             problem = _record_integrity_problem(work, kind, record_id, data)
             if problem and problem not in problems:
                 problems.append(problem)
+            problems.extend(_source_ref_problems(work, data.get("source_refs", [])))
     return problems
 
 
@@ -1977,6 +2162,8 @@ def main():
     s.add_argument("work")
     s.add_argument("--from", dest="src", required=True)
     s.add_argument("--dest", default=None, help="optional manuscript filename; defaults to source basename")
+    s.add_argument("--source-ref", dest="source_refs", action="append", default=[],
+                   help="source fragment id(s) grounding this proposal; repeat or comma-separate")
     s.set_defaults(fn=cmd_propose)
     s = sub.add_parser("audit")
     s.add_argument("work")

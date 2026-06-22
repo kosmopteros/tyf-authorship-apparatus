@@ -64,6 +64,25 @@ def check_gate() -> None:
     assert "--lines" in controlling
 
 
+def check_provenance() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    ingesting = (ROOT / "skills" / "ingesting-sources" / "SKILL.md").read_text(encoding="utf-8")
+    controlling = (ROOT / "skills" / "controlling-manuscript-writes" / "SKILL.md").read_text(encoding="utf-8")
+
+    for token in ("sources/fragments", "fragments.jsonl", "source_refs",
+                  "--source-ref", "_mint_source_fragment",
+                  "_resolve_source_refs", "_source_fragment_integrity_problem"):
+        assert token in source, f"source provenance runtime missing {token}"
+    assert "test_source_capture_fragment_survives_proposal_decision_and_write" in tests
+    assert "test_propose_refuses_missing_or_tampered_source_fragment" in tests
+    assert "test_propose_refuses_fragment_file_and_index_rewritten_under_same_id" in tests
+    assert "test_write_and_doctor_refuse_tampered_source_fragment_after_decision" in tests
+    assert "id hash mismatch" in source
+    assert "source fragment" in ingesting.lower()
+    assert "source ref" in controlling.lower() or "source_refs" in controlling
+
+
 def check_plugin() -> None:
     manifest_path = ROOT / ".codex-plugin" / "plugin.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -106,12 +125,17 @@ def check_onboarding_entry() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("oracle", choices=("helper", "plugin", "onboarding", "onboarding-entry", "gate"))
+    parser.add_argument(
+        "oracle",
+        choices=("helper", "plugin", "onboarding", "onboarding-entry", "gate", "provenance"),
+    )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
         check_helper()
     elif args.oracle == "plugin":
         check_plugin()
+    elif args.oracle == "provenance":
+        check_provenance()
     elif args.oracle == "onboarding":
         check_onboarding()
     elif args.oracle == "onboarding-entry":

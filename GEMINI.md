@@ -10,6 +10,8 @@ Before any task that touches source material, authorship, drafting, editing, voi
 
 If the author says "start my book", "new book", "set up TYF", or similar, do not hand them a command list. Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace, run `tyf start "Working Title"` after getting a title, then show what was created and ask source questions before drafting.
 
+When captured source material grounds a draft, preserve the source fragment id from `tyf capture --kind source` and pass it to `tyf propose --source-ref <id>` so the Gate carries provenance.
+
 ## The commitments (load-bearing, not tone)
 
 1. **The author is the source, not the prompt.** The highest-value passes elicit and structure knowledge; drafting is downstream and subordinate.

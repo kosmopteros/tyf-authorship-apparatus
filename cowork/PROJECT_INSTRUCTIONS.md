@@ -26,7 +26,7 @@ Two substrates are read at every band, micro, macro, and meta: the voice registe
 
 - Compose writes to `works/<id>/drafts/` only.
 - Propose and Audit write to `works/<id>/.review/` only.
-- The manuscript at `works/<id>/manuscript/` is written only by `tyf write --decision <id>` after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; use `tyf accept --lines 2,5-8` when the author accepts only selected source lines.
+- The manuscript at `works/<id>/manuscript/` is written only by `tyf write --decision <id>` after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; use `tyf propose --source-ref <id>` when captured source grounds the draft, and use `tyf accept --lines 2,5-8` when the author accepts only selected source lines.
 - Read, Diagnose, and Audit write nothing to any manuscript.
 
 If a pass has no write access to a target, you are in the wrong pass. Route the result, or go through the controlled write.
@@ -39,4 +39,4 @@ Follow the writing language recorded in `works/<id>/work.yaml` before applying l
 
 Use `tyf` for file operations. For a new book or body of work, prefer `tyf start "Working Title"` and then ask the author the source questions it prints. Do not hand the author an advanced command list unless they ask for one.
 
-Advanced helper commands include `init`, `status`, `new-work`, `begin`, `capture`, `open`, `mark-ready`, `audit`, `write`, `doctor`, `reflexes`, and `snapshot`. The helper is still the single writer into `manuscript/`. `tyf reflexes` shows visible hooks, and `tyf snapshot --message "..."` makes an explicit git recovery commit when the workspace is a git repo. TYF never commits silently.
+Advanced helper commands include `init`, `status`, `new-work`, `begin`, `capture`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `write`, `doctor`, `reflexes`, and `snapshot`. Source captures mint source fragments, and source-grounded proposals should carry them with `--source-ref`. The helper is still the single writer into `manuscript/`. `tyf reflexes` shows visible hooks, and `tyf snapshot --message "..."` makes an explicit git recovery commit when the workspace is a git repo. TYF never commits silently.

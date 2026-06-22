@@ -21,6 +21,7 @@ import shutil
 import unittest
 import re
 import json
+import hashlib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -559,6 +560,136 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("opening pressure", text)
         self.assertIn("pressure I can feel", text)
         self.assertEqual(list((ws / "works" / "new-book" / "manuscript").iterdir()), [])
+
+    def test_source_capture_fragment_survives_proposal_decision_and_write(self):
+        ws = self.ws()
+        run_tyf(["begin", "new-book"], ws)
+        rc, out = run_tyf(
+            ["capture", "new-book", "--kind", "source", "--title", "opening pressure",
+             "--text", "The book begins from a pressure I can feel but not name yet."], ws)
+        self.assertEqual(rc, 0, out)
+        m = re.search(r"Source fragment:\s+(\S+)", out)
+        self.assertIsNotNone(m, out)
+        fragment = m.group(1)
+        fragment_path = ws / "sources" / "fragments" / f"{fragment}.md"
+        self.assertTrue(fragment_path.is_file(), "capture must preserve a stable fragment file")
+        index = [json.loads(line) for line in
+                 (ws / "sources" / "fragments.jsonl").read_text(encoding="utf-8").splitlines()
+                 if line.strip()]
+        self.assertEqual(index[-1]["id"], fragment)
+
+        src = self.make_draft(
+            ws, work="new-book", name="chapter.md",
+            text="The pressure becomes an opening chapter.\n",
+        )
+        rc, out = run_tyf(["propose", "new-book", "--from", src, "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        proposal_path = ws / "works/new-book/.review/proposals" / f"{proposal}.json"
+        proposal_data = json.loads(proposal_path.read_text(encoding="utf-8"))
+        self.assertEqual(proposal_data["source_refs"][0]["id"], fragment)
+
+        rc, out = run_tyf(
+            ["audit", "new-book", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "new-book", proposal,
+             "--evidence", "Alexander: accept this source-grounded proposal"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        decision_path = ws / "works/new-book/.review/decisions" / f"{decision}.json"
+        decision_data = json.loads(decision_path.read_text(encoding="utf-8"))
+        self.assertEqual(decision_data["source_refs"][0]["id"], fragment)
+
+        rc, out = run_tyf(["write", "new-book", "--decision", decision], ws)
+        self.assertEqual(rc, 0, out)
+        log = (ws / "works/new-book/.review/write-log.md").read_text(encoding="utf-8")
+        self.assertIn(fragment, log)
+        self.assertIn("Source refs", log)
+
+    def test_propose_refuses_missing_or_tampered_source_fragment(self):
+        ws = self.ws()
+        run_tyf(["begin", "new-book"], ws)
+        src = self.make_draft(ws, work="new-book", name="chapter.md", text="draft\n")
+        rc, out = run_tyf(
+            ["propose", "new-book", "--from", src, "--source-ref", "src-missing"], ws)
+        self.assertNotEqual(rc, 0, "proposal must refuse unknown source refs")
+        self.assertRegex(out.lower(), r"source fragment|provenance|missing")
+
+        rc, out = run_tyf(
+            ["capture", "new-book", "--kind", "source", "--title", "seed",
+             "--text", "Original source text."], ws)
+        self.assertEqual(rc, 0, out)
+        m = re.search(r"Source fragment:\s+(\S+)", out)
+        self.assertIsNotNone(m, out)
+        fragment = m.group(1)
+        fragment_path = ws / "sources" / "fragments" / f"{fragment}.md"
+        fragment_path.write_text(
+            fragment_path.read_text(encoding="utf-8").replace("Original source text.", "Changed source text."),
+            encoding="utf-8")
+        rc, out = run_tyf(["propose", "new-book", "--from", src, "--source-ref", fragment], ws)
+        self.assertNotEqual(rc, 0, "proposal must refuse tampered source fragments")
+        self.assertRegex(out.lower(), r"source fragment|provenance|hash|tamper")
+
+    def test_propose_refuses_fragment_file_and_index_rewritten_under_same_id(self):
+        ws = self.ws()
+        run_tyf(["begin", "new-book"], ws)
+        rc, out = run_tyf(
+            ["capture", "new-book", "--kind", "source", "--title", "seed",
+             "--text", "Original source text."], ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        fragment_path = ws / "sources" / "fragments" / f"{fragment}.md"
+        changed = "Changed source text."
+        fragment_path.write_text(
+            fragment_path.read_text(encoding="utf-8").replace("Original source text.", changed),
+            encoding="utf-8")
+        index_path = ws / "sources" / "fragments.jsonl"
+        index = [json.loads(line) for line in index_path.read_text(encoding="utf-8").splitlines()
+                 if line.strip()]
+        index[-1]["text_sha256"] = hashlib.sha256(changed.encode("utf-8")).hexdigest()
+        index_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in index) + "\n",
+            encoding="utf-8")
+        src = self.make_draft(ws, work="new-book", name="chapter.md", text="draft\n")
+        rc, out = run_tyf(["propose", "new-book", "--from", src, "--source-ref", fragment], ws)
+        self.assertNotEqual(rc, 0, "proposal must refuse a source fragment rewritten under its old id")
+        self.assertRegex(out.lower(), r"id|hash|source fragment|tamper")
+
+    def test_write_and_doctor_refuse_tampered_source_fragment_after_decision(self):
+        ws = self.ws()
+        run_tyf(["begin", "new-book"], ws)
+        rc, out = run_tyf(
+            ["capture", "new-book", "--kind", "source", "--title", "seed",
+             "--text", "Original source text."], ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        src = self.make_draft(ws, work="new-book", name="chapter.md", text="draft\n")
+        rc, out = run_tyf(["propose", "new-book", "--from", src, "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "new-book", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "new-book", proposal,
+             "--evidence", "Alexander: accept this source-grounded proposal"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+
+        fragment_path = ws / "sources" / "fragments" / f"{fragment}.md"
+        fragment_path.write_text(
+            fragment_path.read_text(encoding="utf-8").replace("Original source text.", "Changed source text."),
+            encoding="utf-8")
+
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag source fragments changed after Gate records reference them")
+        self.assertRegex(out.lower(), r"source fragment|hash|tamper")
+        rc, out = run_tyf(["write", "new-book", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "write must refuse when accepted source provenance changed")
+        self.assertFalse((ws / "works/new-book/manuscript/chapter.md").exists())
 
     def test_capture_requires_existing_work(self):
         ws = self.ws()

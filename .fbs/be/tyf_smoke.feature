@@ -45,6 +45,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
     Then Exit code is 0
 
+  @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @bind-file:skills/controlling-manuscript-writes/SKILL.md @tool-check:cli
+  Scenario: source fragments carry through proposal decision and write records
+    When Run "python tests/test_tyf.py CLIBehaviour.test_source_capture_fragment_survives_proposal_decision_and_write -v"
+    Then Exit code is 0
+
+  @covers:tyf-source-provenance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: source provenance refuses missing or file-tampered fragments
+    When Run "python tests/test_tyf.py CLIBehaviour.test_propose_refuses_missing_or_tampered_source_fragment -v"
+    Then Exit code is 0
+
+  @covers:tyf-source-provenance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: source provenance refuses index and fragment rewrites under an old id
+    When Run "python tests/test_tyf.py CLIBehaviour.test_propose_refuses_fragment_file_and_index_rewritten_under_same_id -v"
+    Then Exit code is 0
+
+  @covers:tyf-source-provenance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: accepted source provenance remains enforced by write and doctor
+    When Run "python tests/test_tyf.py CLIBehaviour.test_write_and_doctor_refuse_tampered_source_fragment_after_decision -v"
+    Then Exit code is 0
+
+  @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: source provenance structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py provenance"
+    Then Exit code is 0
+
   @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: public onboarding has paste-ready author prompts
     When Run "python tests/test_solo_oracles.py onboarding"

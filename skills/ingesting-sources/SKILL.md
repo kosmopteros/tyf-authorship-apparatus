@@ -15,7 +15,7 @@ This is an Elicit pass at the knowledge bands. It writes only to the sources (ra
 
 Raw material wants to be turned into finished prose immediately. Resist it. Preservation and extraction come first; drafting is a later pass owned by `composing-as-amanuensis`, and only after structure and register are known.
 
-1. **Preserve.** Keep the raw material intact in the sources. Record title, type, and scope.
+1. **Preserve.** Keep the raw material intact in the sources. Record title, type, and scope. For short author-supplied source notes, use `tyf capture <work> --kind source --text "<material>"`; the helper appends the note and mints a stable source fragment under `sources/fragments/`.
 2. **Classify.** Identify what each piece is: note, transcript, draft, citation, example, memory, claim, open question.
 3. **Extract candidates** into the knowledge base: concepts, claims, examples, contradictions, open questions, and possible distinct works.
 4. **Mark uncertainty.** Where a fact, date, figure, or citation is implied but not supplied, write `[AUTHOR: needed — what]` instead of supplying it.
@@ -44,10 +44,11 @@ Raw material wants to be turned into finished prose immediately. Resist it. Pres
 - Title:
 - Type:
 - Scope:
+- Source fragment id: src-...
 
 ## Extracted knowledge candidates
 ### Concepts
-### Claims          (each with source reference; mark unsupported)
+### Claims          (each with source reference or source fragment id; mark unsupported)
 ### Examples
 ### Contradictions
 ### Open questions
@@ -61,6 +62,7 @@ Raw material wants to be turned into finished prose immediately. Resist it. Pres
 - **Contradictory sources:** preserve both and log the contradiction; do not silently keep one.
 - **A dump larger than context:** state exactly what was and was not processed and chunk explicitly; never read a slice and imply you read all.
 - **Empty or absent material** ("here are my notes" with nothing attached): say no material was provided rather than proceeding as if it were.
+- **A draft cites no source fragment:** keep it in `drafts/`, but do not present it as source-grounded. When it is proposed for manuscript, pass the relevant fragment id with `tyf propose --source-ref <id>` so the Gate record carries provenance.
 
 ## Next
 

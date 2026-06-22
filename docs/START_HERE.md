@@ -7,7 +7,7 @@ TYF is for people writing books, essays, talks, courses, or newsletters with an 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
 
-Install or load the TYF skills for Codex, read `using-tyf`, and help me start a new book. Do not draft manuscript prose yet. Set up the workspace, ask for the title and writing language if you do not know them, run the TYF first-session start flow, show me what files were created, and ask me the first three source questions. If you use git, make recovery points explicit and never commit silently.
+Install or load the TYF skills for Codex, read `using-tyf`, and help me start a new book. Do not draft manuscript prose yet. Set up the workspace, but do not block on a title; if I do not have one, run `tyf start` and keep the title unknown. If I bring existing material, preserve it first with `tyf import <path>` and show me the orientation packet before organizing it. Show me what files were created and ask me the first three source questions. If you use git, make recovery points explicit and never commit silently.
 ```
 
 ## Paste Into Claude Cowork
@@ -15,15 +15,16 @@ Install or load the TYF skills for Codex, read `using-tyf`, and help me start a 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
 
-Install or load the TYF skills, paste the TYF project instructions into this Cowork project if they are not already present, and help me start a new book. Do not draft manuscript prose yet. Set up the workspace, ask for the title and writing language if you do not know them, run the TYF first-session start flow, show me what files were created, and ask me the first three source questions. If you use git, make recovery points explicit and never commit silently.
+Install or load the TYF skills, paste the TYF project instructions into this Cowork project if they are not already present, and help me start a new book. Do not draft manuscript prose yet. Set up the workspace, but do not block on a title; if I do not have one, run `tyf start` and keep the title unknown. If I bring existing material, preserve it first with `tyf import <path>` and show me the orientation packet before organizing it. Show me what files were created and ask me the first three source questions. If you use git, make recovery points explicit and never commit silently.
 ```
 
 ## What Your Agent Should Do
 
 1. Load `using-tyf`, then `initializing-a-workspace`.
 2. Create or enter a TYF workspace.
-3. Run `tyf start "<working title>" --language "<writing language>"` for the first book or body of work.
-4. Show the created packet in plain language.
-5. Ask source questions before drafting anything.
+3. Run `tyf start` when the title is unknown, or `tyf start "<working title>" --language "<writing language>"` when those labels are already known.
+4. If existing material arrives, run `tyf import <path>` and use the orientation packet to contain, classify, and ask before moving anything.
+5. Show the created packet in plain language.
+6. Ask source questions before drafting anything.
 
 The advanced helper commands still exist for agents and maintainers. For a new author, the public path is: paste the prompt, answer the questions, and keep the manuscript empty until you explicitly approve a controlled write.

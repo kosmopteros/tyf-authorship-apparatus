@@ -9,17 +9,21 @@ Commands:
                                           only missing structure, never clobbers)
   tyf status                              active work, band, write control, write zones
   tyf new-work <id> [--type T] [--register R]
-  tyf start "Working Title" [--id work-id]
+  tyf start ["Working Title"] [--id work-id]
                                           writer-facing first book/session entrypoint
   tyf begin <id> [--title T] [--register R]
                                           create a first-session packet for a book
+  tyf import <path> [--kind K] [--work id]
+                                          preserve existing material without manuscript writes
   tyf capture <work-id> --kind K --text TEXT
                                           append author source/voice/claim/question notes
+  tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
   tyf propose <work-id> --from <draft>    create a manuscript proposal record
   tyf audit <work-id> <unit>              print or record the audit checklist
   tyf accept <work-id> <proposal-id>      create an author decision record
+  tyf adopt <work-id> <unit> --evidence E adopt a direct author manuscript edit
   tyf write <work-id> --decision <id>     ONLY writer into manuscript/
   tyf doctor [--repair]                   workspace integrity check; --repair creates
                                           any missing required structure
@@ -58,7 +62,9 @@ import re
 import argparse
 import datetime
 import json
+import shutil
 import unicodedata
+import zipfile
 from pathlib import Path
 
 try:
@@ -247,6 +253,37 @@ def _require_work(work):
     if not os.path.isfile(os.path.join("works", work, "work.yaml")):
         sys.exit(f"Refused: no work {work!r} (works/{work}/work.yaml not found). Create it with `tyf new-work`.")
 
+
+def _work_yaml_path(work):
+    return os.path.join("works", work, "work.yaml")
+
+
+def _work_status(work):
+    return read_state(_work_yaml_path(work)).get("status")
+
+
+def _set_work_status(work, status):
+    path = _work_yaml_path(work)
+    if not os.path.isfile(path):
+        sys.exit(f"Refused: no work {work!r} (works/{work}/work.yaml not found).")
+    lines = open(path, encoding="utf-8").read().splitlines()
+    out, replaced = [], False
+    for ln in lines:
+        if ln.startswith("status:"):
+            out.append(f"status: {status}")
+            replaced = True
+        else:
+            out.append(ln)
+    if not replaced:
+        out.append(f"status: {status}")
+    atomic_write(path, "\n".join(out) + "\n")
+
+
+def _require_work_status(work, expected, action):
+    actual = _work_status(work)
+    if actual != expected:
+        sys.exit(f"Refused: {action} requires work status {expected!r}; current status is {actual!r}.")
+
 # ---------- documentation-honesty check (deterministic, zero-token) ----------
 
 # Number words this check understands, for catching stale spelled-out counts.
@@ -263,7 +300,7 @@ _DEAD_SKILL_IDS = [
 ]
 
 # CLI commands that were renamed. A live reference is drift.
-_DEAD_COMMANDS = ["tyf gate", "--apply <draft>", "fire-devils-reader"]
+_DEAD_COMMANDS = ["tyf gate", "--apply <draft>", "fire-devils-reader", "tyf write --confirm"]
 
 def _pack_root():
     """The pack root. Honors TYF_PACK_ROOT (set this when the helper is installed
@@ -335,7 +372,11 @@ def run_doc_check(root=None):
     # 3. dead skill IDs and dead command names in routing surfaces. Two files
     #    legitimately name dead tokens: VALIDATION.md (historical changelog) and
     #    this script (the check engine lists them as search targets).
-    _dead_ref_exempt = {"VALIDATION.md", os.path.join("scripts", "tyf.py")}
+    _dead_ref_exempt = {
+        "VALIDATION.md",
+        os.path.join("scripts", "tyf.py"),
+        os.path.join("tests", "test_tyf.py"),
+    }
     for p in _iter_files(root, (".md", ".sh", ".yaml", ".yml", ".py", ".json")):
         rel = os.path.relpath(p, root)
         if rel in _dead_ref_exempt:
@@ -838,7 +879,7 @@ def _required_structure(root):
     a dict of relpath -> default content. Single source of truth for both init
     and doctor's repair check."""
     dirs = [
-        "sources/uploads", "sources/transcripts", "sources/interviews", "sources/notes",
+        "sources/uploads", "sources/transcripts", "sources/interviews", "sources/imports", "sources/notes",
         "sources/fragments",
         "knowledge-base/concepts", "knowledge-base/claims", "knowledge-base/examples",
         "knowledge-base/contradictions", "knowledge-base/open-questions",
@@ -849,16 +890,42 @@ def _required_structure(root):
 
 This is an author-owned TYF workspace.
 
-- If the author says "start my book" or gives a title, use `tyf start "<working title>"`.
+- If the author says "start my book", use `tyf start`; a title can stay unknown.
+- If the author brings existing material, use `tyf import <path>` to preserve it before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `works/*/drafts/`.
-- `tyf capture --kind source` mints source fragments in `sources/fragments/`; pass relevant ids to `tyf propose --source-ref <id>`.
+- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; pass relevant ids to `tyf propose --source-ref <id>`.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
+- If the author edits `manuscript/` directly, use `tyf adopt <work> <unit> --evidence "<what happened>"` before the next controlled write.
+- Use `tyf resume` to recover the active work, pending proposals, open prompts, and next move.
 - Use `tyf notice --peek` for read-only inspection and `tyf snapshot --message "..."` only when the author wants an explicit git recovery point.
 """
     files = {
         "WORKSPACE_STATE.yaml":
             "active_work: \nactive_band: section\nwrite_control:\n  compose: locked\n  revise: locked\nstatus: intake\n",
+        "tyf.portable.json":
+            json.dumps({
+                "format": "tyf-workspace",
+                "format_version": "0.4.0",
+                "canonical_text_state": [
+                    "WORKSPACE_STATE.yaml",
+                    "manifest.yaml",
+                    "ASSUMPTIONS.md",
+                    "sources/",
+                    "knowledge-base/",
+                    "voice/",
+                    "redactor-canon/",
+                    "works/",
+                    ".tyf/events.jsonl",
+                ],
+                "derived_disposable_state": [
+                    ".tyf/ledger.db",
+                    ".tyf/*.db-journal",
+                    ".tyf/*.db-wal",
+                    ".tyf/*.db-shm",
+                ],
+                "git": "optional",
+            }, indent=2, sort_keys=True) + "\n",
         "manifest.yaml":
             "voice_inheritance:\n  default: layer\nhooks:\n  - on: save_chapter\n    run: [ai-tell-scan, register-fence-check]\n  - on: open_chapter\n    run: [load-registers, load-style-sheet, load-chapter-review]\n  - on: mark_ready\n    run: [audit-ready-unit]\nself_extension:\n  anti_pattern_growth: true\n  writes_to: .proposals/\n",
         "ASSUMPTIONS.md": "# Assumptions\n\nUpdated as the author corrects them.\n\n- (none yet)\n",
@@ -954,9 +1021,10 @@ def _create_work(work_id, work_type="book", register=None, title=None,
     work_type = _one_line(work_type, "book")
     title = _one_line(title)
     language = _one_line(language, "undetermined")
+    title_status = "working" if title else "unknown"
     title_line = f"title: {_yaml_scalar(title)}\n" if title else ""
     write(os.path.join(base, "work.yaml"),
-          f"id: {work_id}\ntype: {_yaml_scalar(work_type)}\n{title_line}language: {_yaml_scalar(language)}\nregisters:\n  - {_yaml_scalar(reg)}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
+          f"id: {work_id}\ntype: {_yaml_scalar(work_type)}\n{title_line}title_status: {_yaml_scalar(title_status)}\nlanguage: {_yaml_scalar(language)}\nregisters:\n  - {_yaml_scalar(reg)}\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n")
     write(os.path.join(base, "style-sheet.md"),
           f"# Running style sheet: {work_id}\n\nWriting language: {language}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing. Finish decisions are language-specific; do not apply English typography rules unless this work is in English.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
     write(os.path.join(base, ".review", "write-log.md"), f"# Write log: {work_id}\n\nThe only record of writes into manuscript/.\n")
@@ -973,34 +1041,46 @@ def _slugify_title(title):
         return "work-" + hashlib.sha256(title.encode("utf-8")).hexdigest()[:12]
     return slug[:64].strip("-")
 
+def _untitled_work_id():
+    base = "untitled-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    candidate = base
+    i = 2
+    while os.path.exists(os.path.join("works", candidate)):
+        candidate = f"{base}-{i}"
+        i += 1
+    return candidate
+
 def _write_begin_packet(work_id, title=None, language=None):
     label = _one_line(title, work_id)
     language = _one_line(language, "undetermined")
     base = os.path.join("works", work_id)
-    starter = os.path.join(base, "drafts", "00-start-here.md")
+    _ensure_real_dir(os.path.join("sources", "interviews"), "sources/interviews/")
+    starter = os.path.join("sources", "interviews", f"{work_id}-first-session.md")
     seed = os.path.join(base, "outline", "seed.md")
     runway = os.path.join(base, ".review", "today.md")
+    if os.path.exists(starter):
+        sys.exit(f"Refused: first-session packet already exists: {starter}")
     write(starter, f"""# Start here: {label}
 
-This is an author-owned first-session packet. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
+This is an author-owned first-session packet. It is source/interview evidence, not candidate prose. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
 
 Writing language: {language}
 
 ## What is already true
 
-- [AUTHOR: needed - name the lived pressure, question, or image that makes this book necessary]
+- [PROMPT: name the lived pressure, question, or image that makes this book necessary]
 
 ## Source fragments
 
-- [AUTHOR: needed - paste notes, memories, observations, phrases, or cited material]
+- [PROMPT: paste notes, memories, observations, phrases, or cited material]
 
 ## Voice samples
 
-- [AUTHOR: needed - lines that sound like the book, even if they are rough]
+- [PROMPT: lines that sound like the book, even if they are rough]
 
 ## Open questions
 
-- [AUTHOR: needed - what must be elicited before drafting]
+- [PROMPT: what must be elicited before drafting]
 
 ## Candidate draft target
 
@@ -1010,20 +1090,20 @@ Writing language: {language}
 
 ## Working promise
 
-- [AUTHOR: needed - what this book is trying to make thinkable or feelable]
+- [PROMPT: what this book is trying to make thinkable or feelable]
 
 ## Central pressure
 
-- [AUTHOR: needed - the tension, contradiction, wound, demand, or question]
+- [PROMPT: the tension, contradiction, wound, demand, or question]
 
 ## Source inventory
 
-- [AUTHOR: needed - sources already available]
-- [AUTHOR: needed - sources still missing]
+- [PROMPT: sources already available]
+- [PROMPT: sources still missing]
 
 ## Possible first unit
 
-- [AUTHOR: needed - scene, argument, vignette, letter, chapter, or fragment]
+- [PROMPT: scene, argument, vignette, letter, chapter, or fragment]
 """)
     write(runway, f"""# First-session runway: {label}
 
@@ -1031,7 +1111,7 @@ Active work: `{work_id}`
 
 ## Today's loop
 
-1. Fill `works/{work_id}/drafts/00-start-here.md` with the author's material.
+1. Fill `{starter.replace(os.sep, "/")}` with the author's material.
 2. Capture short source, voice, claim, or question notes with `tyf capture`.
 3. Use `interviewing-the-author` to elicit what is still tacit.
 4. Use `structuring-knowledge` to turn captured material into claims, gaps, and possible shape.
@@ -1068,17 +1148,17 @@ def cmd_begin(args):
 def cmd_start(args):
     _require_workspace()
     title = _one_line(args.title)
-    if not title:
-        sys.exit("Refused: start needs the working title or plain name of the book.")
-    work_id = _safe_work_id(args.id or _slugify_title(title))
+    work_id = _safe_work_id(args.id or (_slugify_title(title) if title else _untitled_work_id()))
     _confine_work(work_id)
     base, _reg = _create_work(work_id, args.type, args.register,
                               language=args.language,
                               title=title, activate=True)
     starter, seed, runway = _write_begin_packet(work_id, title, args.language)
     log_event(".", "start", work_id, f"starter={starter} language={_one_line(args.language, 'undetermined')}")
-    print(f"I created the TYF workspace packet for {title!r}.")
+    label = title if title else "an untitled work"
+    print(f"I created the TYF workspace packet for {label!r}.")
     print(f"  Work id: {work_id}")
+    print(f"  Title status: {'working' if title else 'unknown'}")
     print(f"  Writing language: {_one_line(args.language, 'undetermined')}")
     print(f"  Start here: {starter}")
     print(f"  Seed outline: {seed}")
@@ -1088,7 +1168,7 @@ def cmd_start(args):
     print("  1. What pressure, question, image, or wound makes this book necessary?")
     print("  2. What source material should we preserve before drafting?")
     print("  3. What lines or writers sound close to the desired voice?")
-    print("Keep answers in the packet and drafts. Move text to manuscript only after explicit author acceptance.")
+    print("Keep answers in the source/interview packet. Draft candidates only after source and register are present.")
 
 _CAPTURE_TARGETS = {
     "source": ("sources", "notes"),
@@ -1126,8 +1206,6 @@ def _source_fragment_integrity_problem(ref, work=None):
     frag_id = ref.get("id")
     if not frag_id or not re.fullmatch(r"src-[A-Za-z0-9._-]+", frag_id):
         return f"invalid source fragment id: {frag_id!r}"
-    if work and ref.get("work") and ref.get("work") != work:
-        return f"source fragment {frag_id} belongs to {ref.get('work')}, not {work}"
     rel = ref.get("path") or f"sources/fragments/{frag_id}.md"
     if os.path.isabs(rel):
         return f"source fragment {frag_id} uses an absolute path"
@@ -1178,7 +1256,7 @@ def _load_source_fragment_index():
 
 
 def _mint_source_fragment(work_id, kind, title, text):
-    if kind != "source":
+    if kind not in {"source", "chat", "import", "dump", "transcript", "note"}:
         return None
     _ensure_real_dir(os.path.join("sources", "fragments"), "source fragments/")
     frag_id = _source_fragment_id(text)
@@ -1188,7 +1266,7 @@ def _mint_source_fragment(work_id, kind, title, text):
     captured_at = now()
     content = (
         f"# Source fragment: {frag_id}\n\n"
-        f"Work: `{work_id}`\n"
+        f"Origin work: `{work_id}`\n"
         f"Kind: `{kind}`\n"
         f"Title: {title}\n"
         f"Captured: {captured_at}\n"
@@ -1199,6 +1277,7 @@ def _mint_source_fragment(work_id, kind, title, text):
     atomic_write(rel, content)
     entry = {
         "id": frag_id,
+        "origin_work": work_id,
         "work": work_id,
         "kind": kind,
         "title": title,
@@ -1244,7 +1323,9 @@ def _resolve_source_refs(work, values):
             sys.exit("Refused: " + problem)
         refs.append({
             "id": entry["id"],
-            "work": entry.get("work", work),
+            "origin_work": entry.get("origin_work") or entry.get("work", work),
+            "used_by_work": work,
+            "work": entry.get("origin_work") or entry.get("work", work),
             "path": entry["path"],
             "text_sha256": entry["text_sha256"],
             "title": entry.get("title", ""),
@@ -1287,6 +1368,193 @@ def cmd_capture(args):
     if fragment:
         print(f"Source fragment: {fragment['id']}")
     print("Next: preserve source, structure knowledge, and keep candidates in drafts/.")
+
+def _safe_import_label(name):
+    label = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip("-._")
+    return label[:80] or "arrival"
+
+
+def _active_work_id():
+    active = _one_line(get(read_state("WORKSPACE_STATE.yaml"), "active_work"))
+    if active and os.path.isfile(os.path.join("works", active, "work.yaml")):
+        return active
+    return ""
+
+
+def _work_for_arrival(args):
+    if getattr(args, "work", None):
+        work_id = _safe_work_id(args.work)
+        _confine_work(work_id)
+        _require_work(work_id)
+        return work_id, False
+    active = _active_work_id()
+    if active:
+        return active, False
+    title = _one_line(getattr(args, "title", None))
+    work_id = _safe_work_id(_slugify_title(title) if title else _untitled_work_id())
+    _confine_work(work_id)
+    _create_work(work_id, "book", title=title, language=getattr(args, "language", None), activate=True)
+    _write_begin_packet(work_id, title, getattr(args, "language", None))
+    return work_id, True
+
+
+def _read_import_text(path):
+    if not os.path.isfile(path):
+        return None
+    ext = os.path.splitext(path)[1].lower()
+    if ext not in {".txt", ".md", ".markdown", ".csv", ".json", ".jsonl", ".yaml", ".yml", ".rtf"}:
+        return None
+    try:
+        size = os.path.getsize(path)
+    except OSError:
+        return None  # degradation: ok: raw arrival is still preserved; text extraction is opportunistic
+    if size > 2 * 1024 * 1024:
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        try:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                return f.read()
+        except OSError:
+            return None  # degradation: ok: raw arrival is still preserved; text extraction is opportunistic
+    except OSError:
+        return None  # degradation: ok: raw arrival is still preserved; text extraction is opportunistic
+
+
+def _zip_entries(path):
+    entries, problems = [], []
+    if not zipfile.is_zipfile(path):
+        return entries, problems
+    try:
+        with zipfile.ZipFile(path) as zf:
+            entries = sorted(zf.namelist())
+    except (OSError, zipfile.BadZipFile) as e:
+        problems.append(str(e))
+    return entries, problems
+
+
+def _looks_tyf_shaped(entries):
+    names = {e.replace("\\", "/").strip("/") for e in entries}
+    return (
+        "WORKSPACE_STATE.yaml" in names
+        or any(e.startswith("works/") for e in names)
+        or any(e.startswith("sources/") for e in names)
+        or any(e.startswith("knowledge-base/") for e in names)
+    )
+
+
+def _copy_arrival(src, dest):
+    if os.path.isdir(src):
+        for r, dirs, files in os.walk(src):
+            for name in dirs + files:
+                if os.path.islink(os.path.join(r, name)):
+                    sys.exit("Refused: folder imports currently require a real directory tree; "
+                             f"symlink found at {os.path.join(r, name)}.")
+        shutil.copytree(src, dest)
+        return "folder"
+    shutil.copy2(src, dest)
+    return "file"
+
+
+def _arrival_listing(path):
+    if os.path.isdir(path):
+        rows = []
+        for r, dirs, files in os.walk(path):
+            dirs[:] = sorted(dirs)
+            for name in sorted(files):
+                rows.append(os.path.relpath(os.path.join(r, name), path).replace(os.sep, "/"))
+                if len(rows) >= 80:
+                    rows.append("... listing truncated ...")
+                    return rows
+        return rows
+    if zipfile.is_zipfile(path):
+        entries, _problems = _zip_entries(path)
+        if len(entries) > 120:
+            return entries[:120] + ["... listing truncated ..."]
+        return entries
+    return [os.path.basename(path)]
+
+
+def _write_import_orientation(work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped):
+    label = os.path.splitext(os.path.basename(preserved.rstrip(os.sep)))[0]
+    orientation = os.path.join("sources", "imports", f"{label}-orientation.md")
+    if os.path.exists(orientation):
+        orientation = os.path.join("sources", "imports", f"{label}-{hashlib.sha256(now().encode()).hexdigest()[:6]}-orientation.md")
+    rows = "\n".join(f"- {item}" for item in listing[:120]) or "- (no inspectable listing)"
+    shape = "TYF-shaped workspace/archive signals detected." if zip_tyf_shaped else "Classification required; do not assume this dump is already organized."
+    frag_line = f"- Source fragment: `{fragment['id']}` ({fragment['path']})" if fragment else "- Source fragment: none minted automatically for this arrival"
+    write(orientation, f"""# Arrival orientation: {os.path.basename(src)}
+
+Work: `{work_id}`
+Kind: `{kind}`
+Raw material preserved at: `{preserved.replace(os.sep, "/")}`
+New work created: {'yes' if created_work else 'no'}
+
+No manuscript text was written.
+
+## Containment
+
+- The raw arrival is preserved as-is under `sources/imports/`.
+- Do not merge folders into the workspace, unpack archives into live TYF directories, or move text into `drafts/` or `manuscript/` until the author accepts an organization plan.
+- Treat this packet as a quarantine/orientation record for the amanuensis.
+
+## Shape Read
+
+{shape}
+
+{frag_line}
+
+## Arrival Listing
+
+{rows}
+
+## Analysis Pass For The Agent
+
+1. Classify each item as source, prior draft, voice sample, claim/example, metadata, or unknown.
+2. Identify an organizing principle before moving anything: chronology, source type, work unit, theme, scene, chapter, or another author-approved map.
+3. If the bundle is TYF-shaped, compare its `works/`, `sources/`, `knowledge-base/`, and `voice/` surfaces to this workspace and propose a merge plan instead of copying over live files.
+4. For random dumps, ask the author which materials are authoritative, private, obsolete, or exploratory.
+5. Mint additional source fragments only for text the author wants preserved as evidence.
+6. Keep candidate prose in `works/{work_id}/drafts/`; manuscript still requires proposal, audit, author decision, and `tyf write --decision`.
+""")
+    return orientation
+
+
+def cmd_import(args):
+    _require_workspace()
+    src = os.path.abspath(args.path)
+    if not os.path.exists(src):
+        sys.exit(f"Refused: arrival path not found: {args.path}")
+    work_id, created_work = _work_for_arrival(args)
+    _ensure_real_dir(os.path.join("sources", "imports"), "sources/imports/")
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    label = _safe_import_label(os.path.basename(src.rstrip(os.sep)))
+    preserved = os.path.join("sources", "imports", f"{stamp}-{label}")
+    if os.path.exists(preserved):
+        preserved = os.path.join("sources", "imports", f"{stamp}-{hashlib.sha256(src.encode()).hexdigest()[:6]}-{label}")
+    _copy_arrival(src, preserved)
+    kind = _one_line(args.kind, "auto")
+    text = _read_import_text(src)
+    fragment = None
+    if text and text.strip():
+        title = _one_line(args.title, os.path.basename(src))
+        fragment = _mint_source_fragment(work_id, kind if kind != "auto" else "import", title, text.strip())
+    listing = _arrival_listing(src)
+    zip_tyf_shaped = zipfile.is_zipfile(src) and _looks_tyf_shaped(listing)
+    orientation = _write_import_orientation(
+        work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped)
+    log_event(".", "import", f"{work_id}/{os.path.basename(preserved)}",
+              f"kind={kind} orientation={orientation} fragment={fragment['id'] if fragment else 'none'}")
+    print(f"Imported arrival for work {work_id}.")
+    print(f"  Work id: {work_id}")
+    print(f"  Preserved: {preserved}")
+    print(f"  Orientation: {orientation}")
+    if fragment:
+        print(f"Source fragment: {fragment['id']}")
+    print("No manuscript text was written.")
+    print("Next useful move: read the orientation packet, classify the arrival, and ask the author before promoting anything.")
 
 def _git(args):
     import subprocess
@@ -1405,6 +1673,53 @@ def cmd_status(args):
     print(f"works       : {works or '(none)'}")
     print("write zones : Compose->drafts/  Propose/Audit->.review/  Manuscript-> `tyf write` only")
 
+def cmd_resume(args):
+    _require_workspace()
+    if getattr(args, "work", None):
+        work = _safe_work_id(args.work)
+    else:
+        work = _active_work_id()
+    if not work:
+        print("No active work yet.")
+        print("Next useful move: run `tyf start` for an untitled work, or `tyf import <path>` to preserve existing material.")
+        return
+    _confine_work(work)
+    _require_work(work)
+    wy = read_state(os.path.join("works", work, "work.yaml"))
+    title = get(wy, "title") or "unknown"
+    title_status = get(wy, "title_status") or ("working" if title != "unknown" else "unknown")
+    status = get(wy, "status") or "unknown"
+    language = get(wy, "language") or "undetermined"
+    review = os.path.join("works", work, ".review")
+    proposals = sorted(os.listdir(os.path.join(review, "proposals"))) if os.path.isdir(os.path.join(review, "proposals")) else []
+    decisions = sorted(os.listdir(os.path.join(review, "decisions"))) if os.path.isdir(os.path.join(review, "decisions")) else []
+    interview = os.path.join("sources", "interviews", f"{work}-first-session.md")
+    prompts = []
+    if os.path.isfile(interview):
+        for line in _read(interview).splitlines():
+            if "[PROMPT:" in line:
+                prompts.append(line.strip())
+    print(f"Active work: {work}")
+    print(f"  title: {title} ({title_status})")
+    print(f"  language: {language}")
+    print(f"  status: {status}")
+    print(f"  first-session evidence: {interview.replace(os.sep, '/') if os.path.isfile(interview) else '(none yet)'}")
+    print(f"  pending proposals: {len(proposals)}")
+    print(f"  decisions: {len(decisions)}")
+    if prompts:
+        print("  open prompts:")
+        for prompt in prompts[:5]:
+            print(f"    - {prompt}")
+    print("Next useful move:")
+    if status in {"accepted"} and decisions:
+        print(f"  Run `tyf write {work} --decision {os.path.splitext(decisions[-1])[0]}` if the author is ready.")
+    elif proposals:
+        print("  Review the latest proposal, record/pass an audit, then accept only what the author approves.")
+    elif os.path.isfile(interview):
+        print(f"  Continue filling {interview.replace(os.sep, '/')} or import/capture source before drafting.")
+    else:
+        print("  Import or capture source material before drafting candidate prose.")
+
 def cmd_mark_ready(args):
     _require_workspace()
     args.work = _safe_work_id(args.work)
@@ -1412,6 +1727,7 @@ def cmd_mark_ready(args):
     _require_work(args.work)
     path = os.path.join("works", args.work, ".review", "ready.md")
     append(path, f"- {now()} unit READY for audit: {args.unit}\n")
+    _set_work_status(args.work, "ready-for-audit")
     log_event(".", "mark-ready", f"{args.work}/{args.unit}")
     print(f"Marked ready: {args.work} / {args.unit}. Run `auditing-adversarially` before this is done.")
 
@@ -1839,6 +2155,7 @@ def cmd_propose(args):
         "source_refs": source_refs,
     }
     _write_review_record(work, "proposals", "proposal", proposal_id, proposal)
+    _set_work_status(work, "drafting")
     log_event(".", "propose", f"{work}/{proposal_id}", src)
     print(f"Proposal: {proposal_id}")
     print(f"  source: {proposal['src']}")
@@ -1876,6 +2193,7 @@ def cmd_audit(args):
             "recorded_at": now(),
         }
         _write_review_record(args.work, "audits", "audit", audit_id, audit)
+        _set_work_status(args.work, "audited" if args.verdict == "pass" else "needs-revision")
         log_event(".", "audit", f"{args.work}/{audit_id}", f"proposal={args.proposal} verdict={args.verdict}")
         print(f"Audit: {audit_id}")
         print(f"  verdict: {args.verdict}")
@@ -1897,10 +2215,14 @@ def cmd_accept(args):
     evidence = _one_line(args.evidence)
     if not evidence:
         sys.exit("Refused: accept requires --evidence with the author's explicit acceptance text or reference.")
+    _require_work_status(work, "audited", "author acceptance")
     src = proposal["src"]
     if _file_sha256(src) != proposal.get("src_sha256"):
         sys.exit("Refused: proposal source changed before acceptance.")
     _require_source_ref_integrity(work, proposal.get("source_refs", []))
+    proposal_hash = _canonical_hash(proposal)
+    if _passing_audit_for(work, args.proposal, proposal_hash) is None:
+        sys.exit("Refused: author acceptance requires a passing audit record with answered findings for this proposal.")
     if getattr(args, "lines", None) and getattr(args, "patch", None):
         sys.exit("Refused: choose either --lines or --patch for one author decision, not both.")
     accepted_patch = None
@@ -1925,7 +2247,7 @@ def cmd_accept(args):
         "id": decision_id,
         "work": work,
         "proposal_id": args.proposal,
-        "proposal_hash": _canonical_hash(proposal),
+        "proposal_hash": proposal_hash,
         "src": proposal["src"],
         "dest": proposal["dest"],
         "src_sha256": proposal["src_sha256"],
@@ -1939,11 +2261,44 @@ def cmd_accept(args):
         "decided_at": now(),
     }
     _write_review_record(work, "decisions", "decision", decision_id, decision)
+    _set_work_status(work, "accepted")
     log_event(".", "accept", f"{work}/{decision_id}", f"proposal={args.proposal}")
     print(f"Decision: {decision_id}")
     print(f"  proposal: {args.proposal}")
     print(f"  accepted scope: {accepted_scope}")
     print("Next: `tyf write <work> --decision <decision-id>` after a passing audit.")
+
+def cmd_adopt(args):
+    _require_workspace()
+    work = _safe_work_id(args.work)
+    _confine_work(work)
+    _require_work(work)
+    unit = args.unit
+    if os.path.basename(unit) != unit or unit in ("", ".", ".."):
+        sys.exit("Refused: adopt names one manuscript filename, not a path.")
+    evidence = _one_line(args.evidence)
+    if not evidence:
+        sys.exit("Refused: adopt requires --evidence explaining the direct author edit.")
+    dest = os.path.join("works", work, "manuscript", unit)
+    _reject_symlink_components(dest, "manuscript unit")
+    man = os.path.join("works", work, "manuscript")
+    if not _within(man, dest):
+        sys.exit("Refused: manuscript unit resolves outside manuscript/.")
+    if not os.path.isfile(dest):
+        sys.exit(f"Refused: manuscript unit not found: {dest}")
+    digest = hashlib.sha256(_read(dest).encode("utf-8")).hexdigest()
+    revisions = os.path.join("works", work, ".review", "author-revisions")
+    _ensure_real_dir(revisions, "author revisions/")
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    revision = os.path.join(revisions, f"{stamp}-{unit}")
+    shutil.copy2(dest, revision)
+    log = os.path.join("works", work, ".review", "write-log.md")
+    append(log, f"\n## Author adoption {now()}\n- Adopted: {dest}\n- File: {unit}\n- sha256: {digest}\n- Evidence: {evidence}\n- Revision copy: {revision.replace(os.sep, '/')}\n")
+    log_event(".", "adopt", f"{work}/{unit}", f"sha256={digest[:12]} evidence={evidence}")
+    print(f"Adopted author edit: {dest}")
+    print(f"  sha256: {digest}")
+    print(f"  preserved copy: {revision}")
+    print("Next: proposals against this manuscript base can proceed through audit, acceptance, and write.")
 
 def cmd_write(args):
     _require_workspace()
@@ -1956,6 +2311,7 @@ def cmd_write(args):
         sys.exit("Refused: manuscript writes require an author decision record. Run `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision <id>`.")
     if getattr(args, "force", False):
         sys.exit("Refused: --force is retired. Create a new proposal against the current manuscript base.")
+    _require_work_status(work, "accepted", "controlled manuscript write")
     decision = _load_decision(work, args.decision)
     proposal = _load_proposal(work, decision["proposal_id"])
     proposal_hash = _canonical_hash(proposal)
@@ -1985,9 +2341,9 @@ def cmd_write(args):
             sys.exit(f"Refused: manuscript base changed since acceptance for {dest}. Re-propose from the current file.")
         if os.path.isfile(dest):
             gl = os.path.join("works", work, ".review", "write-log.md")
-            rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
+            rec = _logged_hashes(_read(gl)).get(unit)
             if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
-                sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
+                sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf adopt {work} {unit} --evidence \"...\"` if this was the author's direct edit, or reconcile before rewriting.")
         if decision.get("accepted_patch"):
             patch = decision["accepted_patch"]
             patch_path = _require_patch_file(work, patch.get("path"))
@@ -2004,6 +2360,7 @@ def cmd_write(args):
         append(log, f"- Accepted scope: {decision.get('accepted_scope', 'whole-file')}\n")
         if decision.get("source_refs"):
             append(log, "- Source refs: " + ", ".join(ref["id"] for ref in decision["source_refs"]) + "\n")
+        _set_work_status(work, "written")
         log_event(".", "write", f"{work}/{os.path.basename(dest)}", f"{src} -> {dest} decision={decision['id']} sha256={digest[:12]}")
         print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
     finally:
@@ -2372,8 +2729,8 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "capture", "open", "mark-ready",
-        "propose", "accept", "write", "snapshot", "dismiss",
+        "new-work", "start", "begin", "import", "capture", "open", "mark-ready",
+        "propose", "accept", "adopt", "write", "snapshot", "dismiss",
     }
 
 
@@ -2394,7 +2751,7 @@ def main():
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
     s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.add_argument("--language", default=None); s.set_defaults(fn=cmd_new_work)
     s = sub.add_parser("start", help="plain-language first book/session entrypoint")
-    s.add_argument("title")
+    s.add_argument("title", nargs="?")
     s.add_argument("--id", default=None, help="optional stable work id; otherwise slugged from title")
     s.add_argument("--type", default="book")
     s.add_argument("--register", default=None)
@@ -2407,6 +2764,13 @@ def main():
     s.add_argument("--title", default=None)
     s.add_argument("--language", default=None, help="writing language label, for example English, Portuguese, Russian, or Japanese")
     s.set_defaults(fn=cmd_begin)
+    s = sub.add_parser("import", help="preserve existing material without writing manuscript text")
+    s.add_argument("path")
+    s.add_argument("--kind", choices=("auto", "source", "chat", "bundle", "dump", "transcript", "note"), default="auto")
+    s.add_argument("--work", default=None, help="existing work id; defaults to active work or creates an untitled work")
+    s.add_argument("--title", default=None, help="working title if a new work must be created")
+    s.add_argument("--language", default=None, help="writing language label if a new work must be created")
+    s.set_defaults(fn=cmd_import)
     s = sub.add_parser("capture", help="append author source, voice, claim, or question material")
     s.add_argument("work")
     s.add_argument("--kind", choices=sorted(_CAPTURE_TARGETS.keys()), required=True)
@@ -2445,6 +2809,14 @@ def main():
     s.add_argument("--confirm", action="store_true", help="retired; naked confirmation is refused")
     s.add_argument("--force", action="store_true", help="retired; create a new proposal against the current base")
     s.set_defaults(fn=cmd_write)
+    s = sub.add_parser("adopt", help="adopt a direct author manuscript edit as the new recorded base")
+    s.add_argument("work")
+    s.add_argument("unit")
+    s.add_argument("--evidence", required=True)
+    s.set_defaults(fn=cmd_adopt)
+    s = sub.add_parser("resume", help="show active work continuity and next useful move")
+    s.add_argument("work", nargs="?")
+    s.set_defaults(fn=cmd_resume)
     s = sub.add_parser("doctor"); s.add_argument("--repair", action="store_true", help="create any missing required structure"); s.set_defaults(fn=cmd_doctor)
     s = sub.add_parser("reflexes", help="show TYF's transparent hooks and reflexes")
     s.set_defaults(fn=cmd_reflexes)
@@ -2474,7 +2846,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "capture", "propose", "audit", "accept", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "propose", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

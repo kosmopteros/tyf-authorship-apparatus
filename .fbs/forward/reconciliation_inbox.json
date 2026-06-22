@@ -1,0 +1,129 @@
+{
+  "auto_promoted": false,
+  "items": [
+    {
+      "candidate_id": "cand:98d7d0ec4df2",
+      "item_role": "requirement",
+      "matched_requirement": "req:3b338964",
+      "matched_score": 0.056,
+      "relation": "novel",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 194,
+      "source_path": "external:pasted-text.txt",
+      "source_role": "corrected-roast",
+      "text": "“I have something in me that needs to be elicited.”"
+    },
+    {
+      "candidate_id": "cand:5443c081bcf0",
+      "item_role": "requirement",
+      "matched_requirement": "req:a4629e7a",
+      "matched_score": 0.068,
+      "relation": "novel",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 337,
+      "source_path": "external:pasted-text.txt",
+      "source_role": "corrected-roast",
+      "text": "a non-empty string was recorded as acceptance;"
+    },
+    {
+      "candidate_id": "cand:f5677ac67987",
+      "item_role": "requirement",
+      "matched_requirement": "req:d6e294d5",
+      "matched_score": 0.068,
+      "relation": "novel",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 447,
+      "source_path": "external:pasted-text.txt",
+      "source_role": "corrected-roast",
+      "text": "a rejected formulation that must not return;"
+    },
+    {
+      "candidate_id": "cand:0d8c98840b61",
+      "item_role": "contradiction-ruling",
+      "matched_requirement": "req:681a56b1",
+      "matched_score": 0.026,
+      "relation": "needs-ruling",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 449,
+      "source_path": "external:pasted-text.txt",
+      "source_role": "corrected-roast",
+      "text": "an unresolved contradiction between two accounts;"
+    },
+    {
+      "candidate_id": "cand:8395fe65096c",
+      "item_role": "requirement",
+      "matched_requirement": "req:ae34c916",
+      "matched_score": 0.049,
+      "relation": "novel",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 596,
+      "source_path": "external:pasted-text.txt",
+      "source_role": "corrected-roast",
+      "text": "proposal/acceptance distinction;"
+    }
+  ],
+  "readout": {
+    "be_gaps": 0,
+    "candidates": 5,
+    "contradictions": 1,
+    "duplicates": 0,
+    "novel": 4,
+    "recommended_next_action": "review contradiction rulings first",
+    "refinements": 0,
+    "summary": {
+      "needs-ruling": 1,
+      "novel": 4
+    }
+  },
+  "summary": {
+    "needs-ruling": 1,
+    "novel": 4
+  },
+  "truth_status": "review-only-reconciliation",
+  "ts": "2026-06-22T11:18:31.018623+00:00"
+}

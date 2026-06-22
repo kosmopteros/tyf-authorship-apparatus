@@ -1,6 +1,6 @@
 {
   "name": "tyf",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A faithful apparatus for authorship. Skills install into the Codex agent skills directory (~/.agents/skills/). The author is the source; TYF never becomes the writer.",
   "author": {
     "name": "TYF",
@@ -30,8 +30,8 @@
     ],
     "websiteURL": "https://github.com/kosmopteros/tyf-authorship-apparatus",
     "defaultPrompt": [
-      "Start a new book with TYF: set up the workspace, run the first-session start flow, and ask me source questions before drafting.",
-      "Ingest sources without drafting.",
+      "Start a new book with TYF, even without a title: set up the workspace, run the first-session start flow, and ask me source questions before drafting.",
+      "Import existing material with containment before organizing or drafting.",
       "Audit a chapter before manuscript."
     ],
     "brandColor": "#415A77"

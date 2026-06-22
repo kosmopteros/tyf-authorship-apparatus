@@ -150,7 +150,7 @@ The layer runs in two modes: **intake**, a front-loaded onboarding invoked for a
 
 Where the author is uncertain, both modes widen the choice space by proposing scaffolds the author can accept, reject, or rearrange. The system never invents what the author should believe or want. Intake terminates by writing out the workspace substrate (sources, knowledge base, voice registers) and, if a work is the active target, the per-work scaffold. Intake can be paused and resumed across days (see resolved questions in §13).
 
-**Ongoing disciplines** stay available after intake. In v0.1 these live inside `interviewing-the-author`, `structuring-knowledge`, and `auditing-adversarially` rather than as separate skills; promoting them to their own cells is the planned v0.2 expansion.
+**Ongoing disciplines** stay available after intake. These currently live inside `interviewing-the-author`, `structuring-knowledge`, and `auditing-adversarially` rather than as separate skills; promoting them to their own cells is later roadmap work.
 
 - **Thesis interrogation** (Argument / Elicit). Refuses to proceed until the author has stated, in one paragraph, the thesis and the tension it resolves. It does not propose a thesis; it pressures the author's until it is sharp.
 - **Argument spine** (Argument / Elicit + Diagnose). Captures the claim graph: each load-bearing claim, what supports it, what it depends on. Surfaces orphan claims and circular support.
@@ -170,7 +170,7 @@ Each register contains: voice anchors (a handful of calibrated sentences); sente
 The commitments made mechanical.
 
 - **Read-only by default.** Elicit, Read, Diagnose, and Audit passes get no write access to any work's `manuscript/`. In Claude Code this is real tool scoping on the subagent; in Cowork and Desktop it is enforced by the skill contract and by routing every write through the single controlled-write skill plus the `tyf` helper, which is the only writer into `manuscript/`.
-- **The controlled write.** Entering the Revise column requires an explicit author action (`tyf write --confirm`). No pass crosses from Propose to Revise on its own. It is the only path into any manuscript, and `tyf doctor` detects a manuscript file that arrived without a matching write-log entry (an out-of-band edit).
+- **The controlled write.** Entering the Revise column requires proposal, audit, explicit author decision, and `tyf write --decision <id>`. No pass crosses from Propose to Revise on its own. It is the only path into any manuscript. If the author edits the manuscript directly, `tyf adopt <work> <unit> --evidence "<what happened>"` records that author edit as the new base before the next controlled write.
 - **Adversarial audit before done.** A unit cannot be marked complete until the audit has tried to break it (frame-lock, unsupported claims, hidden assumptions, machine cadence, register cross-talk, unverified citations, redactor-integrity findings) and the author has answered each finding. There is no score: the audit passes when every finding is fixed or explicitly accepted with a reason, logged in `.review/`.
 - **AI-tell check.** At the sentence and paragraph bands, a detector flags low-entropy, high-cliché, machine-cadence text. Failing prose is sent back to Propose, never auto-rewritten, and is checked against the author's own register so an authentic style is not mistaken for a machine tell.
 - **Citation verification.** Every citation is checked against a real index through MCP. Unverified citations are marked unverified; a model-generated DOI or page number is untrusted until confirmed. When the index is unavailable, the audit says so rather than implying a pass.
@@ -187,7 +187,8 @@ workspace/
 ├── ASSUMPTIONS.md                      # explicit, updated as the author learns
 │
 ├── sources/                            # raw, preserved, shared      [read-mostly]
-│   ├── uploads/  transcripts/  interviews/  notes/  links.md
+│   ├── uploads/  transcripts/  interviews/  imports/  notes/  links.md
+│   ├── fragments/  fragments.jsonl
 │
 ├── knowledge-base/                     # structured, shared
 │   ├── concepts/  claims/  examples/  contradictions/  open-questions/
@@ -231,9 +232,9 @@ overrides:
   voice: []          # work-local overrides of any register
 ```
 
-**Apparatus memory is separate from the work.** Everything above is the author's, in plain text. Only machine bookkeeping the author never hand-edits lives in `.tyf/ledger.db` (stdlib SQLite, no third-party dependency): the content-addressed notice ledger (statuses, dismissals, real timestamps) and an append-only event log, a git-like spine of every `init`, `write`, `mark-ready`, `dismiss`, and `repair`. It is disposable derived state, rebuildable by re-scanning content, and mirrorable to Markdown with `tyf reconcile --export`. See `docs/ATTENTIVENESS.md` and `docs/WORKSPACE_CONTRACT.md`.
+**Apparatus memory is separate from the work.** Everything above is the author's, in plain text. Machine bookkeeping lives under `.tyf/`: `.tyf/events.jsonl` is the human-readable hash-chained journal of apparatus actions, while `.tyf/ledger.db` (stdlib SQLite, no third-party dependency) is the derived content-addressed notice index for statuses, dismissals, and real timestamps. The notice index is rebuildable by re-scanning content and mirrorable to Markdown with `tyf reconcile --export`. See `docs/ATTENTIVENESS.md` and `docs/WORKSPACE_CONTRACT.md`.
 
-**The `tyf` helper** performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Commands: `init` (idempotent: creates only missing structure, never clobbers), `status`, `new-work`, `open`, `mark-ready`, `audit`, `write --confirm`, `doctor [--repair]`, `check`, `notice`, `dismiss`, `reconcile`.
+**The `tyf` helper** performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
 
 ## 10. Portability: one skill, many runtimes
 
@@ -271,13 +272,13 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 
 ## 13. Scope, resolved questions, and what remains
 
-**v0.1 ships 16 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the SQLite apparatus memory, and the Cowork packaging.
+**The current pack ships 16 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
 
 **Resolved decisions** (were open questions in the original design):
 
 - **Matrix granularity.** A skill is one `(Band x Pass)` cell; band-level orchestrators may compose cells, but the atom is the cell.
 - **Audit without a score.** The audit passes when every finding is answered (fixed or explicitly accepted with a reason), logged in `.review/`. No number.
-- **Where the controlled write lives.** A single gated skill plus the `tyf write --confirm` helper command, which is the only writer into `manuscript/`; out-of-band edits are detected by `tyf doctor`.
+- **Where the controlled write lives.** A single gated skill plus the proposal, audit, author decision, and `tyf write --decision` helper chain, which is the only apparatus writer into `manuscript/`; direct author edits can be reconciled with `tyf adopt`.
 - **Register-fence representation.** Declared in `voice/register-fences.md` and on each work; passes read it before editing.
 - **Hook taxonomy.** Minimal set: save, open, mark-ready, daily, weekly, return-after-idle.
 - **Surfacing self-extensions and notices.** A content-addressed ledger plus on-demand `tyf notice` / `tyf reconcile` and a daily digest to `.proposals/`, rather than interrupting flow.
@@ -285,12 +286,12 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 
 **Genuine open questions and known gaps** (see `docs/COMPARISON_SUPERPOWERS.md` for the benchmark against the reference pack):
 
-1. **Testing.** The RED/GREEN pressure scenarios in `tests/` have never been run against a subagent. Every discipline claim is, until then, a design claim, not a proven outcome. This is the top priority.
+1. **Testing.** The helper suite and SOLO behaviours now cover the runtime contract, and the pressure scenarios have had an initial run. The remaining testing gap is realistic harness evaluation across Codex, Claude Cowork, Gemini, macOS, Linux, Windows, and longer author sessions.
 2. **Register inheritance semantics.** When a work overrides a workspace-level register, how does the override compose with the base: replace, merge, layer, or per-rule? `manifest.yaml` currently defaults to layer.
-3. **Promoting the knowledge-band disciplines.** Thesis interrogation, the argument spine, and the claims index are embedded in three skills; promoting them to their own cells is the main v0.2 expansion.
+3. **Promoting the knowledge-band disciplines.** Thesis interrogation, the argument spine, and the claims index are embedded in three skills; promoting them to their own cells remains later roadmap work.
 4. **Missing disciplines vs the reference.** No execution-to-completion skill, no debugging/isolation skill, no receiving-critique skill. The last is the most TYF-native and highest-value to add next.
 5. **Distribution.** No update path for an installed pack; superpowers' plugin-shim-plus-skills-repo split is the model to study.
-6. **Token budget.** A full multi-band parallel review is roughly 15x a single chat. v0.1 runs sequential by default; parallelism is opt-in.
+6. **Token budget.** A full multi-band parallel review is roughly 15x a single chat. TYF runs sequential by default; parallelism is opt-in.
 
 ---
 

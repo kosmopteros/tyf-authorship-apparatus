@@ -4,6 +4,17 @@
 
 TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same sixteen skills plus a context file under the filename that harness expects.
 
+## Portable Workspace Format
+
+A TYF workspace is a text-first author-work bundle. `tyf init` writes `tyf.portable.json` at the workspace root so agents can recognize and re-enter it after a move, zip, chat handoff, or harness switch. The marker identifies:
+
+- `format: "tyf-workspace"` and a format version.
+- canonical text state: `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, `sources/`, `knowledge-base/`, `voice/`, `redactor-canon/`, `works/`, and `.tyf/events.jsonl`.
+- derived/disposable state: `.tyf/ledger.db` and SQLite journal files.
+- `git: "optional"`.
+
+This means Markdown, YAML, and JSONL are the durable truth. SQLite is an index, not prose custody. Git is useful for recovery and recall, but not required for TYF to function.
+
 ## What ships for each harness
 
 | Harness | Plugin / extension file | Context file | Skills directory |
@@ -20,7 +31,7 @@ The three context files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`) carry identical 
 
 If you use more than one harness, install separately for each.
 
-For non-technical authors, use the paste prompts in `docs/START_HERE.md`. They tell Codex or Claude Cowork to install or load TYF, set up the workspace, run the first-session start flow, and ask source questions before drafting.
+For non-technical authors, use the paste prompts in `docs/START_HERE.md`. They tell Codex or Claude Cowork to install or load TYF, set up the workspace, start even when the title is unknown, preserve existing material with `tyf import <path>` when it arrives, and ask source questions before drafting.
 
 **Claude Code** (plugin marketplace):
 

@@ -18,8 +18,9 @@ Scaffold first, then elicit, then write the substrate. Do not draft, and do not 
 1. **Scaffold.** Create the `workspace/` tree (see `working-the-workspace`). Prefer the helper: `tyf init <name>`. Init is idempotent: it creates only missing structure and never overwrites existing files, so it safely heals a partial workspace. It also initializes apparatus memory: `.tyf/events.jsonl` for the hash-chained action journal and `.tyf/ledger.db` for the derived notice index. Run `tyf doctor --repair` any time to restore missing structure. Write `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, and the router/standing-instructions file.
 2. **Run intake.** Invoke `ingesting-sources` for any material the author brings, then `interviewing-the-author` for tacit knowledge, thesis, and registers.
 3. **Seed the substrate.** Write at least one register to the voice registers via `managing-voice`, seed the knowledge base via `structuring-knowledge`, and start the redactor canon and the running style sheet via `keeping-the-redactor-canon`.
-4. **Start the first work.** For a book that needs to start today, prefer `tyf start "Working Title" --language "<writing language>"`. It creates `works/<id>/`, marks it active, records the writing language in `work.yaml`, and writes the first-session source packet, seed outline, and review runway. It also prints the first source questions the agent should ask. Use `tyf begin <id>` only when a stable id is already required.
-5. **Set state.** Record the active work and band in `WORKSPACE_STATE.yaml`, gates closed. If the author wants recoverability and recall, initialize git for the workspace and use `tyf snapshot --message "..."` at session boundaries. TYF may report git status, but it never commits silently.
+4. **Start the first work.** For a book that needs to start today, prefer `tyf start`; add `"Working Title"` and `--language "<writing language>"` only when the author already knows them. The helper creates `works/<id>/`, marks it active, records title/language state in `work.yaml`, and writes the first-session source packet under `sources/interviews/`, the seed outline, and review runway. It also prints the first source questions the agent should ask. Use `tyf begin <id>` only when a stable id is already required.
+5. **Preserve arrivals.** If the author brings existing material, run `tyf import <path>` before analyzing it. Text/chat imports preserve the raw file and can mint source fragments. Zip and folder imports are containment-first: read the orientation packet, classify contents, propose an organization principle, and ask before moving anything into sources, knowledge, voice, drafts, or manuscript.
+6. **Set state.** Record the active work and band in `WORKSPACE_STATE.yaml`, gates closed. If the author wants recoverability and recall, initialize git for the workspace and use `tyf snapshot --message "..."` at session boundaries. TYF may report git status, but it never commits silently.
 
 Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and `WORKSPACE_STATE.yaml` honest about what is done and what is still open.
 
@@ -29,7 +30,7 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 |---|---|---|
 | "The author wants to write now, skip setup." | Without the structure, every later pass freelances and state is lost. | Scaffold first; it takes one command. |
 | "I will pick sensible default registers." | Default registers are your voice wearing the author's name. | Elicit at least one register in The author interview; never invent one. |
-| "One folder of notes is enough, no workspace needed." | Shared substrate is what keeps several works coherent. | Create the full tree even for a single work; v0.1 ships workspace-aware. |
+| "One folder of notes is enough, no workspace needed." | Shared substrate is what keeps several works coherent. | Create the full tree even for a single work; TYF is workspace-aware. |
 | "I can fill ASSUMPTIONS later." | Unstated assumptions are where the project quietly drifts. | Write what you assumed during setup, and update it as the author corrects you. |
 
 ## Red flags: stop if you catch yourself
@@ -43,8 +44,10 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 
 ```
 tyf init <workspace-name>       # scaffold the tree and state files
-tyf start "Working Title" --language "<writing language>"
+tyf start ["Working Title"] --language "<writing language>"
                                # create the first-session packet and ask source questions
+tyf import <path>               # preserve existing material and create an orientation packet
+tyf resume                      # recover active work, state, prompts, and next move
 tyf status                      # confirm what exists
 tyf reflexes                    # show hooks and git recovery behavior
 tyf snapshot -m "first session" # explicit git recovery point

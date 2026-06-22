@@ -63,6 +63,6 @@ Integrity is a substrate, parallel to voice. Voice registers govern how the work
 
 Around the editorial apparatus sits the workspace lifecycle: `initializing-a-workspace` founds a workspace and runs intake, `working-the-workspace` governs where each pass may read and write, `scheduling-ongoing-work` runs the iterative-phase cadence (on Cowork, via scheduled tasks and Routines), and `keeping-documentation-honest` makes sure no structural change is called done while the docs that route future behavior are still stale. The `tyf` helper performs the concrete file operations and is the single writer into `manuscript/`.
 
-## Note on the knowledge bands (v0.2)
+## Note on the knowledge bands
 
-The three knowledge-band disciplines the manifesto would promote to their own cells (thesis interrogation, argument spine, claims index) currently live inside `interviewing-the-author`, `structuring-knowledge`, and `auditing-adversarially`. Promoting them is the planned v0.2 expansion and needs no restructuring.
+The three knowledge-band disciplines the manifesto would promote to their own cells (thesis interrogation, argument spine, claims index) currently live inside `interviewing-the-author`, `structuring-knowledge`, and `auditing-adversarially`. Promoting them remains later roadmap work and needs no restructuring.

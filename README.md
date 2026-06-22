@@ -2,7 +2,7 @@
 
 *The Yours Faithfully. A faithful apparatus for authorship.*
 
-**v0.3.0 "Gate hardening".**
+**v0.4.0 "Amanuensis entry".**
 
 TYF is not a writing assistant. TYF is not a productivity system. TYF is not a knowledge-management tool.
 
@@ -84,21 +84,23 @@ Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) w
 `tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. The public entrypoint is simple:
 
 ```
-tyf start "Working Title"
+tyf start
 ```
 
-That creates the first-session packet, seed outline, and review runway, then tells the agent the first source questions to ask. It does not write manuscript text. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
+That creates an untitled first-session packet, seed outline, and review runway, then tells the agent the first source questions to ask. If the author already has a title, use `tyf start "Working Title"`; if they bring a chat, folder, old workspace, or zip, use `tyf import <path>` first. None of these write manuscript text. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
 
 Advanced commands for agents and maintainers:
 
 ```
-tyf init <name>          tyf start "<working title>" [--id <id>] [--language <language>]
+tyf init <name>          tyf start ["<working title>"] [--id <id>] [--language <language>]
 tyf begin <id> --title <t> --register <r> [--language <language>]
+tyf import <path> [--kind auto|source|chat|bundle|dump|transcript|note] [--work <id>]
 tyf capture <work> --kind source|voice|claim|question --text <text>
-tyf status               tyf open <work>          tyf mark-ready <work> <unit>
+tyf status               tyf resume [<work>]      tyf open <work>          tyf mark-ready <work> <unit>
 tyf propose <work> --from <draft> [--dest <file>] [--source-ref <id>]
 tyf audit <work> <unit> --record --proposal <id> --verdict pass --findings-answered
 tyf accept <work> <proposal-id> [--lines 2,5-8 | --patch <diff>] --evidence "<author accepted this>"
+tyf adopt <work> <unit> --evidence "<author edited this directly>"
 tyf write <work> --decision <decision-id>
 tyf doctor [--repair]    # workspace integrity check; --repair heals missing structure
 tyf reflexes             # show TYF's visible hooks and recovery behavior
@@ -110,9 +112,13 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It creates the work from a human title, opens it as active, records the writing language in `work.yaml`, and adds a source/interview packet in `drafts/`, a seed outline in `outline/`, and a first-session runway in `.review/`. Non-Latin titles fall back to stable generated ids, and TYF preserves UTF-8 source, draft, and manuscript text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults. `tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. Source captures also mint stable source fragments under `sources/fragments/` and record them in `sources/fragments.jsonl`, so later proposals can carry source provenance without asking the author to manage a database. None of these commands write to `manuscript/`; that remains behind the Gate chain: `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision`.
+`tyf start` is the low-friction way to start a book today without turning TYF into the writer. It can run without a title, creates an `untitled-...` work when needed, records `title_status: "unknown"` until the author has a working title, opens the work as active, records the writing language in `work.yaml`, and adds a source/interview packet in `sources/interviews/`, a seed outline in `outline/`, and a first-session runway in `.review/`. Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles fall back to stable generated ids, and TYF preserves UTF-8 source, draft, and manuscript text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
 
-The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash, current manuscript base hash, and any source refs supplied with `--source-ref`. An audit record must pass with findings answered. A decision record names the proposal the author accepted, records acceptance evidence, preserves source refs, and can optionally narrow acceptance to strictly increasing source line ranges with `--lines 2,5-8` or to an exact reviewed unified diff with `--patch`; omitting both means whole-file acceptance. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`, so ordinary post-creation JSON edits are detected by `tyf write` and `tyf doctor`. `tyf write --decision <id>` verifies that the draft, source fragments, accepted patch, and manuscript base have not changed, refuses symlink escapes, acquires a per-unit lock under `.review/locks/`, writes atomically, applies only the accepted scope, and logs the proposal, decision, audit, source refs, accepted scope, and content hash. Naked `--confirm` is refused.
+`tyf import <path>` is the arrival lane for projects that do not start from zero. Text files and chat exports are preserved under `sources/imports/`, get an orientation packet, and mint source fragments when appropriate. Zip and folder arrivals are containment-first: TYF preserves the raw bundle, writes an orientation/triage packet with a listing and analysis questions, and does not unpack or merge it into live workspace directories until the author accepts an organization plan. A TYF-shaped archive is recognized as such in the orientation packet, but it is still reviewed before merging. `tyf resume` shows the active work, title/language/status, first-session evidence, pending proposals and decisions, open prompts, and the next useful move.
+
+`tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. Source captures and textual imports mint stable source fragments under `sources/fragments/` and record them in `sources/fragments.jsonl`, so later proposals can carry source provenance without asking the author to manage a database. Source fragments are workspace-owned: a fragment records its origin work, but any later work may cite it with `--source-ref`. None of these commands write to `manuscript/`; that remains behind the Gate chain: `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision`.
+
+The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash, current manuscript base hash, and any source refs supplied with `--source-ref`. A proposal moves the work status to `drafting`; a passing audit with answered findings moves it to `audited`; author acceptance moves it to `accepted`; and the controlled write moves it to `written`. A failing audit records `needs-revision`, and `tyf accept`/`tyf write` refuse when the work is not in the required state. Acceptance also verifies that the passing audit belongs to the same proposal hash, so one audited proposal cannot bless another. A decision record names the proposal the author accepted, records acceptance evidence, preserves source refs, and can optionally narrow acceptance to strictly increasing source line ranges with `--lines 2,5-8` or to an exact reviewed unified diff with `--patch`; omitting both means whole-file acceptance. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`, so ordinary post-creation JSON edits are detected by `tyf write` and `tyf doctor`. `tyf write --decision <id>` verifies that the draft, source fragments, accepted patch, and manuscript base have not changed, refuses symlink escapes, acquires a per-unit lock under `.review/locks/`, writes atomically, applies only the accepted scope, and logs the proposal, decision, audit, source refs, accepted scope, and content hash. If the author edits `manuscript/` directly, `tyf adopt <work> <unit> --evidence "<what happened>"` preserves that direct edit under `.review/author-revisions/` and records it as the new base before the next controlled write. Naked `--confirm` is refused.
 
 `tyf reflexes` shows the apparatus behavior that would otherwise be easy to forget: the documentation-honesty tail hook, the attentive-amanuensis notice hook after controlled writes, the doctor integrity check, and the git recovery path. If a workspace is also a git repository, mutating commands surface changed-path counts and point to `tyf snapshot`. `tyf snapshot --message "..."` stages and commits the current workspace as an explicit recovery point. TYF never commits silently.
 
@@ -126,7 +132,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.3.0 alpha. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.4.0 alpha. The helper has a stronger amanuensis entry and continuity slice, but the semantic engine is still partial. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 

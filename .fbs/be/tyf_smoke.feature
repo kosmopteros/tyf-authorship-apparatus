@@ -15,6 +15,111 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py gate"
     Then Exit code is 0
 
+  @covers:tyf-work-state-machine-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper advances work status through proposal audit accept write
+    When Run "python tests/test_tyf.py CLIBehaviour.test_gate_updates_work_status_across_transitions -v"
+    Then Exit code is 0
+
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses acceptance before audited state
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_refuses_before_passing_audit_state -v"
+    Then Exit code is 0
+
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses acceptance after failed audit state
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_refuses_after_failed_audit_state -v"
+    Then Exit code is 0
+
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses acceptance using another proposal audit
+    When Run "python tests/test_tyf.py CLIBehaviour.test_accept_requires_audit_for_the_same_proposal -v"
+    Then Exit code is 0
+
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper refuses write outside accepted state
+    When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_when_work_status_is_not_accepted -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: amanuensis entry structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py amanuensis-entry"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: helper starts without a title and keeps fresh intake non-blocking
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_allows_no_title_and_keeps_intake_non_blocking -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: first-session evidence is source evidence not draft prose
+    When Run "python tests/test_tyf.py CLIBehaviour.test_begin_creates_first_session_packet_without_manuscript_text -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @tool-check:cli
+  Scenario: import preserves chat and bundle arrivals without manuscript writes
+    When Run "python tests/test_tyf.py CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment CLIBehaviour.test_import_zip_preserves_bundle_without_manuscript_write -v"
+    Then Exit code is 0
+
+  @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @tool-check:cli
+  Scenario: text and zip arrivals stay portable without manuscript writes
+    When Run "python tests/test_tyf.py CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment CLIBehaviour.test_import_zip_preserves_bundle_without_manuscript_write -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @tool-check:cli
+  Scenario: folder dumps and TYF-shaped zips stay contained until organized
+    When Run "python tests/test_tyf.py CLIBehaviour.test_import_folder_preserves_tree_and_lists_without_live_merge CLIBehaviour.test_import_tyf_shaped_zip_is_detected_without_merging -v"
+    Then Exit code is 0
+
+  @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @tool-check:cli
+  Scenario: folder dumps and TYF-shaped zips stay portable until organized
+    When Run "python tests/test_tyf.py CLIBehaviour.test_import_folder_preserves_tree_and_lists_without_live_merge CLIBehaviour.test_import_tyf_shaped_zip_is_detected_without_merging -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: source fragments are reusable workspace memory
+    When Run "python tests/test_tyf.py CLIBehaviour.test_source_fragments_are_workspace_owned_and_reusable_across_works -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/controlling-manuscript-writes/SKILL.md @tool-check:cli
+  Scenario: author direct manuscript edits can be adopted as the next base
+    When Run "python tests/test_tyf.py CLIBehaviour.test_adopt_author_manuscript_edit_updates_base_for_next_decision -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: resume reports active work continuity and next move
+    When Run "python tests/test_tyf.py CLIBehaviour.test_resume_reports_active_work_state_and_next_useful_move -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check accepts the current repo pack
+    When Run "python tests/test_tyf.py DocCheck.test_repo_pack_is_clean -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags retired manuscript confirmation command
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_retired_write_confirm_command -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags stale ledger memory paths
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_legacy_ledger_path -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags stale role terminology
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_role_terminology_drift -v"
+    Then Exit code is 0
+
+  @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
+  Scenario: workspace initializes a portable text-first bundle marker
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_portable_workspace_marker -v"
+    Then Exit code is 0
+
+  @covers:tyf-portable-workspace-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
+  Scenario: portable workspace structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py portability"
+    Then Exit code is 0
+
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: helper refuses tampered Gate review records
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_tampered_decision_record CLIBehaviour.test_write_refuses_tampered_audit_record CLIBehaviour.test_doctor_flags_tampered_gate_record CLIBehaviour.test_doctor_flags_missing_gate_record_seal -v"

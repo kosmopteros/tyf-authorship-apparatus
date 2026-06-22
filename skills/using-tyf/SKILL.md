@@ -16,10 +16,10 @@ Do not jump to drafting when the work is still source, knowledge, voice, structu
 When an author says "start my book", "new essay series", "set up TYF", or similar, do not hand them a command list. Load `initializing-a-workspace`, create or enter the workspace, and run the helper yourself. Prefer:
 
 ```
-tyf start "Working Title"
+tyf start
 ```
 
-If the title is unknown, ask for the working title in plain language. After the helper runs, tell the author what was created, confirm that no manuscript text was written, and ask the first source questions. Keep advanced commands such as `begin`, `capture`, `snapshot`, and `write` as agent tools, not as the author's first interface.
+If the title is known, pass it: `tyf start "Working Title"`. If the title is unknown, do not block; let `tyf start` create an untitled work and keep `title_status: unknown`. If the author brings a chat export, zip, folder, or old workspace, preserve it first with `tyf import <path>` and read the orientation packet before organizing anything. After the helper runs, tell the author what was created, confirm that no manuscript text was written, and ask the first source questions. Keep advanced commands such as `begin`, `capture`, `import`, `adopt`, `snapshot`, and `write` as agent tools, not as the author's first interface.
 
 ## Selection order
 

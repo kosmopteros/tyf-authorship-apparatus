@@ -1,8 +1,8 @@
-# The Learn pass (opt-in, unwired in v0.1)
+# The Learn pass (opt-in, unwired)
 
 The deterministic attentiveness layer (`tyf notice`) catches what code can see: gaps, unfinished lines, unsourced claims, a style sheet lagging the manuscript, an unused register. It spends no tokens and runs anywhere.
 
-There is a second kind of drift code cannot see: *semantic* staleness. A paragraph in chapter nine that quietly contradicts a claim logged in chapter two. A manuscript whose argument has moved past what the outline still asserts. Prose that has drifted out of its declared register in a way no string match will catch. Surfacing that needs a reading pass, which means a model, which means tokens. This document specifies that pass. It is deliberately **not wired into anything** in v0.1: nothing reads your corpus or spends tokens in the background until you choose to run it.
+There is a second kind of drift code cannot see: *semantic* staleness. A paragraph in chapter nine that quietly contradicts a claim logged in chapter two. A manuscript whose argument has moved past what the outline still asserts. Prose that has drifted out of its declared register in a way no string match will catch. Surfacing that needs a reading pass, which means a model, which means tokens. This document specifies that pass. It is deliberately **not wired into anything** yet: nothing reads your corpus or spends tokens in the background until you choose to run it.
 
 ## Principles it must obey
 

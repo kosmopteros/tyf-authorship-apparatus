@@ -22,6 +22,7 @@ import unittest
 import re
 import json
 import hashlib
+import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -102,6 +103,9 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIsNotNone(m, out)
         return m.group(1)
 
+    def work_status(self, ws, work="demo"):
+        return tyf.read_state(str(ws / "works" / work / "work.yaml")).get("status")
+
     # ---- existing behaviour that must keep working (regression guards) ----
 
     def test_init_creates_and_is_idempotent(self):
@@ -113,6 +117,19 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertEqual((ws / "ASSUMPTIONS.md").read_text(encoding="utf-8"),
                          "CUSTOM CONTENT\n")
+
+    def test_init_creates_portable_workspace_marker(self):
+        ws = self.ws()
+        marker = json.loads((ws / "tyf.portable.json").read_text(encoding="utf-8"))
+        self.assertEqual(marker["format"], "tyf-workspace")
+        self.assertEqual(marker["format_version"], "0.4.0")
+        self.assertEqual(marker["git"], "optional")
+        self.assertIn("WORKSPACE_STATE.yaml", marker["canonical_text_state"])
+        self.assertIn("manifest.yaml", marker["canonical_text_state"])
+        self.assertIn("sources/", marker["canonical_text_state"])
+        self.assertIn(".tyf/events.jsonl", marker["canonical_text_state"])
+        self.assertIn(".tyf/ledger.db", marker["derived_disposable_state"])
+        self.assertIn(".tyf/*.db-wal", marker["derived_disposable_state"])
 
     def test_write_refuses_without_decision(self):
         ws = self.ws()
@@ -133,8 +150,104 @@ class CLIBehaviour(unittest.TestCase):
         proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
         rc, out = run_tyf(["accept", "demo", proposal], ws)
         self.assertNotEqual(rc, 0, "acceptance without recorded author evidence must refuse")
+        rc, out = run_tyf(
+            ["audit", "demo", "ch1.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(["accept", "demo", proposal, "--evidence", "Alexander: accept this file"], ws)
         self.assertEqual(rc, 0, out)
+
+    def test_gate_updates_work_status_across_transitions(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        self.assertEqual(self.work_status(ws), "structuring")
+        src = self.make_draft(ws, name="chapter.md", text="draft\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.work_status(ws), "drafting")
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.work_status(ws), "audited")
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.work_status(ws), "accepted")
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.work_status(ws), "written")
+
+    def test_accept_refuses_before_passing_audit_state(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "author acceptance must not bypass the audit transition")
+        self.assertRegex(out.lower(), r"audit|audited|state|status")
+        self.assertEqual(self.work_status(ws), "drafting")
+
+    def test_accept_refuses_after_failed_audit_state(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "ch1.md", "--record", "--proposal", proposal,
+             "--verdict", "fail"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.work_status(ws), "needs-revision")
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+        self.assertNotEqual(rc, 0, "author acceptance must not bypass a failed audit")
+        self.assertRegex(out.lower(), r"audited|needs-revision|state|status")
+
+    def test_accept_requires_audit_for_the_same_proposal(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        first_src = self.make_draft(ws, name="first.md", text="first\n")
+        rc, out = run_tyf(["propose", "demo", "--from", first_src], ws)
+        self.assertEqual(rc, 0, out)
+        first_proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "first.md", "--record", "--proposal", first_proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.work_status(ws), "audited")
+
+        second_src = self.make_draft(ws, name="second.md", text="second\n")
+        rc, out = run_tyf(["propose", "demo", "--from", second_src], ws)
+        self.assertEqual(rc, 0, out)
+        second_proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        work_yaml = ws / "works/demo/work.yaml"
+        work_yaml.write_text(work_yaml.read_text(encoding="utf-8").replace(
+            "status: drafting", "status: audited"), encoding="utf-8")
+        rc, out = run_tyf(
+            ["accept", "demo", second_proposal,
+             "--evidence", "Alexander: accept this second proposal"], ws)
+        self.assertNotEqual(rc, 0, "acceptance must be bound to the proposal's own passing audit")
+        self.assertRegex(out.lower(), r"audit|proposal|findings")
+
+    def test_write_refuses_when_work_status_is_not_accepted(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        decision = self.gate_decision(ws, src=src)
+        work_yaml = ws / "works/demo/work.yaml"
+        work_yaml.write_text(work_yaml.read_text(encoding="utf-8").replace(
+            "status: accepted", "status: drafting"), encoding="utf-8")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "write must refuse when the work state is not accepted")
+        self.assertRegex(out.lower(), r"status|state|accepted")
+        self.assertFalse((ws / "works/demo/manuscript/ch1.md").exists())
 
     def test_write_with_decision_copies_and_logs(self):
         ws = self.ws()
@@ -181,6 +294,10 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["propose", "demo", "--from", src], ws)
         self.assertEqual(rc, 0, out)
         proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "2-1",
              "--evidence", "Alexander: accept this"], ws)
@@ -252,6 +369,10 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["propose", "demo", "--from", src], ws)
         self.assertEqual(rc, 0, out)
         proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
         patches = ws / "works/demo/.review/patches"
         patches.mkdir(parents=True, exist_ok=True)
         (patches / "chapter.patch").write_text(
@@ -272,6 +393,10 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["propose", "demo", "--from", src], ws)
         self.assertEqual(rc, 0, out)
         proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
         patches = ws / "works/demo/.review/patches"
         patches.mkdir(parents=True, exist_ok=True)
         (patches / "chapter.patch").write_text(
@@ -387,7 +512,7 @@ class CLIBehaviour(unittest.TestCase):
         proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
         rc, out = run_tyf(
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
-             "--verdict", "fail"], ws)
+             "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
         audit = re.search(r"Audit:\s+(\S+)", out).group(1)
         rc, out = run_tyf(
@@ -396,8 +521,8 @@ class CLIBehaviour(unittest.TestCase):
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         audit_path = ws / "works/demo/.review/audits" / f"{audit}.json"
         data = json.loads(audit_path.read_text(encoding="utf-8"))
-        data["verdict"] = "pass"
-        data["findings_answered"] = True
+        data["verdict"] = "fail"
+        data["findings_answered"] = False
         audit_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
         self.assertNotEqual(rc, 0, "tampered audit records must not satisfy the Gate")
@@ -649,6 +774,47 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertEqual((ws / "works/demo/manuscript/ch.md").read_text(encoding="utf-8"), "v2\n")
 
+    def test_adopt_author_manuscript_edit_updates_base_for_next_decision(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="ch.md", text="v1\n")
+        first = self.gate_decision(ws, src=src, unit="ch.md")
+        self.assertEqual(run_tyf(["write", "demo", "--decision", first], ws)[0], 0)
+
+        man = ws / "works" / "demo" / "manuscript" / "ch.md"
+        man.write_text("author direct edit\n", encoding="utf-8")
+        self.make_draft(ws, name="ch.md", text="author direct edit\namanuensis continuation\n")
+        second = self.gate_decision(ws, src="works/demo/drafts/ch.md", unit="ch.md")
+
+        rc, out = run_tyf(["write", "demo", "--decision", second], ws)
+        self.assertNotEqual(rc, 0, "direct author edits should require explicit adoption before the next write")
+        self.assertRegex(out.lower(), r"out-of-band|adopt|reconcile|changed")
+
+        rc, out = run_tyf(
+            ["adopt", "demo", "ch.md", "--evidence", "Alexander edited the manuscript directly"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Adopted author edit", out)
+        revisions = list((ws / "works" / "demo" / ".review" / "author-revisions").glob("*ch.md"))
+        self.assertEqual(len(revisions), 1)
+        self.assertIn("author direct edit", revisions[0].read_text(encoding="utf-8"))
+
+        rc, out = run_tyf(["write", "demo", "--decision", second], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(man.read_text(encoding="utf-8"), "author direct edit\namanuensis continuation\n")
+
+    def test_resume_reports_active_work_state_and_next_useful_move(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["resume"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn(f"Active work: {work_id}", out)
+        self.assertIn("title: unknown", out.lower())
+        self.assertIn("status: structuring", out.lower())
+        self.assertIn("Next useful move", out)
+        self.assertIn("sources/interviews", out)
+
     # ---- third review: commands must require the work to exist ----
 
     def test_mark_ready_requires_existing_work(self):
@@ -683,16 +849,21 @@ class CLIBehaviour(unittest.TestCase):
              "--register", "author-poetic-philosophical"], ws)
         self.assertEqual(rc, 0, out)
         base = ws / "works" / "new-book"
-        self.assertTrue((base / "drafts" / "00-start-here.md").is_file())
+        starter_path = ws / "sources" / "interviews" / "new-book-first-session.md"
+        self.assertTrue(starter_path.is_file())
+        self.assertFalse((base / "drafts" / "00-start-here.md").exists(),
+                         "first-session evidence belongs in sources/interviews, not drafts")
         self.assertTrue((base / "outline" / "seed.md").is_file())
         self.assertTrue((base / ".review" / "today.md").is_file())
         self.assertEqual(list((base / "manuscript").iterdir()), [],
                          "begin must not create manuscript text")
         self.assertIn("active_work: new-book",
                       (ws / "WORKSPACE_STATE.yaml").read_text(encoding="utf-8"))
-        starter = (base / "drafts" / "00-start-here.md").read_text(encoding="utf-8")
+        starter = starter_path.read_text(encoding="utf-8")
         self.assertIn("author-owned", starter)
         self.assertIn("do not invent", starter.lower())
+        self.assertNotIn("[AUTHOR: needed", starter,
+                         "fresh intake prompts should not be treated as overdue author gaps")
         self.assertIn("tyf capture", out)
         self.assertIn("tyf write", out)
 
@@ -700,7 +871,7 @@ class CLIBehaviour(unittest.TestCase):
         ws = self.ws()
         rc, out = run_tyf(["begin", "new-book"], ws)
         self.assertEqual(rc, 0, out)
-        starter = ws / "works" / "new-book" / "drafts" / "00-start-here.md"
+        starter = ws / "sources" / "interviews" / "new-book-first-session.md"
         starter.write_text("AUTHOR SEED\n", encoding="utf-8")
         rc, out = run_tyf(["begin", "new-book"], ws)
         self.assertNotEqual(rc, 0, "begin must not clobber an existing work")
@@ -766,6 +937,28 @@ class CLIBehaviour(unittest.TestCase):
         log = (ws / "works/new-book/.review/write-log.md").read_text(encoding="utf-8")
         self.assertIn(fragment, log)
         self.assertIn("Source refs", log)
+
+    def test_source_fragments_are_workspace_owned_and_reusable_across_works(self):
+        ws = self.ws()
+        run_tyf(["begin", "book-one"], ws)
+        rc, out = run_tyf(
+            ["capture", "book-one", "--kind", "source", "--title", "shared memory",
+             "--text", "This remembered image may belong in several works."], ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+
+        run_tyf(["begin", "book-two"], ws)
+        src = self.make_draft(
+            ws, work="book-two", name="chapter.md",
+            text="The remembered image enters a different book.\n",
+        )
+        rc, out = run_tyf(["propose", "book-two", "--from", src, "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        proposal_data = json.loads(
+            (ws / "works/book-two/.review/proposals" / f"{proposal}.json").read_text(encoding="utf-8"))
+        self.assertEqual(proposal_data["source_refs"][0]["id"], fragment)
+        self.assertEqual(proposal_data["source_refs"][0]["origin_work"], "book-one")
 
     def test_propose_refuses_missing_or_tampered_source_fragment(self):
         ws = self.ws()
@@ -862,7 +1055,8 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["start", "The New Book"], ws)
         self.assertEqual(rc, 0, out)
         base = ws / "works" / "the-new-book"
-        self.assertTrue((base / "drafts" / "00-start-here.md").is_file())
+        self.assertTrue((ws / "sources" / "interviews" / "the-new-book-first-session.md").is_file())
+        self.assertFalse((base / "drafts" / "00-start-here.md").exists())
         self.assertTrue((base / "outline" / "seed.md").is_file())
         self.assertTrue((base / ".review" / "today.md").is_file())
         self.assertEqual(list((base / "manuscript").iterdir()), [])
@@ -872,6 +1066,25 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Next, ask the author", out)
         self.assertIn("No manuscript text was written", out)
         self.assertNotIn("tyf capture", out, "public start should not hand users a command list")
+
+    def test_start_allows_no_title_and_keeps_intake_non_blocking(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        m = re.search(r"Work id:\s+(\S+)", out)
+        self.assertIsNotNone(m, out)
+        work_id = m.group(1)
+        self.assertRegex(work_id, r"^untitled-[0-9]{8}-[0-9]{6}(?:-\d+)?$")
+        base = ws / "works" / work_id
+        work_yaml = (base / "work.yaml").read_text(encoding="utf-8")
+        self.assertIn('title_status: "unknown"', work_yaml)
+        self.assertIn('language: "undetermined"', work_yaml)
+        self.assertTrue((ws / "sources" / "interviews" / f"{work_id}-first-session.md").is_file())
+        self.assertEqual(list((base / "manuscript").iterdir()), [])
+
+        rc, notice = run_tyf(["notice", "--peek"], ws)
+        self.assertEqual(rc, 0, notice)
+        self.assertIn("nothing outstanding", notice.lower())
 
     def test_start_accepts_explicit_id_without_clobbering(self):
         ws = self.ws()
@@ -897,7 +1110,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         base = ws / "works" / "livro-novo"
         work_yaml = (base / "work.yaml").read_text(encoding="utf-8")
-        starter = (base / "drafts" / "00-start-here.md").read_text(encoding="utf-8")
+        starter = (ws / "sources" / "interviews" / "livro-novo-first-session.md").read_text(encoding="utf-8")
         style = (base / "style-sheet.md").read_text(encoding="utf-8")
         self.assertIn('language: "Portuguese"', work_yaml)
         self.assertIn("Writing language: Portuguese", starter)
@@ -917,6 +1130,86 @@ class CLIBehaviour(unittest.TestCase):
                       (ws / "works/demo/work.yaml").read_text(encoding="utf-8"))
         self.assertEqual((ws / "works/demo/manuscript/chapter.md").read_text(encoding="utf-8"),
                          text)
+
+    def test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment(self):
+        ws = self.ws()
+        chat = self.tmp / "arrival-chat.txt"
+        chat.write_text("Alexander: The book starts from an inherited silence.\n", encoding="utf-8")
+
+        rc, out = run_tyf(["import", str(chat), "--kind", "chat"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        self.assertTrue((ws / "works" / work_id / "work.yaml").is_file())
+        self.assertIn('title_status: "unknown"',
+                      (ws / "works" / work_id / "work.yaml").read_text(encoding="utf-8"))
+        imports = list((ws / "sources" / "imports").glob("*arrival-chat.txt"))
+        self.assertEqual(len(imports), 1)
+        self.assertIn("inherited silence", imports[0].read_text(encoding="utf-8"))
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        self.assertEqual(len(orientation), 1)
+        self.assertIn("No manuscript text was written", orientation[0].read_text(encoding="utf-8"))
+        index = (ws / "sources" / "fragments.jsonl").read_text(encoding="utf-8")
+        self.assertIn(fragment, index)
+        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+
+    def test_import_zip_preserves_bundle_without_manuscript_write(self):
+        ws = self.ws()
+        bundle = self.tmp / "old-project.zip"
+        with zipfile.ZipFile(bundle, "w") as zf:
+            zf.writestr("notes/opening.md", "A remembered draft from elsewhere.\n")
+            zf.writestr("state/work.yaml", "title: old\n")
+
+        rc, out = run_tyf(["import", str(bundle), "--kind", "bundle", "--title", "Imported Kin"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        imports = list((ws / "sources" / "imports").glob("*old-project.zip"))
+        self.assertEqual(len(imports), 1)
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        self.assertTrue(any("notes/opening.md" in p.read_text(encoding="utf-8") for p in orientation))
+        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+
+    def test_import_folder_preserves_tree_and_lists_without_live_merge(self):
+        ws = self.ws()
+        dump = self.tmp / "random-dump"
+        (dump / "notes").mkdir(parents=True)
+        (dump / "works" / "old" / "manuscript").mkdir(parents=True)
+        (dump / "notes" / "opening.md").write_text("A loose source note.\n", encoding="utf-8")
+        (dump / "works" / "old" / "manuscript" / "chapter.md").write_text(
+            "Old prose that should not be live yet.\n", encoding="utf-8")
+
+        rc, out = run_tyf(["import", str(dump), "--kind", "dump"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        preserved = list((ws / "sources" / "imports").glob("*random-dump"))
+        self.assertEqual(len(preserved), 1)
+        self.assertTrue((preserved[0] / "works" / "old" / "manuscript" / "chapter.md").is_file())
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
+        self.assertIn("notes/opening.md", orientation_text)
+        self.assertIn("works/old/manuscript/chapter.md", orientation_text)
+        self.assertIn("organization plan", orientation_text)
+        self.assertFalse((ws / "works" / "old").exists())
+        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
+
+    def test_import_tyf_shaped_zip_is_detected_without_merging(self):
+        ws = self.ws()
+        bundle = self.tmp / "tyf-shaped.zip"
+        with zipfile.ZipFile(bundle, "w") as zf:
+            zf.writestr("WORKSPACE_STATE.yaml", "active_work: old\n")
+            zf.writestr("sources/notes/opening.md", "Existing source.\n")
+            zf.writestr("works/old/manuscript/chapter.md", "Existing manuscript.\n")
+
+        rc, out = run_tyf(["import", str(bundle), "--kind", "bundle"], ws)
+        self.assertEqual(rc, 0, out)
+        work_id = re.search(r"Work id:\s+(\S+)", out).group(1)
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
+        self.assertIn("TYF-shaped workspace/archive signals detected", orientation_text)
+        self.assertIn("propose a merge plan", orientation_text)
+        self.assertIn("works/old/manuscript/chapter.md", orientation_text)
+        self.assertFalse((ws / "works" / "old").exists())
+        self.assertEqual(list((ws / "works" / work_id / "manuscript").iterdir()), [])
 
     def test_user_yaml_values_are_safely_quoted(self):
         ws = self.ws()
@@ -1172,6 +1465,14 @@ class DocCheck(unittest.TestCase):
         problems, _ = tyf.run_doc_check(str(root))
         self.assertTrue(any("ledger" in p.lower() for p in problems),
                         f"expected a stale-ledger-path problem, got {problems}")
+
+    def test_check_flags_retired_write_confirm_command(self):
+        root = self.min_pack()
+        (root / "README.md").write_text(
+            "Apply accepted text with `tyf write --confirm`.\n", encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("tyf write --confirm" in p for p in problems),
+                        f"expected a retired-command problem, got {problems}")
 
     def test_check_flags_role_terminology_drift(self):
         root = self.min_pack()

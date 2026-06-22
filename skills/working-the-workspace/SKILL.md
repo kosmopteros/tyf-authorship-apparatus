@@ -47,15 +47,16 @@ workspace/
 
 Before writing anything, name the pass you are in and check the table. If the pass has no write access to the target directory, you are in the wrong pass. Route the result to where that pass may write, or stop and go through the controlled write.
 
-The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; `tyf propose --source-ref <id>` binds preserved source fragments into the Gate, `tyf accept --lines 2,5-8` narrows the accepted subset when the author approves only selected source lines, and `tyf accept --patch <diff>` applies an exact reviewed unified diff. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
+The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, and `tyf accept --evidence`; `tyf propose --source-ref <id>` binds preserved source fragments into the Gate, `tyf accept --lines 2,5-8` narrows the accepted subset when the author approves only selected source lines, and `tyf accept --patch <diff>` applies an exact reviewed unified diff. The helper updates `work.yaml` status as the Gate advances and refuses acceptance before `audited` or writing before `accepted`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
 
-For a first writing session, `tyf start "Working Title" --language "<writing language>"` creates a normal work plus a safe source/interview packet in `drafts/`, a seed outline, and a `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures also mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
+For a first writing session, `tyf start` creates a normal work even when the title is unknown, writes the first-session evidence packet to `sources/interviews/`, creates a seed outline and `.review/` runway, then prints plain source questions for the agent to ask. `tyf begin <id>` is the lower-level form when a stable id is already needed. `tyf import <path>` preserves existing material under `sources/imports/` and writes an orientation packet; zip and folder arrivals stay contained until the author accepts an organization plan. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures and textual imports mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
 
 ## Rationalization table
 
 | What you will tell yourself | The reality | Do instead |
 |---|---|---|
 | "It is one small fix, I will edit the manuscript directly." | One uncontrolled write is the whole contract broken. | Route through proposal, audit, decision, and `tyf write --decision`. |
+| "The author edited it by hand, so TYF is stuck." | Direct author edits are legitimate, but the apparatus needs a new base hash. | Run `tyf adopt <work> <unit> --evidence "<what happened>"`, then continue through the Gate. |
 | "Drafts and manuscript are basically the same." | Drafts are candidates; the manuscript is the work. | Compose writes to `drafts/` only. |
 | "I will tidy the sources while I am here." | The sources is the source of truth and is read-mostly. | Add derived structure to the knowledge base, leave the raw intact. |
 | "I am not sure which pass I am in, I will just write." | Unsure-which-pass is exactly when the contract leaks. | Name the pass first; consult the table. |
@@ -71,8 +72,10 @@ For a first writing session, `tyf start "Working Title" --language "<writing lan
 
 ```
 tyf status            # active work, band, open gates, write-zone reminder
-tyf start "Title" --language "<writing language>"
+tyf start ["Title"] --language "<writing language>"
                      # public first-session flow, no manuscript text
+tyf import <path>    # preserve an arrival and create an orientation packet
+tyf resume [work]    # active work, state, prompts, and next useful move
 tyf begin <work> --language "<writing language>"
                      # lower-level first-session packet with explicit id
 tyf capture <work>     # append author source, voice, claim, or question material
@@ -82,6 +85,7 @@ tyf snapshot -m <msg> # explicit git recovery commit; never automatic
 tyf propose <work> --from <draft> [--source-ref <id>]
 tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered
 tyf accept <work> <proposal-id> [--lines 2,5-8 | --patch <diff>] --evidence "<author acceptance>"
+tyf adopt <work> <unit> --evidence "<author direct edit>"
 tyf write <work> --decision <decision-id>
 ```
 

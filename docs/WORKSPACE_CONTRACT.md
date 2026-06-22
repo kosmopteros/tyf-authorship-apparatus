@@ -9,11 +9,12 @@ workspace/
 ├── CLAUDE.md / AGENTS.md         # router + the commitments + project conventions
 ├── manifest.yaml                 # voice inheritance rules, hooks
 ├── WORKSPACE_STATE.yaml          # durable state: active work, active band, write-control state
+├── tyf.portable.json             # portable bundle marker: canonical text vs derived state
 ├── ASSUMPTIONS.md                # explicit, updated as the author learns
 │
 ├── sources/                 # The sources: raw, preserved, shared
-│   ├── uploads/  transcripts/  interviews/  notes/  links.md
-│   ├── fragments/                  # stable source fragments minted by capture
+│   ├── uploads/  transcripts/  interviews/  imports/  notes/  links.md
+│   ├── fragments/                  # stable workspace-owned source fragments
 │   └── fragments.jsonl             # source fragment index
 │
 ├── knowledge-base/               # The knowledge base: structured, shared
@@ -31,7 +32,7 @@ workspace/
 │       ├── work.yaml             # type, writing language, registers used, status, scope
 │       ├── outline/              # thesis, argument-spine, chapter-outlines, seed.md
 │       ├── manuscript/           # behind the controlled write
-│       ├── drafts/               # candidate text from the amanuensis, start packet
+│       ├── drafts/               # candidate text from the amanuensis
 │       ├── style-sheet.md        # running, emitted by passes
 │       └── .review/              # findings, Gate records, record seals, never auto-applied
 │
@@ -42,9 +43,9 @@ workspace/
 
 ## Read-only enforcement
 
-Elicit, Read (sympathetic read), Diagnose, and Audit (adversarial audit) get no write access to any work's `manuscript/`. Propose writes only to `.review/`. Compose writes only to `drafts/`. Revise writes to `manuscript/`, and only through the controlled write: `tyf propose`, `tyf audit --record`, `tyf accept --evidence` with optional `--lines 2,5-8` for partial source-line acceptance or `--patch <diff>` for an exact reviewed unified diff, then `tyf write --decision`. Source captures mint stable fragments in `sources/fragments/`; source-grounded proposals include them with `tyf propose --source-ref <id>`, and proposal, audit, decision, write-log, and doctor integrity checks carry those source refs forward. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`; `tyf write` and `tyf doctor` refuse mismatched seals instead of trusting edited JSON. Controlled writes also acquire a per-unit lock under `.review/locks/` before mutating a manuscript destination. In Claude Code this is real tool scoping on the subagent. In Desktop it is enforced by routing every edit through `controlling-manuscript-writes`.
+Elicit, Read (sympathetic read), Diagnose, and Audit (adversarial audit) get no write access to any work's `manuscript/`. Propose writes only to `.review/`. Compose writes only to `drafts/`. Revise writes to `manuscript/`, and only through the controlled write: `tyf propose`, `tyf audit --record`, `tyf accept --evidence` with optional `--lines 2,5-8` for partial source-line acceptance or `--patch <diff>` for an exact reviewed unified diff, then `tyf write --decision`. The helper also updates and enforces `work.yaml` status: `structuring`/`ready-for-audit`, `drafting`, `audited`, `accepted`, and `written` are no longer labels only, because `tyf accept` refuses before `audited`, verifies the audit belongs to the same proposal, and `tyf write` refuses before `accepted`. Source captures and textual imports mint stable fragments in `sources/fragments/`; source-grounded proposals include them with `tyf propose --source-ref <id>`, and proposal, audit, decision, write-log, and doctor integrity checks carry those source refs forward. Fragments are workspace-owned: they preserve origin work/session, but later works may reuse them without duplicate capture. Proposal, audit, and decision records are sealed in `.review/record-seals.jsonl`; `tyf write` and `tyf doctor` refuse mismatched seals instead of trusting edited JSON. Controlled writes also acquire a per-unit lock under `.review/locks/` before mutating a manuscript destination. If the author directly edits a manuscript unit, `tyf adopt <work> <unit> --evidence "<what happened>"` preserves the direct edit in `.review/author-revisions/` and records it as the new base before the next controlled write. In Claude Code this is real tool scoping on the subagent. In Desktop it is enforced by routing every edit through `controlling-manuscript-writes`.
 
-`tyf start "Working Title" --language "<writing language>"` is the public first-session shortcut. It creates a normal work from the title, marks it active, records the writing language in `work.yaml`, and adds `drafts/00-start-here.md`, `outline/seed.md`, and `.review/today.md`. Those files are prompts and records for the author; they are not manuscript. `tyf begin <id>` is the lower-level form when an agent already needs a stable work id. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material to `sources/notes/`, `voice/exemplar-passages/`, `knowledge-base/claims/`, or `knowledge-base/open-questions/` respectively. Source captures also create an inspectable source fragment with an id such as `src-...`, and later `tyf propose --source-ref <id>` binds that preserved material into the Gate. Capture binds each note to an existing work and never writes to `works/<id>/manuscript/`.
+`tyf start` is the public first-session shortcut. It may run without a title, creates an `untitled-...` work when needed, records `title_status: "unknown"`, marks the work active, records the writing language in `work.yaml`, and adds `sources/interviews/<work>-first-session.md`, `outline/seed.md`, and `.review/today.md`. Those files are prompts and records for the author; they are not manuscript. Fresh intake prompts use `[PROMPT: ...]` rather than overdue `[AUTHOR: needed]` gaps. `tyf begin <id>` is the lower-level form when an agent already needs a stable work id. `tyf import <path>` preserves existing material under `sources/imports/` and writes an orientation packet. Text imports can mint source fragments immediately; zip and folder arrivals are containment-first, listed and analyzed before anything is unpacked or merged into live workspace structure. `tyf capture <work> --kind source|voice|claim|question --text <text>` appends author-supplied material to `sources/notes/`, `voice/exemplar-passages/`, `knowledge-base/claims/`, or `knowledge-base/open-questions/` respectively. None of these write to `works/<id>/manuscript/`.
 
 ## Transparent reflexes and git recovery
 

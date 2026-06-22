@@ -20,14 +20,16 @@ def check_helper() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
-        "audit", "accept", "adopt", "write", "doctor", "check",
+        "audit", "accept", "adopt", "write", "doctor", "check", "structure", "character",
+        "consult-character",
     }
     missing = sorted(
         command for command in required
         if f'add_parser("{command}"' not in source
     )
     assert not missing, f"missing TYF commands: {missing}"
-    for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_resume",
+    for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_character",
+                    "cmd_consult_character", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_accept",
                     "cmd_adopt"):
         assert f"def {handler}(" in source, f"missing {handler}"
@@ -293,11 +295,48 @@ def check_onboarding_entry() -> None:
     assert "You should not need to learn the helper commands" in readme
 
 
+def check_character_consultation() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    contract = (ROOT / "docs" / "WORKSPACE_CONTRACT.md").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    composing = (ROOT / "skills" / "composing-as-amanuensis" / "SKILL.md").read_text(encoding="utf-8")
+    voice = (ROOT / "skills" / "managing-voice" / "SKILL.md").read_text(encoding="utf-8")
+    cowork = (ROOT / "cowork" / "PROJECT_INSTRUCTIONS.md").read_text(encoding="utf-8")
+
+    for token in (
+        "def cmd_character(",
+        "def cmd_consult_character(",
+        "knowledge-base/characters",
+        "voice/characters",
+        "character-consults",
+        "hidden amanuensis machinery",
+        "candidate dramatic insight",
+        "Ground only in this character dossier",
+        "not evidence, not manuscript, not a source",
+    ):
+        assert token in source, f"character consultation runtime missing {token}"
+    for name in (
+        "test_character_dossier_and_consultation_stay_contained",
+        "test_character_consultation_refuses_missing_dossier",
+        "test_character_dossier_supports_non_latin_names",
+    ):
+        assert name in tests, f"missing {name}"
+    assert "what would Mark say" in readme
+    assert "candidate dramatic insight" in readme
+    assert "character-consults" in contract
+    assert "what would Mark say here" in using
+    assert "Character consultation" in composing
+    assert "voice/characters/" in voice
+    assert "hidden amanuensis machinery" in cowork
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -320,6 +359,8 @@ def main(argv: list[str] | None = None) -> int:
         check_onboarding()
     elif args.oracle == "onboarding-entry":
         check_onboarding_entry()
+    elif args.oracle == "character-consultation":
+        check_character_consultation()
     else:
         check_gate()
     return 0

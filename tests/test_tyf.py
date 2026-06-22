@@ -1081,6 +1081,160 @@ class CLIBehaviour(unittest.TestCase):
         self.assertNotEqual(rc, 0, "write must refuse when accepted source provenance changed")
         self.assertFalse((ws / "works/new-book/manuscript/chapter.md").exists())
 
+    def test_structure_source_fragment_builds_knowledge_and_amanuensis_brief(self):
+        ws = self.ws()
+        text = "\n".join([
+            "Claim: Kinship is a weather system.",
+            "Example: The aunt keeps a list of storms by name.",
+            "Question: Which family member first taught the weather ritual?",
+            "Loose image of rain on the kitchen window.",
+        ])
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "storm notes", "--text", text],
+            ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Claims: 1", out)
+        self.assertIn("Examples: 1", out)
+        self.assertIn("Open questions: 1", out)
+
+        claims = (ws / "knowledge-base" / "claims.md").read_text(encoding="utf-8")
+        self.assertRegex(claims, r"clm-[0-9a-f]{12}")
+        self.assertIn("Kinship is a weather system.", claims)
+        self.assertIn(fragment, claims)
+        self.assertIn("source-backed", claims)
+
+        examples = (ws / "knowledge-base" / "examples" / "work.md").read_text(encoding="utf-8")
+        self.assertIn("The aunt keeps a list of storms by name.", examples)
+        self.assertIn(fragment, examples)
+
+        questions = (ws / "knowledge-base" / "open-questions" / "work.md").read_text(encoding="utf-8")
+        self.assertIn("Which family member first taught the weather ritual?", questions)
+        self.assertIn(fragment, questions)
+
+        brief = (ws / ".review" / "amanuensis-brief.md").read_text(encoding="utf-8")
+        self.assertIn("Source fragments", brief)
+        self.assertIn(fragment, brief)
+        self.assertIn("Claims extracted: 1", brief)
+        self.assertIn("Gentle questions for the author", brief)
+        self.assertIn("These are nudges of attention, not doubts in the author's judgment.", brief)
+        self.assertIn("Loose image of rain on the kitchen window.", brief)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_structure_source_fragment_is_idempotent(self):
+        ws = self.ws()
+        text = "\n".join([
+            "Claim: A room can remember an argument.",
+            "Example: The chair remains turned toward the door.",
+            "Question: Who moved the chair?",
+        ])
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "room note", "--text", text],
+            ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        for _ in range(2):
+            rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+            self.assertEqual(rc, 0, out)
+
+        claims = (ws / "knowledge-base" / "claims.md").read_text(encoding="utf-8")
+        examples = (ws / "knowledge-base" / "examples" / "work.md").read_text(encoding="utf-8")
+        questions = (ws / "knowledge-base" / "open-questions" / "work.md").read_text(encoding="utf-8")
+        self.assertEqual(claims.count("A room can remember an argument."), 1)
+        self.assertEqual(examples.count("The chair remains turned toward the door."), 1)
+        self.assertEqual(questions.count("Who moved the chair?"), 1)
+
+    def test_structure_refuses_tampered_source_fragment(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "seed",
+             "--text", "Claim: The first image is true."], ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        fragment_path = ws / "sources" / "fragments" / f"{fragment}.md"
+        fragment_path.write_text(
+            fragment_path.read_text(encoding="utf-8").replace("first image", "second image"),
+            encoding="utf-8")
+
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+        self.assertNotEqual(rc, 0, "structure must refuse changed source fragments")
+        self.assertRegex(out.lower(), r"source fragment|hash|tamper")
+        claims = (ws / "knowledge-base" / "claims.md").read_text(encoding="utf-8")
+        self.assertNotIn("second image", claims)
+
+    def test_import_text_orientation_points_to_structure_pass(self):
+        ws = self.ws()
+        chat = self.tmp / "arrival-chat.txt"
+        chat.write_text("Claim: The family archive begins with a silence.\n", encoding="utf-8")
+        rc, out = run_tyf(["import", str(chat), "--kind", "chat"], ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        orientation = "\n".join(
+            p.read_text(encoding="utf-8")
+            for p in (ws / "sources" / "imports").glob("*orientation.md")
+        )
+        self.assertIn(f"tyf structure work --source-ref {fragment}", orientation)
+
+    def test_character_dossier_and_consultation_stay_contained(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["character", "Mark",
+             "--knowledge", "Mark knows the archive was locked before winter.",
+             "--voice", "short, dry, protective"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertTrue((ws / "knowledge-base" / "characters" / "mark.md").is_file())
+        self.assertTrue((ws / "voice" / "characters" / "mark.md").is_file())
+
+        rc, out = run_tyf(
+            ["consult-character", "work", "Mark",
+             "--prompt", "What would Mark say in response to the opened archive?"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Character consultation", out)
+        consults = list((ws / ".review" / "character-consults").glob("mark-*.md"))
+        self.assertEqual(len(consults), 1)
+        packet = consults[0].read_text(encoding="utf-8")
+        self.assertIn("hidden amanuensis machinery", packet)
+        self.assertIn("candidate dramatic insight", packet)
+        self.assertIn("not evidence", packet)
+        self.assertIn("not manuscript", packet)
+        self.assertIn("Ground only in this character dossier", packet)
+        self.assertIn("Mark knows the archive was locked before winter.", packet)
+        self.assertIn("short, dry, protective", packet)
+        self.assertIn("What would Mark say in response to the opened archive?", packet)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_character_consultation_refuses_missing_dossier(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["consult-character", "work", "Mark", "--prompt", "What would Mark say?"], ws)
+        self.assertNotEqual(rc, 0, "character consult must not invent a dossier")
+        self.assertRegex(out.lower(), r"character|dossier|missing")
+        self.assertFalse((ws / ".review" / "character-consults").exists())
+
+    def test_character_dossier_supports_non_latin_names(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["character", "Мария",
+             "--knowledge", "Мария знает старую песню.",
+             "--voice", "тихо, точно"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertTrue((ws / "knowledge-base" / "characters" / "мария.md").is_file())
+        self.assertTrue((ws / "voice" / "characters" / "мария.md").is_file())
+
+        rc, out = run_tyf(
+            ["consult-character", "work", "Мария",
+             "--prompt", "Что Мария сказала бы здесь?"], ws)
+        self.assertEqual(rc, 0, out)
+        consults = list((ws / ".review" / "character-consults").glob("мария-*.md"))
+        self.assertEqual(len(consults), 1)
+        packet = consults[0].read_text(encoding="utf-8")
+        self.assertIn("Мария знает старую песню.", packet)
+        self.assertIn("тихо, точно", packet)
+        self.assertIn("Ground only in this character dossier", packet)
+
     def test_capture_requires_existing_work(self):
         ws = self.ws()
         rc, out = run_tyf(

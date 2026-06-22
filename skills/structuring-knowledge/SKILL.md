@@ -21,6 +21,14 @@ Structure is not summary. The job is to expose the architecture of what the auth
 
 **Claims index.** Maintain `claims.md`: every load-bearing claim mapped to at least one source in the sources. A claim with no source is flagged, never silently accepted.
 
+**Deterministic source structuring.** For stable source fragments, prefer the helper before hand-authoring derived records:
+
+```bash
+tyf structure work --source-ref <id>
+```
+
+This pass extracts only explicit author-supplied `Claim:`, `Example:`, and `Question:` lines, appends source-linked knowledge records, writes `.review/amanuensis-brief.md`, and leaves unclassified source material visible for the author. Its questions are gentle nudges of attention, not doubts in the author's judgment. It is not a summarizer, not an interrogation, and not a drafting pass.
+
 **Gap-marking, not confabulation.** When the structure needs a fact, figure, anecdote, or citation the author has not supplied, insert `[AUTHOR: needed — what]` and stop. The system is structurally unable to pretend to know what only the author knows.
 
 ## Rationalization table
@@ -58,6 +66,7 @@ Structure is not summary. The job is to expose the architecture of what the auth
 - **A claim the author calls "obvious":** keep it flagged as unsourced regardless of their confidence; obviousness is not a source.
 - **A "claim" that is actually a value or preference** (not falsifiable): classify it as stance, not claim, and do not demand evidence for a taste.
 - **A whole book's worth of claims:** scope the claim graph to the active unit each run; a corpus-wide graph is unreadable and unusable.
+- **Unlabelled source material:** do not infer the hidden claim. Preserve it in `.review/amanuensis-brief.md` as unclassified and ask the author what it is doing.
 
 ## Next
 

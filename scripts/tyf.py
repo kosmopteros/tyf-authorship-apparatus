@@ -1055,9 +1055,9 @@ def _required_structure(root):
     dirs = [
         "sources/uploads", "sources/transcripts", "sources/interviews", "sources/imports", "sources/notes",
         "sources/fragments",
-        "knowledge-base/concepts", "knowledge-base/claims", "knowledge-base/examples",
+        "knowledge-base/concepts", "knowledge-base/claims", "knowledge-base/examples", "knowledge-base/characters",
         "knowledge-base/contradictions", "knowledge-base/open-questions",
-        "voice/registers", "voice/exemplar-passages",
+        "voice/registers", "voice/exemplar-passages", "voice/characters",
         "redactor-canon", "outline", "drafts", "manuscript", ".review",
         ".proposals", ".hooks", ".tyf",
     ]
@@ -1068,7 +1068,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - If the author says "start my book" or wants a first writing session, use `tyf start`; a title can stay unknown.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
-- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; pass relevant ids to `tyf propose --source-ref <id>`.
+- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions, then pass relevant ids to `tyf propose --source-ref <id>`.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
 - If the author edits `manuscript/` directly, use `tyf adopt work <unit> --evidence "<what happened>"` before the next controlled write.
@@ -1686,6 +1686,291 @@ def _require_source_ref_integrity(work, refs):
     if problems:
         sys.exit("Refused: " + problems[0])
 
+
+def _knowledge_id(prefix, source_id, text):
+    payload = f"{source_id}\0{text.strip()}".encode("utf-8")
+    return f"{prefix}-{hashlib.sha256(payload).hexdigest()[:12]}"
+
+
+def _knowledge_escape(value):
+    return _one_line(value).replace("|", "\\|")
+
+
+def _strip_list_marker(line):
+    line = line.strip()
+    line = re.sub(r"^[-*+]\s+", "", line)
+    line = re.sub(r"^\d+[.)]\s+", "", line)
+    return line.strip()
+
+
+def _extract_structured_knowledge(text):
+    claims, examples, questions, unclassified = [], [], [], []
+    claim_labels = r"(claim|thesis|argument|assertion)"
+    example_labels = r"(example|scene|memory|anecdote|image)"
+    question_labels = r"(question|open question|gap)"
+    for raw in text.splitlines():
+        line = _strip_list_marker(raw)
+        if not line or line.startswith("#"):
+            continue
+        m = re.match(rf"^{claim_labels}\s*:\s*(.+)$", line, re.I)
+        if m:
+            claims.append(m.group(2).strip())
+            continue
+        m = re.match(rf"^{example_labels}\s*:\s*(.+)$", line, re.I)
+        if m:
+            examples.append(m.group(2).strip())
+            continue
+        m = re.match(rf"^{question_labels}\s*:\s*(.+)$", line, re.I)
+        if m:
+            questions.append(m.group(2).strip().rstrip("?") + "?")
+            continue
+        if "[AUTHOR:" in line or line.endswith("?"):
+            questions.append(line.rstrip("?") + "?")
+            continue
+        unclassified.append(line)
+    return {
+        "claims": [c for c in claims if c],
+        "examples": [e for e in examples if e],
+        "questions": [q for q in questions if q],
+        "unclassified": unclassified,
+    }
+
+
+def _append_unique_block(path, marker, block, header):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if os.path.exists(path):
+        body = _read(path)
+    else:
+        body = header.rstrip() + "\n\n"
+    if marker in body:
+        return False
+    atomic_write(path, body.rstrip() + "\n\n" + block.rstrip() + "\n")
+    return True
+
+
+def _append_claim_row(claim_id, statement, source_id):
+    path = os.path.join("knowledge-base", "claims.md")
+    if not os.path.isfile(path):
+        write(path, "# Claims index\n\n| Claim id | Statement | Support | Source | Status |\n|---|---|---|---|---|\n")
+    body = _read(path)
+    if claim_id in body:
+        return False
+    row = (
+        f"| {claim_id} | {_knowledge_escape(statement)} | source fragment | "
+        f"`{source_id}` | source-backed |\n"
+    )
+    atomic_write(path, body.rstrip() + "\n" + row)
+    return True
+
+
+def _write_amanuensis_brief(work, refs, extracted):
+    _ensure_real_dir(_work_path(work, ".review"), ".review/")
+    path = _work_path(work, ".review", "amanuensis-brief.md")
+    ref_lines = "\n".join(
+        f"- `{ref['id']}` ({ref.get('path', '')})"
+        for ref in refs
+    ) or "- (none)"
+    claim_lines = "\n".join(
+        f"- `{item['id']}` {item['text']} (source `{item['source_id']}`)"
+        for item in extracted["claims"]
+    ) or "- (none)"
+    example_lines = "\n".join(
+        f"- `{item['id']}` {item['text']} (source `{item['source_id']}`)"
+        for item in extracted["examples"]
+    ) or "- (none)"
+    question_lines = "\n".join(
+        f"- `{item['id']}` {item['text']} (source `{item['source_id']}`)"
+        for item in extracted["questions"]
+    ) or "- (none)"
+    unclassified_lines = "\n".join(
+        f"- {item['text']} (source `{item['source_id']}`)"
+        for item in extracted["unclassified"][:40]
+    ) or "- (none)"
+    atomic_write(path, f"""# Amanuensis brief
+
+Work: `{work}`
+
+This brief is source-to-knowledge context for candidate drafting. It is not
+manuscript text and it is not author acceptance.
+
+Questions here are gentle attention for the author. These are nudges of attention, not doubts in the author's judgment. Adversarial pressure belongs to the audit, not the amanuensis.
+
+## Source fragments
+
+{ref_lines}
+
+## Counts
+
+- Claims extracted: {len(extracted['claims'])}
+- Examples extracted: {len(extracted['examples'])}
+- Gentle questions surfaced: {len(extracted['questions'])}
+- Unclassified lines preserved: {len(extracted['unclassified'])}
+
+## Claims
+
+{claim_lines}
+
+## Examples
+
+{example_lines}
+
+## Gentle questions for the author
+
+{question_lines}
+
+## Unclassified source material
+
+{unclassified_lines}
+""")
+    return path
+
+
+def cmd_structure(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work)
+    _confine_work(work_id)
+    _require_work(work_id)
+    refs = _resolve_source_refs(work_id, args.source_ref)
+    if not refs:
+        sys.exit("Refused: structure needs at least one --source-ref.")
+    extracted = {"claims": [], "examples": [], "questions": [], "unclassified": []}
+    for ref in refs:
+        text = _source_fragment_text_from_file(ref["path"])
+        if text is None:
+            sys.exit(f"Refused: source fragment {ref['id']} has no text section")
+        parsed = _extract_structured_knowledge(text)
+        for claim in parsed["claims"]:
+            claim_id = _knowledge_id("clm", ref["id"], claim)
+            _append_claim_row(claim_id, claim, ref["id"])
+            extracted["claims"].append({"id": claim_id, "text": claim, "source_id": ref["id"]})
+        for example in parsed["examples"]:
+            example_id = _knowledge_id("exm", ref["id"], example)
+            path = os.path.join("knowledge-base", "examples", f"{work_id}.md")
+            block = f"## {example_id}\n\nSource: `{ref['id']}`\n\n{example}\n"
+            _append_unique_block(path, example_id, block, f"# Examples: {work_id}")
+            extracted["examples"].append({"id": example_id, "text": example, "source_id": ref["id"]})
+        for question in parsed["questions"]:
+            question_id = _knowledge_id("qst", ref["id"], question)
+            path = os.path.join("knowledge-base", "open-questions", f"{work_id}.md")
+            block = f"## {question_id}\n\nSource: `{ref['id']}`\n\n{question}\n"
+            _append_unique_block(path, question_id, block, f"# Open questions: {work_id}")
+            extracted["questions"].append({"id": question_id, "text": question, "source_id": ref["id"]})
+        for line in parsed["unclassified"]:
+            extracted["unclassified"].append({"text": line, "source_id": ref["id"]})
+    brief = _write_amanuensis_brief(work_id, refs, extracted)
+    log_event(".", "structure", work_id, f"refs={','.join(ref['id'] for ref in refs)} brief={brief}")
+    print(f"Structured source for {work_id}.")
+    print(f"  Claims: {len(extracted['claims'])}")
+    print(f"  Examples: {len(extracted['examples'])}")
+    print(f"  Open questions: {len(extracted['questions'])}")
+    print(f"  Unclassified: {len(extracted['unclassified'])}")
+    print(f"  Amanuensis brief: {brief.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+
+
+def _character_slug(name):
+    clean = _one_line(name)
+    normalized = unicodedata.normalize("NFKC", clean).casefold()
+    slug = re.sub(r"[^\w]+", "-", normalized, flags=re.UNICODE).strip("-_")
+    slug = slug[:64].strip("-_. ")
+    digest = hashlib.sha256(clean.encode("utf-8")).hexdigest()[:8]
+    if not slug:
+        slug = f"character-{digest}"
+    reserved = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
+    if slug.upper() in reserved:
+        slug = f"{slug}-{digest}"
+    return slug
+
+
+def _character_paths(name):
+    slug = _character_slug(name)
+    return (
+        slug,
+        os.path.join("knowledge-base", "characters", f"{slug}.md"),
+        os.path.join("voice", "characters", f"{slug}.md"),
+    )
+
+
+def cmd_character(args):
+    _require_workspace()
+    name = _one_line(args.name)
+    knowledge = (args.knowledge or "").strip()
+    voice = (args.voice or "").strip()
+    if not knowledge and not voice:
+        sys.exit("Refused: character dossier needs --knowledge, --voice, or both.")
+    slug, knowledge_path, voice_path = _character_paths(name)
+    _ensure_real_dir(os.path.dirname(knowledge_path), "knowledge-base/characters/")
+    _ensure_real_dir(os.path.dirname(voice_path), "voice/characters/")
+    if knowledge and not os.path.isfile(knowledge_path):
+        write(knowledge_path, f"# Character knowledge: {name}\n\n")
+    if voice and not os.path.isfile(voice_path):
+        write(voice_path, f"# Character voice: {name}\n\n")
+    if knowledge:
+        append(knowledge_path, f"## {now()}\n\n{knowledge}\n\n")
+    if voice:
+        append(voice_path, f"## {now()}\n\n{voice}\n\n")
+    log_event(".", "character", slug, f"knowledge={bool(knowledge)} voice={bool(voice)}")
+    print(f"Character dossier updated: {name}")
+    if knowledge:
+        print(f"  Knowledge: {knowledge_path.replace(os.sep, '/')}")
+    if voice:
+        print(f"  Voice: {voice_path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+
+
+def cmd_consult_character(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work)
+    _confine_work(work_id)
+    _require_work(work_id)
+    name = _one_line(args.name)
+    prompt = (args.prompt or "").strip()
+    if not prompt:
+        sys.exit("Refused: character consultation needs --prompt.")
+    slug, knowledge_path, voice_path = _character_paths(name)
+    if not os.path.isfile(knowledge_path) and not os.path.isfile(voice_path):
+        sys.exit(f"Refused: missing character dossier for {name!r}. Use `tyf character {name} --knowledge ... --voice ...` first.")
+    knowledge = _read(knowledge_path) if os.path.isfile(knowledge_path) else "(no knowledge dossier yet)"
+    voice = _read(voice_path) if os.path.isfile(voice_path) else "(no voice dossier yet)"
+    consult_dir = _work_path(work_id, ".review", "character-consults")
+    _ensure_real_dir(consult_dir, ".review/character-consults/")
+    digest = hashlib.sha256(f"{slug}\0{prompt}\0{now()}".encode("utf-8")).hexdigest()[:10]
+    path = os.path.join(consult_dir, f"{slug}-{digest}.md")
+    write(path, f"""# Character consultation: {name}
+
+Work: `{work_id}`
+Prompt: {prompt}
+
+This packet is hidden amanuensis machinery. It supports candidate dramatic
+insight only. It is not evidence, not manuscript, not a source, and not a
+replacement for the author.
+
+## Containment
+
+- Ground only in this character dossier: the knowledge and voice notes copied below.
+- Do not import another character's knowledge or voice.
+- Mark missing material as `[AUTHOR: needed - what]`.
+- Return a candidate dramatic insight, not an assertion of truth.
+- The answer may be playful or voiced, but it stays quarantined until the author uses it.
+
+## Character knowledge dossier
+
+{knowledge.strip()}
+
+## Character voice dossier
+
+{voice.strip()}
+
+## Candidate response workspace
+
+[Agent may answer the author in chat from this containment packet. Do not write
+to manuscript. If prose is drafted, put it in `drafts/` as candidate text.]
+""")
+    log_event(".", "consult-character", f"{work_id}/{slug}", path)
+    print(f"Character consultation: {name}")
+    print(f"  Packet: {path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+
 def cmd_capture(args):
     _require_workspace()
     work_id = _safe_work_id(args.work)
@@ -1828,7 +2113,13 @@ def _write_import_orientation(work_id, src, preserved, kind, fragment, created_w
         orientation = os.path.join("sources", "imports", f"{label}-{hashlib.sha256(now().encode()).hexdigest()[:6]}-orientation.md")
     rows = "\n".join(f"- {item}" for item in listing[:120]) or "- (no inspectable listing)"
     shape = "TYF-shaped workspace/archive signals detected." if zip_tyf_shaped else "Classification required; do not assume this dump is already organized."
-    frag_line = f"- Source fragment: `{fragment['id']}` ({fragment['path']})" if fragment else "- Source fragment: none minted automatically for this arrival"
+    if fragment:
+        frag_line = (
+            f"- Source fragment: `{fragment['id']}` ({fragment['path']})\n"
+            f"- Structuring pass: `tyf structure {work_id} --source-ref {fragment['id']}`"
+        )
+    else:
+        frag_line = "- Source fragment: none minted automatically for this arrival"
     write(orientation, f"""# Arrival orientation: {os.path.basename(src)}
 
 Work: `this book folder`
@@ -3277,7 +3568,8 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "open", "mark-ready",
+        "new-work", "start", "begin", "import", "capture", "structure", "character",
+        "consult-character", "open", "mark-ready",
         "propose", "accept", "adopt", "write", "snapshot", "dismiss",
     }
 
@@ -3325,6 +3617,21 @@ def main():
     s.add_argument("--title", default=None)
     s.add_argument("--text", required=True)
     s.set_defaults(fn=cmd_capture)
+    s = sub.add_parser("structure", help="extract explicit claims, examples, and questions from source fragments")
+    s.add_argument("work")
+    s.add_argument("--source-ref", action="append", required=True,
+                   help="source fragment id(s) to structure; repeat or comma-separate")
+    s.set_defaults(fn=cmd_structure)
+    s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
+    s.add_argument("name")
+    s.add_argument("--knowledge", default=None)
+    s.add_argument("--voice", default=None)
+    s.set_defaults(fn=cmd_character)
+    s = sub.add_parser("consult-character", help="create a contained amanuensis packet for a character response")
+    s.add_argument("work")
+    s.add_argument("name")
+    s.add_argument("--prompt", required=True)
+    s.set_defaults(fn=cmd_consult_character)
     s = sub.add_parser("open"); s.add_argument("work"); s.set_defaults(fn=cmd_open)
     s = sub.add_parser("mark-ready"); s.add_argument("work"); s.add_argument("unit"); s.set_defaults(fn=cmd_mark_ready)
     s = sub.add_parser("propose", help="create a manuscript proposal from a draft")

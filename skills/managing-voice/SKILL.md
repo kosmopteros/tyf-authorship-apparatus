@@ -11,12 +11,15 @@ Voice is an input every pass reads from, not a filter applied at the end. The vo
 
 Every Diagnose, Propose, and Revise pass at every band reads the relevant register before touching prose.
 
+Fictional or dramatic characters are kept narrower than author registers. Character voice notes live under `voice/characters/`, and character knowledge notes live under `knowledge-base/characters/`. A character consultation may borrow cadence from that character dossier, but it may not borrow another character's knowledge, another register's authority, or the author's voice as evidence.
+
 ## What a register holds
 
 - **Voice anchors:** a handful of calibrated sentences that sound unmistakably like this author in this register.
 - **Sentence and punctuation patterns:** how they build a line.
 - **Anti-patterns:** cadences and phrases the author never uses. This list grows when the author rejects a phrasing more than once.
 - **Exemplar passages:** annotated samples of the author's own prose in the register.
+- **Character voice notes:** isolated notes for one named character when the work needs dramatic consultation.
 
 The lower-band component (punctuation discipline, dash rules, the typographer canon) is shared across all registers for a work and must honor that work's writing language, so a line-level pass never proposes something the glyph-level rules forbid.
 
@@ -43,6 +46,7 @@ The lower-band component (punctuation discipline, dash rules, the typographer ca
 - Removing a quirk that appears in the author's exemplars.
 - Auto-rewriting flagged machine cadence instead of proposing.
 - Claiming the output is fully in the author's voice.
+- Treating a character consultation as permission to invent the character's private knowledge.
 
 ## Output shape
 

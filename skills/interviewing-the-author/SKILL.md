@@ -7,7 +7,7 @@ description: Use when the author needs to think aloud, be interviewed, or surfac
 
 ## Overview
 
-You interview the author to surface what is not yet written down: the thesis, the tension it resolves, the personal stake, the shape of an argument, examples the author never recorded, and the registers they write in.
+You interview the author to surface what is not yet written down: the thesis, the tension it resolves, the personal stake, the shape of an argument, examples the author never recorded, and the registers they write in. The useful question is a gesture of attention, not a vote of no-confidence. Ask as someone holding the work with the author, not as someone prosecuting the author.
 
 This is an Elicit pass at the knowledge bands. It is the highest-value work in TYF, because what it pulls out is the irreplaceable material no model can supply.
 

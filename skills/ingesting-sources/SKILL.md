@@ -18,7 +18,7 @@ Raw material wants to be turned into finished prose immediately. Resist it. Pres
 1. **Preserve.** Keep the raw material intact in the sources. Record title, type, and scope. For a first writing session with files, folders, chat exports, prior project dumps, scaffolds, or zip bundles, use `tyf start <path>` so preservation and the writing runway happen together. For later arrivals, use `tyf import <path>`; the helper preserves the raw arrival under `sources/imports/` and writes an orientation packet. For short author-supplied source notes, use `tyf capture work --kind source --text "<material>"`; the helper appends the note and mints a stable source fragment under `sources/fragments/`.
 2. **Contain bundles.** Zip and folder arrivals are not automatically unpacked into live TYF directories. Read the orientation packet, inspect the listing, identify whether the bundle is TYF-shaped or random, then propose an organization principle before moving anything.
 3. **Classify.** Identify what each piece is: note, transcript, draft, citation, example, memory, claim, open question.
-4. **Extract candidates** into the knowledge base: concepts, claims, examples, contradictions, open questions, and possible distinct works.
+4. **Extract candidates.** When a stable source fragment contains explicit author-supplied lines such as `Claim:`, `Example:`, or `Question:`, run `tyf structure work --source-ref <id>`. It writes source-linked claims, examples, open questions, and `.review/amanuensis-brief.md`; unclassified lines stay visible instead of being smoothed into invented structure.
 5. **Mark uncertainty.** Where a fact, date, figure, or citation is implied but not supplied, write `[AUTHOR: needed — what]` instead of supplying it.
 
 ## Rationalization table
@@ -55,6 +55,7 @@ Raw material wants to be turned into finished prose immediately. Resist it. Pres
 ### Contradictions
 ### Open questions
 ### Possible works   (kept separate)
+### Amanuensis brief: .review/amanuensis-brief.md
 ```
 
 ## Acceptance and edge cases
@@ -65,6 +66,7 @@ Raw material wants to be turned into finished prose immediately. Resist it. Pres
 - **A dump larger than context:** state exactly what was and was not processed and chunk explicitly; never read a slice and imply you read all.
 - **A zip or folder dump:** use `tyf start <path>` for a first writing session or `tyf import <path>` for a later arrival, then treat the generated orientation packet as the analysis brief. Do not unpack it into `sources/`, `voice/`, `knowledge-base/`, `drafts/`, or `manuscript/` until the author accepts the organization plan.
 - **Empty or absent material** ("here are my notes" with nothing attached): say no material was provided rather than proceeding as if it were.
+- **A text import mints a source fragment:** run `tyf structure work --source-ref <id>` before drafting if the fragment contains explicit claims, examples, or questions. If the material is unlabeled or ambiguous, leave it visible in the amanuensis brief and ask the author.
 - **A draft cites no source fragment:** keep it in `drafts/`, but do not present it as source-grounded. When it is proposed for manuscript, pass the relevant fragment id with `tyf propose --source-ref <id>` so the Gate record carries provenance.
 
 ## Next

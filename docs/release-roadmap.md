@@ -2,7 +2,7 @@
 
 ## 0.3.0 hardening
 
-- Keep tightening the Gate: source-line partial acceptance is implemented, while semantic hunk-level decisions and concurrent write locking remain next.
+- Keep tightening the Gate: source-line partial acceptance and per-unit write locks are implemented, while semantic hunk-level decisions remain next.
 - Promote sealed Gate records toward a canonical event stream so the tamper-evident seal log and SQLite event index converge rather than becoming parallel truths.
 - Promote acceptance evidence conventions into templates for Codex, Claude Cowork, and Gemini.
 - Add optional per-language notice detectors on top of the explicit writing-language metadata now stored per work.
@@ -18,4 +18,4 @@
 
 - Revisit the author-facing ceremonial vocabulary as an interface layer backed by the plain runtime ontology.
 - Add richer source ingestion for PDFs, transcripts, and citation indexes.
-- Add lock-aware collaborative workflows for multi-agent and scheduled writing sessions.
+- Add richer lock-aware collaborative workflows for multi-agent and scheduled writing sessions, including stale-lock review and recovery guidance.

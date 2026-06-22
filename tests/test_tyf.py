@@ -277,6 +277,34 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("rogue.md", out)
         self.assertRegex(out.lower(), r"uncontrolled|not recorded")
 
+    def test_write_refuses_existing_manuscript_unit_lock(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws)
+        decision = self.gate_decision(ws, src=src)
+        locks = ws / "works/demo/.review/locks"
+        locks.mkdir(parents=True)
+        (locks / "ch1.md.lock.json").write_text(
+            '{"unit":"ch1.md","created_at":"test","pid":999999}\n',
+            encoding="utf-8")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "write must refuse when a unit lock already exists")
+        self.assertRegex(out.lower(), r"lock|locked")
+        self.assertFalse((ws / "works/demo/manuscript/ch1.md").exists())
+
+    def test_doctor_flags_manuscript_unit_lock(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        locks = ws / "works/demo/.review/locks"
+        locks.mkdir(parents=True)
+        (locks / "chapter.md.lock.json").write_text(
+            '{"unit":"chapter.md","created_at":"test","pid":999999}\n',
+            encoding="utf-8")
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must surface outstanding unit locks")
+        self.assertIn("chapter.md", out)
+        self.assertRegex(out.lower(), r"lock|locked")
+
     # ---- P0 #3: mutating commands must require a workspace ----
 
     def test_new_work_requires_workspace(self):

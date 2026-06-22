@@ -1323,6 +1323,37 @@ def _select_line_ranges(lines, ranges):
     return "".join(out)
 
 
+def _unit_lock_path(work, unit):
+    if os.path.basename(unit) != unit or unit in ("", ".", ".."):
+        sys.exit(f"Refused: unsafe manuscript unit for lock: {unit!r}.")
+    d = os.path.join("works", work, ".review", "locks")
+    _ensure_real_dir(d, "review locks/")
+    return os.path.join(d, unit + ".lock.json")
+
+
+def _acquire_unit_lock(work, unit):
+    path = _unit_lock_path(work, unit)
+    payload = {
+        "unit": unit,
+        "pid": os.getpid(),
+        "created_at": now(),
+    }
+    try:
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        sys.exit(f"Refused: manuscript unit is locked for write: {unit}. Run `tyf doctor` if this looks stale.")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(json.dumps(payload, sort_keys=True, ensure_ascii=False) + "\n")
+    return path
+
+
+def _release_unit_lock(path):
+    try:
+        os.unlink(path)
+    except FileNotFoundError:  # degradation: ok: the lock is already absent, so release is complete
+        return
+
+
 def _workspace_rel(path, label):
     if not path:
         sys.exit(f"Refused: missing {label}.")
@@ -1538,22 +1569,27 @@ def cmd_write(args):
     _reject_symlink_components(dest, "manuscript destination")
     if not _within(man, dest):
         sys.exit(f"Refused: destination resolves outside manuscript/: {dest}")
-    current_base = _dest_base_hash(dest)
-    if current_base != decision.get("base_sha256"):
-        sys.exit(f"Refused: manuscript base changed since acceptance for {dest}. Re-propose from the current file.")
-    if os.path.isfile(dest):
-        gl = os.path.join("works", work, ".review", "write-log.md")
-        rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
-        if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
-            sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
-    content = _select_line_ranges(_source_lines(src), decision.get("accepted_ranges"))
-    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    atomic_write(dest, content)
-    log = os.path.join("works", work, ".review", "write-log.md")
-    append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(dest)}\n- sha256: {digest}\n- Proposal: {decision['proposal_id']}\n- Decision: {decision['id']}\n- Audit: {audit['id']}\n")
-    append(log, f"- Accepted scope: {decision.get('accepted_scope', 'whole-file')}\n")
-    log_event(".", "write", f"{work}/{os.path.basename(dest)}", f"{src} -> {dest} decision={decision['id']} sha256={digest[:12]}")
-    print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
+    unit = os.path.basename(dest)
+    lock_path = _acquire_unit_lock(work, unit)
+    try:
+        current_base = _dest_base_hash(dest)
+        if current_base != decision.get("base_sha256"):
+            sys.exit(f"Refused: manuscript base changed since acceptance for {dest}. Re-propose from the current file.")
+        if os.path.isfile(dest):
+            gl = os.path.join("works", work, ".review", "write-log.md")
+            rec = _logged_hashes(_read(gl)).get(os.path.basename(src))
+            if rec is not None and hashlib.sha256(_read(dest).encode("utf-8")).hexdigest() != rec:
+                sys.exit(f"Refused: {dest} changed since the last logged write (out-of-band edit). Run `tyf doctor` and reconcile before forcing a rewrite.")
+        content = _select_line_ranges(_source_lines(src), decision.get("accepted_ranges"))
+        digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        atomic_write(dest, content)
+        log = os.path.join("works", work, ".review", "write-log.md")
+        append(log, f"\n## Write record {now()}\n- Applied: {src} -> {dest}\n- File: {os.path.basename(dest)}\n- sha256: {digest}\n- Proposal: {decision['proposal_id']}\n- Decision: {decision['id']}\n- Audit: {audit['id']}\n")
+        append(log, f"- Accepted scope: {decision.get('accepted_scope', 'whole-file')}\n")
+        log_event(".", "write", f"{work}/{os.path.basename(dest)}", f"{src} -> {dest} decision={decision['id']} sha256={digest[:12]}")
+        print(f"Write: applied {src} into {dest}. Logged (with content hash) in {log}.")
+    finally:
+        _release_unit_lock(lock_path)
 
 def _logged_hashes(log_text):
     """Map manuscript filename -> last recorded sha256 from a write-log."""
@@ -1596,6 +1632,27 @@ def _review_record_integrity_problems(work):
     return problems
 
 
+def _unit_lock_problems(work):
+    problems = []
+    d = os.path.join("works", work, ".review", "locks")
+    if os.path.islink(os.path.abspath(d)):
+        return [f"{work}: review locks directory is a symlink; integrity cannot be verified"]
+    if not os.path.isdir(d):
+        return problems
+    for name in sorted(os.listdir(d)):
+        path = os.path.join(d, name)
+        if not name.endswith(".lock.json"):
+            continue
+        unit = name[:-len(".lock.json")]
+        try:
+            data = json.loads(_read(path))
+            unit = data.get("unit") or unit
+        except json.JSONDecodeError as e:
+            problems.append(f"{work}: invalid manuscript unit lock {name}: {e}")
+        problems.append(f"{work}: manuscript unit lock outstanding: {unit}")
+    return problems
+
+
 def cmd_doctor(args):
     problems, notes = [], []
     if not os.path.isfile("WORKSPACE_STATE.yaml"):
@@ -1625,6 +1682,7 @@ def cmd_doctor(args):
             if not os.path.isfile(os.path.join(wd, "style-sheet.md")):
                 problems.append(f"{w}: missing running style sheet")
             problems.extend(_review_record_integrity_problems(w))
+            problems.extend(_unit_lock_problems(w))
             man = os.path.join(wd, "manuscript")
             gl = os.path.join(wd, ".review", "write-log.md")
             man_files = [f for f in os.listdir(man)] if os.path.isdir(man) else []

@@ -43,7 +43,8 @@ def check_gate() -> None:
     for token in ("cmd_propose", "cmd_accept", "--decision", "--lines", "base_sha256",
                   "src_sha256", "acceptance_evidence", "accepted_ranges",
                   "_passing_audit_for", "_require_record_integrity",
-                  "record-seals.jsonl", "atomic_write"):
+                  "record-seals.jsonl", "_acquire_unit_lock", "_release_unit_lock",
+                  ".lock.json", "atomic_write"):
         assert token in source, f"Gate runtime missing {token}"
     assert "naked --confirm is retired" in source
     assert "test_write_refuses_without_decision" in tests
@@ -54,9 +55,12 @@ def check_gate() -> None:
     assert "test_write_refuses_tampered_audit_record" in tests
     assert "test_doctor_flags_tampered_gate_record" in tests
     assert "test_doctor_flags_missing_gate_record_seal" in tests
+    assert "test_write_refuses_existing_manuscript_unit_lock" in tests
+    assert "test_doctor_flags_manuscript_unit_lock" in tests
     assert "proposal record" in controlling.lower()
     assert "decision record" in controlling.lower()
     assert "record-seals.jsonl" in controlling
+    assert "lock" in controlling.lower()
     assert "--lines" in controlling
 
 

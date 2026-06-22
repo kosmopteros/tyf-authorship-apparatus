@@ -21,6 +21,11 @@ Feature: TYF helper smoke suite
     Then Exit code is 0
 
   @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper locks manuscript units during controlled writes
+    When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_existing_manuscript_unit_lock CLIBehaviour.test_doctor_flags_manuscript_unit_lock -v"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: helper applies only accepted source line ranges
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_line_ranges_writes_only_selected_lines CLIBehaviour.test_accept_line_ranges_refuses_invalid_or_out_of_range_selection -v"
     Then Exit code is 0

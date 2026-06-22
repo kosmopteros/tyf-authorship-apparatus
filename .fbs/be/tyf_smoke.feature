@@ -150,7 +150,7 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_beta_portable_marker_declares_single_work_bundle -v"
     Then Exit code is 0
 
-  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SCHEDULED_TASKS.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: beta public docs do not teach multi-work startup
     When Run "python tests/test_solo_oracles.py single-work"
     Then Exit code is 0
@@ -208,6 +208,11 @@ Feature: TYF helper smoke suite
   @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: documentation check flags plugin manifest version divergence
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_plugin_manifest_version_divergence -v"
+    Then Exit code is 0
+
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SCHEDULED_TASKS.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags stale single-work path drift
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_stale_single_work_path_drift DocCheck.test_check_flags_stale_multi_work_globs DocCheck.test_check_flags_today_inside_command_lists -v"
     Then Exit code is 0
 
   @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli

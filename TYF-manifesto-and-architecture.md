@@ -116,8 +116,8 @@ The new and most valuable work is bands 1 through 3, the knowledge layer, which 
 | Read | `reading-sympathetically` | Report the sympathetic experience of reading | Read-only |
 | Diagnose | `diagnosing-text` | Identify issues; change nothing | Read-only |
 | Propose | `editing-faithfully` | Suggest specific edits; apply nothing | Writes findings to `.review/` |
-| Compose | `composing-as-amanuensis` | Draft from supplied material in the selected register; output is a candidate | Writes to `works/<id>/drafts/` |
-| Revise | `editing-faithfully` + `controlling-manuscript-writes` | Apply accepted edits to the manuscript | Writes to `works/<id>/manuscript/` only via the controlled write |
+| Compose | `composing-as-amanuensis` | Draft from supplied material in the selected register; output is a candidate | Writes to root `drafts/` |
+| Revise | `editing-faithfully` + `controlling-manuscript-writes` | Apply accepted edits to the manuscript | Writes to root `manuscript/` only via the controlled write |
 | Audit | `auditing-adversarially` | Attack the unit before it is called done | Read-only; findings to `.review/` |
 
 ### The matrix
@@ -177,7 +177,7 @@ The commitments made mechanical.
 
 ## 9. State and file contract
 
-The body of work lives in plain, readable Markdown and YAML, owned by and legible to the author. The root unit is a **workspace** that holds shared substrate at the top and per-work directories beneath. Each work stays contained; works that share knowledge and voice share them honestly.
+The body of work lives in plain, readable Markdown and YAML, owned by and legible to the author. For the v0.5 beta and Cowork v1 surface, the book folder is the single work. Shared substrate and work-local state live together at the workspace root so a first-time author does not have to reason about a catalog of works before writing.
 
 ```
 workspace/
@@ -185,6 +185,12 @@ workspace/
 ├── manifest.yaml                       # hooks, voice inheritance rules
 ├── WORKSPACE_STATE.yaml                # durable state: active work, active band, write_control
 ├── ASSUMPTIONS.md                      # explicit, updated as the author learns
+├── work.yaml                           # type, registers, status, scope, overrides
+├── outline/                            # thesis, argument spine, chapter outlines
+├── drafts/                             # candidate text from the amanuensis
+├── manuscript/                         # behind the controlled write
+├── style-sheet.md                      # running, the redactor's instrument
+├── .review/                            # findings + write-log, never auto-applied
 │
 ├── sources/                            # raw, preserved, shared      [read-mostly]
 │   ├── uploads/  transcripts/  interviews/  imports/  notes/  links.md
@@ -201,15 +207,6 @@ workspace/
 │   └── anti-patterns.md
 │
 ├── redactor-canon/                     # integrity substrate (terminology, logic, apparatus, finish)
-│
-├── works/                              # each work is contained
-│   └── <work-id>/
-│       ├── work.yaml                   # type, registers, status, scope, overrides
-│       ├── outline/                    # thesis, argument spine, chapter outlines
-│       ├── drafts/                     # candidate text from the amanuensis
-│       ├── manuscript/                 # behind the controlled write
-│       ├── style-sheet.md              # running, the redactor's instrument
-│       └── .review/                    # findings + write-log, never auto-applied
 │
 ├── .tyf/                               # apparatus memory: SQLite ledger + event log (NOT the work)
 │   └── ledger.db

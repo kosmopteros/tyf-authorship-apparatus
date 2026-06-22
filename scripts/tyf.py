@@ -330,6 +330,17 @@ _DEAD_SKILL_IDS = [
 # CLI commands that were renamed. A live reference is drift.
 _DEAD_COMMANDS = ["tyf gate", "--apply <draft>", "fire-devils-reader", "tyf write --confirm", "tyf today"]
 
+# Public v0.5 surfaces are root single-work by default. These old public path
+# shapes are allowed only in historical validation/changelog material or inside
+# tests/checker code that name them as canaries.
+_STALE_SINGLE_WORK_PATHS = [
+    "works/<id>",
+    "works/*/",
+    "works/*/drafts",
+    "works/*/manuscript",
+    "works/*/.review",
+]
+
 def _pack_root():
     """The pack root. Honors TYF_PACK_ROOT (set this when the helper is installed
     or copied outside the repo); otherwise resolves from this script's real
@@ -355,6 +366,26 @@ def _iter_pack_lines(path):
     with open(path, encoding="utf-8") as f:
         for i, line in enumerate(f, 1):
             yield i, line
+
+def _looks_like_today_command_list(line):
+    low = line.lower()
+    if not re.search(r"\btoday\b", low):
+        return False
+    command_list_markers = (
+        "advanced helper commands",
+        "helper commands",
+        "commands include",
+        "command list",
+        "available commands",
+    )
+    today_pos = low.find('today')
+    for marker in command_list_markers:
+        marker_pos = low.find(marker)
+        if marker_pos != -1 and marker_pos <= today_pos and ("`" in line or "," in line):
+            return True
+    if "`today`" in low and "," in line and re.search(r"\b(init|new-work|begin|start|write|resume)\b.*\btoday\b", low):
+        return True
+    return False
 
 def run_doc_check(root=None):
     """Return (problems, notes). Pure file/string inspection; no LLM, no deps."""
@@ -401,6 +432,7 @@ def run_doc_check(root=None):
     #    legitimately name dead tokens: VALIDATION.md (historical changelog) and
     #    this script (the check engine lists them as search targets).
     _dead_ref_exempt = {
+        "CHANGELOG.md",
         "VALIDATION.md",
         os.path.join("scripts", "tyf.py"),
         os.path.join("tests", "test_tyf.py"),
@@ -505,13 +537,31 @@ def run_doc_check(root=None):
             continue
         for i, line in _iter_pack_lines(p):
             low = line.lower()
+            stale_today_command_list = _looks_like_today_command_list(line)
             if ("tyf today" in line or "Today Mode" in line or "today-draft.md" in line
                     or ".review/today.md" in line or 'tyf start "Working Title"' in line
-                    or "after getting a title" in line):
+                    or "after getting a title" in line or stale_today_command_list):
+                label = "stale today command-list routing" if stale_today_command_list else "stale writing-runway routing"
                 problems.append(
-                    f"{rel}:{i}: stale writing-runway routing "
+                    f"{rel}:{i}: {label} "
                     "(use `tyf start` or `tyf start <path>` before drafting)"
                 )
+
+    # 10. Public v0.5 author surfaces use one root book folder as the work.
+    #     Old works/<id> and works/* path shapes are implementation-compatible
+    #     helper history, not the Cowork/public beta contract.
+    for p in _iter_files(root, (".md", ".json", ".sh", ".yaml", ".yml")):
+        rel = os.path.relpath(p, root)
+        if rel in _dead_ref_exempt:
+            continue
+        for i, line in _iter_pack_lines(p):
+            for token in _STALE_SINGLE_WORK_PATHS:
+                if token in line:
+                    problems.append(
+                        f"{rel}:{i}: stale single-work path '{token}' "
+                        "(use root `drafts/`, `.review/`, `manuscript/`, and `work.yaml`)"
+                    )
+                    break
 
     return problems, notes
 

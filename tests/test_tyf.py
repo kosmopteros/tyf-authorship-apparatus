@@ -1649,6 +1649,41 @@ class DocCheck(unittest.TestCase):
                             for p in problems),
                         f"expected a stale writing-runway routing problem, got {problems}")
 
+    def test_check_flags_stale_single_work_path_drift(self):
+        root = self.min_pack()
+        path = root / "cowork" / "PROJECT_INSTRUCTIONS.md"
+        path.parent.mkdir(parents=True)
+        path.write_text(
+            "Compose writes to `works/<id>/drafts/` only.\n"
+            "Audit writes findings to `works/<id>/.review/`.\n",
+            encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("single-work" in p.lower() or "works/<id>" in p
+                            for p in problems),
+                        f"expected a stale single-work path problem, got {problems}")
+
+    def test_check_flags_stale_multi_work_globs(self):
+        root = self.min_pack()
+        path = root / "cowork" / "SCHEDULED_TASKS.md"
+        path.parent.mkdir(parents=True)
+        path.write_text(
+            "Find chapters in any `works/*/drafts/` or `works/*/manuscript/`.\n",
+            encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("single-work" in p.lower() or "works/*/" in p
+                            for p in problems),
+                        f"expected a stale multi-work glob problem, got {problems}")
+
+    def test_check_flags_today_inside_command_lists(self):
+        root = self.min_pack()
+        (root / "README.md").write_text(
+            "Advanced helper commands include `init`, `new-work`, `today`, `start`, and `write`.\n",
+            encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("today" in p.lower() and "command" in p.lower()
+                            for p in problems),
+                        f"expected a stale today command-list problem, got {problems}")
+
     def test_check_flags_plugin_manifest_version_divergence(self):
         root = self.min_pack()
         for rel, version in (
@@ -1681,7 +1716,13 @@ class DocCheck(unittest.TestCase):
                 ".fbs/** export-ignore",
                 ".pytest_cache/** export-ignore",
                 "**/__pycache__/** export-ignore",
-                "*.pyc export-ignore"):
+                "*.pyc export-ignore",
+                "fbs.yaml export-ignore",
+                ".claude/commands/fbs-* export-ignore",
+                ".claude/settings.json export-ignore",
+                "AGENTS.md export-ignore",
+                "CLAUDE.md export-ignore",
+                "GEMINI.md export-ignore"):
             self.assertIn(token, attrs)
 
     def test_readme_pressure_status_matches_validation_evidence(self):

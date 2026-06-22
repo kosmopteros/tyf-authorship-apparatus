@@ -199,6 +199,9 @@ def check_single_work() -> None:
         ROOT / "skills" / "using-tyf" / "SKILL.md",
         ROOT / "skills" / "initializing-a-workspace" / "SKILL.md",
         ROOT / "skills" / "working-the-workspace" / "SKILL.md",
+        ROOT / "cowork" / "PROJECT_INSTRUCTIONS.md",
+        ROOT / "cowork" / "SCHEDULED_TASKS.md",
+        ROOT / "TYF-manifesto-and-architecture.md",
     ]
 
     for token in (
@@ -219,6 +222,7 @@ def check_single_work() -> None:
         assert "drafts/candidate-draft.md" in text or "drafts/" in text, f"{path} does not point to root drafts"
         assert "works/<id>" not in text, f"{path} still exposes works/<id> as public beta shape"
         assert "works/*/drafts" not in text, f"{path} still exposes multi-work draft glob"
+        assert "works/*/" not in text, f"{path} still exposes multi-work scheduled-task glob"
 
 
 def check_plugin() -> None:

@@ -35,7 +35,7 @@ workspace/
 │       ├── style-sheet.md        # running, emitted by passes
 │       └── .review/              # findings, Gate records, record seals, never auto-applied
 │
-├── .tyf/                         # apparatus memory: SQLite ledger + event log (not the work)
+├── .tyf/                         # apparatus memory: events.jsonl + SQLite notice index (not the work)
 ├── .proposals/                   # harness self-extensions awaiting author commit
 └── .hooks/                       # contextual hook definitions
 ```

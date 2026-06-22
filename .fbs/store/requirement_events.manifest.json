@@ -1,7 +1,7 @@
 {
   "event_schema": 2,
-  "head_event_id": "sha256:3964eedf1d0446148e320de14b7e22907a32ade3e448a2acb43c2f8d4cd4b2cc",
-  "ledger_digest": "sha256:b8d1ba751b719223a2a5e760362ba887fd221378ec9c29b042b29c96eee2b489",
-  "rows": 15,
+  "head_event_id": "sha256:7b2083ee3187e7b8024862f3f546e492b9fbb279eb6076cb0394934299f94e65",
+  "ledger_digest": "sha256:347fbc9fb282a8b5b325e01218573f4692200291a5cb518651a501adf27adca8",
+  "rows": 16,
   "schema": 1
 }

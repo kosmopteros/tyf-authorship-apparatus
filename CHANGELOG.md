@@ -10,13 +10,14 @@ Release label: "Gate hardening".
 - Added line-range partial acceptance with `tyf accept --lines`, stored accepted scope, and write-time application of only the accepted source lines.
 - Added exact accepted patch support with `tyf accept --patch`, patch path/hash/unit storage in author decisions, write-time patch application, and doctor/write refusal for missing or changed accepted patches.
 - Added source-fragment provenance: `tyf capture --kind source` mints stable fragments in `sources/fragments/`, `tyf propose --source-ref` binds them into the Gate, and audit, decision, write-log, and doctor integrity checks carry them forward.
+- Added `.tyf/events.jsonl` as the canonical hash-chained apparatus event journal, with SQLite kept as a derived event mirror, `tyf doctor` checking journal integrity, and mutating commands refusing to recreate missing history.
 - Added explicit writing-language metadata for `new-work`, `start`, and `begin`, surfaced in first-session packets and style sheets.
 - Added source hash, manuscript base hash, passing-audit, acceptance-evidence, symlink-boundary, and atomic-write checks to controlled manuscript writes.
 - Scoped `tyf snapshot` to the TYF workspace path and kept derived `.tyf/ledger.db` out of commits by default.
 - Hardened notice identity and recurrence: identical gaps in different locations remain distinct, resolved notices reopen when they return, and `tyf notice --peek` does not create a ledger database.
 - Added non-Latin title support through stable generated work ids.
 - Generated workspace context contracts for Codex, Claude, and Gemini.
-- Expanded the helper smoke suite to 76 tests and SOLO Be coverage to 27 scenarios.
+- Expanded the helper smoke suite to 81 tests and SOLO Be coverage to 32 scenarios.
 
 ## 0.2.1
 

@@ -33,9 +33,17 @@ def check_helper() -> None:
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
     assert "--language" in source, "work creation must expose writing-language metadata"
     assert "language:" in source, "work.yaml must store writing-language metadata"
+    for token in ("events.jsonl", "_event_record_hash", "_event_journal_problems",
+                  "previous_hash", "hash chain"):
+        assert token in source, f"canonical event journal missing {token}"
     tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
     assert "test_start_accepts_non_latin_title_with_stable_generated_id" in tests
     assert "test_gate_preserves_utf8_manuscript_text_for_declared_language" in tests
+    assert "test_canonical_event_journal_records_core_actions_with_hash_chain" in tests
+    assert "test_doctor_flags_tampered_canonical_event_journal" in tests
+    assert "test_doctor_flags_missing_canonical_event_journal" in tests
+    assert "test_doctor_flags_malformed_canonical_event_journal" in tests
+    assert "test_mutating_command_refuses_missing_canonical_event_journal" in tests
 
 
 def check_gate() -> None:

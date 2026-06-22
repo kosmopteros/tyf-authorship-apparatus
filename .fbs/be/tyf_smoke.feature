@@ -70,6 +70,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_accepts_non_latin_title_with_stable_generated_id CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_gate_preserves_utf8_manuscript_text_for_declared_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
     Then Exit code is 0
 
+  @covers:tyf-canonical-event-journal-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: helper records a canonical hash-chained event journal
+    When Run "python tests/test_tyf.py CLIBehaviour.test_canonical_event_journal_records_core_actions_with_hash_chain -v"
+    Then Exit code is 0
+
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: doctor detects a rewritten event by hash-chain mismatch
+    When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_tampered_canonical_event_journal -v"
+    Then Exit code is 0
+
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: doctor detects a deleted event journal before trusting history
+    When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_missing_canonical_event_journal -v"
+    Then Exit code is 0
+
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: doctor detects an invalid JSON line in the event journal
+    When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_malformed_canonical_event_journal -v"
+    Then Exit code is 0
+
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: mutation refuses to recreate a lost event history
+    When Run "python tests/test_tyf.py CLIBehaviour.test_mutating_command_refuses_missing_canonical_event_journal -v"
+    Then Exit code is 0
+
   @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @bind-file:skills/controlling-manuscript-writes/SKILL.md @tool-check:cli
   Scenario: source fragments carry through proposal decision and write records
     When Run "python tests/test_tyf.py CLIBehaviour.test_source_capture_fragment_survives_proposal_decision_and_write -v"

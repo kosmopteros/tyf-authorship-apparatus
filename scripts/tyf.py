@@ -32,14 +32,14 @@ Commands:
   tyf reconcile [--export]                show the ledger; --export mirrors it to Markdown
   tyf update [--force]                    notify-only check for a newer release; never modifies
 
-Apparatus memory (SQLite, stdlib)
+Apparatus memory (JSONL + SQLite, stdlib)
   The body of work stays in Markdown and YAML, owned by and legible to the
-  author. Only machine bookkeeping lives in .tyf/ledger.db: the content-addressed
-  notice ledger (statuses, dismissals, real timestamps) and an append-only event
-  log (a git-like spine of apparatus actions). It uses
-  the stdlib sqlite3 module: no third-party dependencies. It is disposable derived
-  state, rebuildable by re-scanning content, and mirrorable to Markdown with
-  `tyf reconcile --export`. See docs/ATTENTIVENESS.md.
+  author. Only apparatus bookkeeping lives under .tyf/: events.jsonl is the
+  human-readable hash-chained spine of apparatus actions, while ledger.db is the
+  derived SQLite notice index and event mirror. It uses only stdlib modules:
+  no third-party dependencies. Notice state is rebuildable by re-scanning
+  content, and mirrorable to Markdown with `tyf reconcile --export`. See
+  docs/ATTENTIVENESS.md.
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, capture, propose, audit --record, accept, write, mark-ready) runs `check` as a
@@ -558,11 +558,11 @@ def gather_notices(root="."):
 # This is the apparatus's growing memory of the work, NOT the work itself. The
 # body of work (manuscript, sources, knowledge base, voice, redactor canon,
 # claims) stays in Markdown and YAML, owned by and legible to the author. Only
-# machine bookkeeping the author never hand-edits lives here: the notice ledger
-# (hashes, statuses, dismissals), real timestamps from the system clock, and an
-# append-only event log (a git-like spine of what the apparatus did). It is
-# disposable derived state: it can be rebuilt by re-scanning content, and it can
-# be mirrored to Markdown with `tyf reconcile --export`.
+# machine bookkeeping the author rarely hand-edits lives here: a canonical
+# hash-chained JSONL event journal for apparatus actions, plus a SQLite notice
+# index (hashes, statuses, dismissals) and derived event mirror. Notice state is
+# notice state is disposable derived state: it can be rebuilt by re-scanning
+# content, and it can be mirrored to Markdown with `tyf reconcile --export`.
 
 import sqlite3
 
@@ -571,6 +571,85 @@ def _tyf_dir(root):
 
 def _db_path(root):
     return os.path.join(_tyf_dir(root), "ledger.db")
+
+
+def _event_log_path(root):
+    return os.path.join(_tyf_dir(root), "events.jsonl")
+
+
+def _event_record_hash(record):
+    payload = {k: record[k] for k in sorted(record) if k != "hash"}
+    data = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def _read_event_journal(root):
+    path = _event_log_path(root)
+    if not os.path.isfile(path):
+        return [], [f"missing canonical event journal: {path}"]
+    records, problems = [], []
+    with open(path, encoding="utf-8") as f:
+        for i, line in enumerate(f, 1):
+            if not line.strip():
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                problems.append(f"event journal line {i} is invalid JSON: {e}")
+    return records, problems
+
+
+def _append_event_journal(root, kind, ref="", detail=""):
+    os.makedirs(_tyf_dir(root), exist_ok=True)
+    records, _problems = _read_event_journal(root)
+    previous = records[-1].get("hash", "") if records else ""
+    seq = records[-1].get("seq", 0) + 1 if records else 1
+    record = {
+        "seq": seq,
+        "ts": now(),
+        "kind": _one_line(kind),
+        "ref": _one_line(ref),
+        "detail": _one_line(detail),
+        "previous_hash": previous,
+    }
+    record["hash"] = _event_record_hash(record)
+    append(_event_log_path(root), json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+    return record
+
+
+def _event_journal_problems(root):
+    records, problems = _read_event_journal(root)
+    if problems:
+        return problems
+    if not records:
+        return [f"canonical event journal is empty: {_event_log_path(root)}"]
+    previous = ""
+    for i, record in enumerate(records, 1):
+        for key in ("seq", "ts", "kind", "ref", "detail", "previous_hash", "hash"):
+            if key not in record:
+                problems.append(f"event journal line {i} missing {key}")
+        if problems:
+            continue
+        if record.get("seq") != i:
+            problems.append(f"event journal line {i} has sequence {record.get('seq')}, expected {i}")
+        if record.get("previous_hash") != previous:
+            problems.append(f"event journal line {i} breaks the hash chain")
+        actual = _event_record_hash(record)
+        if record.get("hash") != actual:
+            problems.append(f"event journal line {i} hash mismatch; possible tampering")
+        previous = record.get("hash", "")
+    return problems
+
+
+def _event_journal_count(root):
+    records, problems = _read_event_journal(root)
+    if not problems:
+        return len(records)
+    if not os.path.isfile(_db_path(root)):
+        return 0
+    return None
+
 
 def _db(root, create=True):
     if create:
@@ -596,6 +675,7 @@ def log_event(root, kind, ref="", detail=""):
     if not os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml")):
         return
     try:
+        _append_event_journal(root, kind, ref, detail)
         conn = _db(root)
         conn.execute("INSERT INTO events (ts, kind, ref, detail) VALUES (?,?,?,?)",
                      (now(), kind, ref, detail))
@@ -701,14 +781,15 @@ def dismiss_notice(root, content_hash):
 def ledger_summary(root):
     """Return (items_dict, events_count) for reconcile display."""
     if not os.path.isfile(_db_path(root)):
-        return {}, 0
+        return {}, _event_journal_count(root) or 0
     conn = _db(root)
     cur = conn.cursor()
     items = {}
     for r in cur.execute("""SELECT content_hash, kind, where_ref, status,
                             first_seen FROM notices"""):
         items[r[0]] = {"kind": r[1], "where": r[2], "status": r[3], "first_seen": r[4]}
-    ev = cur.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+    canonical_count = _event_journal_count(root)
+    ev = canonical_count if canonical_count is not None else cur.execute("SELECT COUNT(*) FROM events").fetchone()[0]
     conn.close()
     return items, ev
 
@@ -720,7 +801,7 @@ def export_ledger_markdown(root):
     os.makedirs(d, exist_ok=True)
     path = os.path.join(d, "ledger-mirror.md")
     lines = [f"# Notice ledger mirror ({now()})", "",
-             "Read-only mirror of .tyf/ledger.db. The database is the source of truth.", ""]
+             "Read-only mirror of .tyf/ledger.db. The database is the source of truth for notice status only; apparatus actions live in .tyf/events.jsonl.", ""]
     by_status = {}
     for h, r in items.items():
         by_status.setdefault(r["status"], []).append((h, r))
@@ -826,7 +907,7 @@ def _scaffold(root, create=True):
                     f.write(content)
             created.append(rel)
     if create:
-        _db(root)  # initialize the SQLite ledger + event log if absent
+        _db(root)  # initialize the SQLite notice index and event mirror if absent
     return created, present
 
 def cmd_init(args):
@@ -1998,6 +2079,7 @@ def cmd_doctor(args):
         sys.exit("Not in a workspace root (no WORKSPACE_STATE.yaml).")
     # required structure: report anything missing (doctor --repair to create it)
     missing_created, _present = _scaffold(".", create=getattr(args, "repair", False))
+    problems.extend(_event_journal_problems("."))
     if missing_created:
         if getattr(args, "repair", False):
             notes.append(f"repaired {len(missing_created)} missing structure item(s)")
@@ -2284,6 +2366,27 @@ def _git_hook_tail():
         print(f"\n[git-hook] {len(status)} changed path(s) in this git workspace.")
         print("  Recovery point is explicit: run `tyf snapshot --message \"...\"`.")
 
+
+def _command_requires_event_journal(args):
+    cmd = getattr(args, "cmd", None)
+    if cmd == "audit":
+        return getattr(args, "record", False)
+    return cmd in {
+        "new-work", "start", "begin", "capture", "open", "mark-ready",
+        "propose", "accept", "write", "snapshot", "dismiss",
+    }
+
+
+def _require_event_journal_ready(root="."):
+    if not os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml")):
+        return
+    problems = _event_journal_problems(root)
+    if problems:
+        first = problems[0]
+        sys.exit("Refused: canonical event journal is not trustworthy; "
+                 f"{first}. Run `tyf doctor` and reconcile before mutating the workspace.")
+
+
 def main():
     p = argparse.ArgumentParser(prog="tyf", description="TYF workspace helper")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -2367,6 +2470,8 @@ def main():
     s.add_argument("--force", action="store_true", help="ignore the once-a-day throttle and check now")
     s.set_defaults(fn=cmd_update)
     args = p.parse_args()
+    if _command_requires_event_journal(args):
+        _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
     if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "capture", "propose", "audit", "accept", "write", "mark-ready"}:

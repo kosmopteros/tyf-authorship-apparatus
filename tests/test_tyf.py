@@ -44,6 +44,13 @@ def run_tyf(args, cwd):
     return p.returncode, (p.stdout + p.stderr)
 
 
+def event_record_hash(record):
+    payload = {k: record[k] for k in sorted(record) if k != "hash"}
+    data = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
 def _can_symlink(tmp):
     """True if this platform/user can create directory symlinks."""
     try:
@@ -939,6 +946,72 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         after = tyf.ledger_summary(str(ws))[1]
         self.assertGreater(after, before)
+
+    def test_canonical_event_journal_records_core_actions_with_hash_chain(self):
+        ws = self.ws()
+        rc, out = run_tyf(["new-work", "event-demo", "--language", "Portuguese"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["capture", "event-demo", "--kind", "source", "--text", "Fonte viva."], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["mark-ready", "event-demo", "chapter.md"], ws)
+        self.assertEqual(rc, 0, out)
+
+        journal = ws / ".tyf" / "events.jsonl"
+        self.assertTrue(journal.is_file(), "apparatus events should have a canonical JSONL journal")
+        records = [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
+        self.assertGreaterEqual(len(records), 4)
+        self.assertEqual([r["seq"] for r in records], list(range(1, len(records) + 1)))
+        previous = ""
+        for record in records:
+            self.assertEqual(record["previous_hash"], previous)
+            self.assertEqual(record["hash"], event_record_hash(record))
+            previous = record["hash"]
+        kinds = [r["kind"] for r in records]
+        self.assertEqual(kinds[:1], ["init"])
+        self.assertIn("new-work", kinds)
+        self.assertIn("capture", kinds)
+        self.assertIn("mark-ready", kinds)
+
+    def test_doctor_flags_tampered_canonical_event_journal(self):
+        ws = self.ws()
+        rc, out = run_tyf(["new-work", "event-demo"], ws)
+        self.assertEqual(rc, 0, out)
+        journal = ws / ".tyf" / "events.jsonl"
+        self.assertTrue(journal.is_file(), "apparatus events should have a canonical JSONL journal")
+        records = [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
+        records[0]["kind"] = "rewritten-init"
+        journal.write_text("\n".join(json.dumps(r, ensure_ascii=False, sort_keys=True)
+                                     for r in records) + "\n",
+                           encoding="utf-8")
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag tampered canonical event journals")
+        self.assertRegex(out.lower(), r"event journal|event log|tamper|hash|chain")
+
+    def test_doctor_flags_missing_canonical_event_journal(self):
+        ws = self.ws()
+        journal = ws / ".tyf" / "events.jsonl"
+        journal.unlink()
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag a missing canonical event journal")
+        self.assertRegex(out.lower(), r"event journal|missing")
+
+    def test_doctor_flags_malformed_canonical_event_journal(self):
+        ws = self.ws()
+        journal = ws / ".tyf" / "events.jsonl"
+        journal.write_text("{not json}\n", encoding="utf-8")
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag malformed canonical event journals")
+        self.assertRegex(out.lower(), r"event journal|invalid json|malformed")
+
+    def test_mutating_command_refuses_missing_canonical_event_journal(self):
+        ws = self.ws()
+        journal = ws / ".tyf" / "events.jsonl"
+        journal.unlink()
+        rc, out = run_tyf(["new-work", "after-loss"], ws)
+        self.assertNotEqual(rc, 0, "mutating commands must not recreate a missing event journal over lost history")
+        self.assertRegex(out.lower(), r"event journal|missing|doctor")
+        self.assertFalse((ws / "works" / "after-loss").exists())
 
     # ---- transparent reflexes and explicit git recovery points ----
 

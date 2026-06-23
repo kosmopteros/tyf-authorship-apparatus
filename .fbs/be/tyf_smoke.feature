@@ -320,7 +320,7 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py Installer.test_codex_install_targets_current_skill_root -v"
     Then Exit code is 0
 
-  @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
+  @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: Windows installer preserves pack-root launchers
     When Run "python tests/test_tyf.py Installer.test_powershell_installer_writes_pack_root_launchers -v"
     Then Exit code is 0
@@ -620,7 +620,7 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_independent_oracles.py onboarding-entry"
     Then Exit code is 0
 
-  @covers:tyf-public-onboarding-contract @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:docs/START_HERE.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:skills/interviewing-the-author/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SETUP.md @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  @covers:tyf-public-onboarding-contract @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:docs/START_HERE.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:skills/interviewing-the-author/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SETUP.md @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: author-facing surfaces do not require private development context
     When Run "python tests/test_tyf.py DocCheck.test_author_facing_surfaces_do_not_require_private_development_context -v"
     Then Exit code is 0

@@ -6,7 +6,7 @@ separates what is locally proven from what still needs real author use.
 
 ## Current Verdict
 
-TYF is ready for a local-first beta start of a single book folder.
+TYF is ready for a local-first single-book beta start.
 
 The proved launch promise is narrow and useful: preserve existing material,
 start without a final title, keep candidate prose in `drafts/`, keep
@@ -14,9 +14,30 @@ start without a final title, keep candidate prose in `drafts/`, keep
 resume`, and keep the helper, skills, author context, and installer surfaces in
 step.
 
+## Release Promise and Stop Rule
+
+For this local-first single-book beta, a 10/10 release means that TYF fulfills
+its declared release promise exceptionally well, with no known issue serious enough to undermine that promise.
+It does not mean the whole long-term authorship workbench is finished.
+
+Faithfulness includes helping the author finish. Do not confuse further possible
+improvement with a reason not to deliver. Future longitudinal memory,
+cross-session evaluations, multilingual semantic interpretation, mature
+parallel-agent orchestration, and broader portability proof are roadmap items
+unless a concrete defect blocks the current beta promise.
+
+The release question is narrow: can an author bring material, begin a sitting,
+preserve source and voice, produce candidate prose, return later, and consciously
+move accepted text into `manuscript/` without TYF becoming obstructive or taking
+over authorship?
+
+If the answer stays yes, the next proof is real author use. Record field
+friction, but do not reopen the beta merely because another later layer can be
+imagined.
+
 ## Evidence-Green
 
-- `173` stdlib helper, documentation, installer, and packaging tests pass.
+- `175` stdlib helper, documentation, installer, and packaging tests pass.
 - `137/137` internal acceptance scenarios have current direct RED proof.
 - CI passes on the pull request for install, Python 3.9, and Python 3.12.
 - Public TYF-visible surfaces do not require private development context.

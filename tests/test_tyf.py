@@ -2772,6 +2772,21 @@ class DocCheck(unittest.TestCase):
         self.assertIn("faithful next candidate", initializing.lower())
         self.assertIn("faithful next candidate", using.lower())
 
+    def test_release_docs_define_beta_done_without_goalpost_creep(self):
+        release = (REPO / "docs" / "RELEASE_READINESS.md").read_text(encoding="utf-8")
+        readme = (REPO / "README.md").read_text(encoding="utf-8")
+        using = (REPO / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+        audit = (REPO / "skills" / "auditing-adversarially" / "SKILL.md").read_text(encoding="utf-8")
+        combined = "\n".join((release, readme, using, audit))
+
+        self.assertIn("local-first single-book beta", combined)
+        self.assertIn("Faithfulness includes helping the author finish.", combined)
+        self.assertIn("Do not confuse further possible improvement with a reason not to deliver.", combined)
+        self.assertIn("ready enough to meet a reader", combined)
+        self.assertIn("next edition", combined)
+        self.assertIn("no known issue serious enough to undermine that promise", release)
+        self.assertIn("roadmap", release.lower())
+
     def test_author_facing_surfaces_do_not_require_private_development_context(self):
         public_author_surfaces = [
             "AGENTS.md",
@@ -2799,6 +2814,12 @@ class DocCheck(unittest.TestCase):
             text = (REPO / rel).read_text(encoding="utf-8")
             for token in forbidden:
                 self.assertNotIn(token, text, f"{rel} must not require {token}")
+        p = subprocess.run(
+            [sys.executable, str(TYF), "check", "--strict", "--quiet"],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", env=ENV,
+        )
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
 
     def test_release_archive_excludes_workshop_debris(self):
         attrs = (REPO / ".gitattributes").read_text(encoding="utf-8")
@@ -2989,6 +3010,7 @@ class DocCheck(unittest.TestCase):
             cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
             errors="replace", env=ENV,
         )
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
         self.assertNotIn("unrecognized arguments", p.stdout + p.stderr)
 
 
@@ -3186,6 +3208,12 @@ class Installer(unittest.TestCase):
         self.assertIn('set "TYF_PACK_ROOT=$Root"', script)
         self.assertIn("$env:TYF_PACK_ROOT = '$EscapedRoot'", script)
         self.assertIn("scripts\\tyf.py", script)
+        p = subprocess.run(
+            [sys.executable, str(TYF), "check", "--strict", "--quiet"],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", env=ENV,
+        )
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
 
     @unittest.skipUnless(shutil.which("powershell") or shutil.which("pwsh"), "PowerShell not available")
     def test_powershell_installer_installs_codex_skills_and_helper(self):

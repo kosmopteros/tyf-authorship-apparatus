@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -359,6 +360,12 @@ def check_private_context_boundary() -> None:
             for token in forbidden:
                 assert token not in text, f"{path.relative_to(ROOT)} leaks private development context token {token!r}"
     assert inspected > 20, "private context boundary oracle inspected too few TYF-visible files"
+    p = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "tyf.py"), "check", "--strict", "--quiet"],
+        cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8",
+        errors="replace", env={**os.environ, "TYF_NO_DOC_HOOK": "1"},
+    )
+    assert p.returncode == 0, p.stdout + p.stderr
 
 
 def check_onboarding() -> None:

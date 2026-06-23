@@ -7,6 +7,8 @@ TYF is for people writing books, essays, talks, courses, or newsletters with an 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
 
+If the TYF repository or installer scripts are not already present, fetch them first with `git clone https://github.com/kosmopteros/tyf-authorship-apparatus`, then `cd tyf-authorship-apparatus` and run the installer from that clone or load the skills directly.
+
 Install or load the TYF skills for Codex into `$CODEX_HOME/skills` or `~/.codex/skills`, using `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 codex` on Windows if bash is unavailable. Read `using-tyf`, and help me start writing my new book today. Set up the workspace so this repo has its local `AGENTS.md`, but do not block on a title or writing language; ask if either matters now, then keep moving. If I bring existing material, preserve it first. Run `tyf start` or `tyf start <path>` for my scaffold/chat/folder/zip, show me the orientation and writing runway, structure any minted text source fragment before drafting, then use the gentle attention deck and ask only what is needed to begin one candidate passage. Do not write manuscript text yet; candidate prose belongs in `drafts/candidate-draft.md`. If you use git, make recovery points explicit and never commit silently.
 ```
 
@@ -14,6 +16,8 @@ Install or load the TYF skills for Codex into `$CODEX_HOME/skills` or `~/.codex/
 
 ```text
 Use TYF from https://github.com/kosmopteros/tyf-authorship-apparatus.
+
+If the TYF repository or installer scripts are not already present, fetch them first with `git clone https://github.com/kosmopteros/tyf-authorship-apparatus`, then `cd tyf-authorship-apparatus` and run the installer from that clone or load the skills directly.
 
 Install or load the TYF skills, using `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 claude` on Windows if bash is unavailable. Paste the TYF project instructions into this Cowork project if they are not already present, and help me start writing my new book today. Set up the workspace, but do not block on a title or writing language; ask if either matters now, then keep moving. If I bring existing material, preserve it first. Run `tyf start` or `tyf start <path>` for my scaffold/chat/folder/zip, show me the orientation and writing runway, structure any minted text source fragment before drafting, then use the gentle attention deck and ask only what is needed to begin one candidate passage. Do not write manuscript text yet; candidate prose belongs in `drafts/candidate-draft.md`. If you use git, make recovery points explicit and never commit silently.
 ```

@@ -83,7 +83,7 @@ On Windows without bash:
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1 codex
 ```
 
-For a book workspace, run `tyf init <book-folder>` so TYF writes the local `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` context without contributor-only routing. If a harness needs manual context before a workspace exists, use the matching file from `author-context/`; the pack-root context files are for contributing to TYF itself.
+For a book workspace, run `tyf init` in the book folder, or `tyf init <book-folder>` near it, so TYF writes the local `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` context without contributor-only routing. If a harness needs manual context before a workspace exists, use the matching file from `author-context/`; the pack-root context files are for contributing to TYF itself.
 
 For Codex specifically, TYF has two layers. Install the TYF skills once into `$CODEX_HOME/skills` or `~/.codex/skills` so `$using-tyf` is available. Then, inside each book repo, `tyf init` writes the local `AGENTS.md` workspace contract so Codex entering that repo knows to run `tyf start` or `tyf start <path>` before drafting.
 
@@ -100,7 +100,7 @@ That treats the book folder as the single work, records any supplied working tit
 Advanced commands for agents and maintainers:
 
 ```
-tyf init <name>          tyf start [<path>] [--kind dump|chat|bundle|source] [--title <t>] [--language <language>]
+tyf init [<name>]        tyf start [<path>] [--kind dump|chat|bundle|source] [--title <t>] [--language <language>]
 tyf begin <id> --title <t> --register <r> [--language <language>]
 tyf import <path> [--kind auto|source|chat|bundle|dump|transcript|note] [--work <id>]
 tyf capture <work> --kind source|voice|claim|question --text <text>

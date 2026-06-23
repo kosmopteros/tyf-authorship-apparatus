@@ -280,6 +280,8 @@ def check_onboarding() -> None:
     assert "## Paste Into Claude Cowork" in start_here
     assert "do not block on a title" in start_here.lower()
     assert "tyf start <path>" in start_here
+    assert "If the TYF repository or installer scripts are not already present" in start_here
+    assert "git clone https://github.com/kosmopteros/tyf-authorship-apparatus" in start_here
     assert "[docs/START_HERE.md]" in readme
     assert "do not hand them a command list" in using.lower()
     assert "tyf start" in init

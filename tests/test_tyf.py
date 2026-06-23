@@ -120,6 +120,16 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual((ws / "ASSUMPTIONS.md").read_text(encoding="utf-8"),
                          "CUSTOM CONTENT\n")
 
+    def test_init_without_name_scaffolds_current_book_folder(self):
+        book = self.tmp / "book"
+        book.mkdir()
+        rc, out = run_tyf(["init"], book)
+        self.assertEqual(rc, 0, out)
+        self.assertTrue((book / "WORKSPACE_STATE.yaml").is_file())
+        self.assertTrue((book / "work.yaml").is_file())
+        self.assertIn("Founded workspace", out)
+        self.assertIn("tyf start", out)
+
     def test_init_from_installed_helper_does_not_warn_about_missing_pack_skills(self):
         packless = self.tmp / "packless-install-root"
         packless.mkdir()
@@ -1548,6 +1558,20 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Draft runway", out)
         self.assertNotIn("Work id:", out)
 
+    def test_start_rerun_preserves_existing_writing_runway_notes(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        runway = ws / ".review" / "writing-runway.md"
+        runway.write_text(runway.read_text(encoding="utf-8") + "\nHUMAN SESSION NOTE\n", encoding="utf-8")
+
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        text = runway.read_text(encoding="utf-8")
+        self.assertIn("HUMAN SESSION NOTE", text)
+        self.assertIn("Existing writing runway preserved", out)
+        self.assertIn("tyf resume", out)
+
     def test_start_first_session_packet_has_gentle_attention_deck(self):
         ws = self.ws()
         rc, out = run_tyf(["start"], ws)
@@ -2022,6 +2046,9 @@ class DocCheck(unittest.TestCase):
             self.assertIn("TYF workspace", text)
             self.assertIn("tyf start", text)
             self.assertIn("single work", text.lower())
+            self.assertIn("tyf structure work --source-ref", text)
+            self.assertIn("tyf consult-character", text)
+            self.assertIn("amanuensis", text.lower())
             self.assertNotIn("SOLO Reflex", text)
             self.assertNotIn("using-solo", text)
             self.assertNotIn("fbs", text.lower())
@@ -2039,10 +2066,26 @@ class DocCheck(unittest.TestCase):
                 "fbs.yaml export-ignore",
                 ".claude/commands/fbs-* export-ignore",
                 ".claude/settings.json export-ignore",
-                "AGENTS.md export-ignore",
-                "CLAUDE.md export-ignore",
-                "GEMINI.md export-ignore"):
+                "/AGENTS.md export-ignore",
+                "/CLAUDE.md export-ignore",
+                "/GEMINI.md export-ignore"):
             self.assertIn(token, attrs)
+
+    def test_release_archive_keeps_author_context_templates(self):
+        p = subprocess.run(
+            ["git", "check-attr", "export-ignore", "--",
+             "AGENTS.md", "author-context/AGENTS.md",
+             "author-context/CLAUDE.md", "author-context/GEMINI.md"],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            errors="replace",
+        )
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        out = p.stdout
+        self.assertIn("AGENTS.md: export-ignore: set", out)
+        for rel in ("author-context/AGENTS.md",
+                    "author-context/CLAUDE.md",
+                    "author-context/GEMINI.md"):
+            self.assertIn(f"{rel}: export-ignore: unspecified", out)
 
     def test_readme_pressure_status_matches_validation_evidence(self):
         readme = (REPO / "README.md").read_text(encoding="utf-8")
@@ -2066,6 +2109,21 @@ class DocCheck(unittest.TestCase):
             "place the matching context file where the harness reads session context",
             portability,
         )
+
+    def test_opencode_install_routes_to_helper_and_author_context(self):
+        install = (REPO / ".opencode" / "INSTALL.md").read_text(encoding="utf-8")
+        self.assertIn("scripts/install", install)
+        self.assertIn("tyf --help", install)
+        self.assertIn("author-context", install)
+        self.assertNotIn("Copy `AGENTS.md` from the repository root", install)
+
+    def test_check_accepts_advertised_strict_flag(self):
+        p = subprocess.run(
+            [sys.executable, str(TYF), "check", "--strict", "--quiet"],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", env=ENV,
+        )
+        self.assertNotIn("unrecognized arguments", p.stdout + p.stderr)
 
 
 class PackRoot(unittest.TestCase):
@@ -2116,6 +2174,8 @@ class Installer(unittest.TestCase):
         self.assertIn("TYF_PACK_ROOT", script)
         self.assertIn("tyf init", script)
         self.assertIn("author-context", script)
+        self.assertIn("[Environment]::SetEnvironmentVariable", script)
+        self.assertNotIn("setx PATH", script)
         self.assertNotIn(".agents", script)
 
     def test_powershell_installer_writes_pack_root_launchers(self):

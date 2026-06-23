@@ -106,7 +106,8 @@ Write-Host "  $CmdPath"
 Write-Host "  $Ps1Path"
 if (($env:PATH -split ";") -notcontains $BinDir) {
     Write-Host "  NOTE: $BinDir is not on your PATH. Add it for future shells:"
-    Write-Host "        setx PATH `"$BinDir;%PATH%`""
+    Write-Host "        `$current = [Environment]::GetEnvironmentVariable('Path', 'User')"
+    Write-Host "        [Environment]::SetEnvironmentVariable('Path', `"$BinDir;`$current`", 'User')"
 }
 
 Write-Host ""

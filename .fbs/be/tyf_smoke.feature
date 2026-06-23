@@ -115,6 +115,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway -v"
     Then Exit code is 0
 
+  @covers:tyf-writing-runway-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: start reruns preserve author runway notes
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_rerun_preserves_existing_writing_runway_notes -v"
+    Then Exit code is 0
+
   @covers:tyf-writing-runway-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: start preserves title language and first-session evidence
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_updates_root_title_language_and_evidence_packet -v"
@@ -137,7 +142,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-single-work-beta-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: beta book folder is the single work
-    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_single_work_root_layout CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_single_work_root_layout CLIBehaviour.test_init_without_name_scaffolds_current_book_folder CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway -v"
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -252,7 +257,12 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: release export ignores workshop debris
-    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris -v"
+    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris DocCheck.test_release_archive_keeps_author_context_templates -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.opencode/INSTALL.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: OpenCode install routes through helper and clean author context
+    When Run "python tests/test_tyf.py DocCheck.test_opencode_install_routes_to_helper_and_author_context -v"
     Then Exit code is 0
 
   @covers:tyf-windows-installer-contract @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
@@ -273,6 +283,11 @@ Feature: TYF helper smoke suite
   @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:docs/PORTABILITY.md @bind-file:docs/START_HERE.md @tool-check:cli
   Scenario: Windows installer docs expose no-bash path
     When Run "python tests/test_tyf.py Installer.test_powershell_installer_has_windows_author_contract DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    Then Exit code is 0
+
+  @covers:tyf-helper-current-contract @covers:tyf-doc-drift-command-contract @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: advertised strict check flag is accepted
+    When Run "python tests/test_tyf.py DocCheck.test_check_accepts_advertised_strict_flag -v"
     Then Exit code is 0
 
   @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli

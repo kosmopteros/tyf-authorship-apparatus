@@ -62,7 +62,7 @@ On Windows without bash:
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1 codex
 ```
 
-That installs the global dispatcher skill (`using-tyf`). A book repository still needs its local workspace context: run `tyf init <workspace-name>` in or near the book repo, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf start` rather than a title-gated setup.
+That installs the global dispatcher skill (`using-tyf`). A book repository still needs its local workspace context: run `tyf init` in the book folder, or `tyf init <workspace-name>` near it, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf start` rather than a title-gated setup.
 
 **Cursor** (agent chat):
 

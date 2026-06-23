@@ -5,7 +5,7 @@ The helper performs the concrete file operations of a TYF workspace so the agent
 does not freelance, and it is the single writer into a work's manuscript/.
 
 Commands:
-  tyf init <name>                         scaffold a workspace (idempotent: creates
+  tyf init [<name>]                       scaffold a workspace (idempotent: creates
                                           only missing structure, never clobbers)
   tyf status                              active work, band, write control, write zones
   tyf new-work <id> [--type T] [--register R]
@@ -186,7 +186,7 @@ def _require_workspace():
     """Refuse any mutating command run outside a TYF workspace root."""
     if not os.path.isfile("WORKSPACE_STATE.yaml"):
         sys.exit("Not in a TYF workspace (no WORKSPACE_STATE.yaml). "
-                 "Run `tyf init <name>`, or cd into the workspace root.")
+                 "Run `tyf init`, or cd into the workspace root.")
     real = os.path.realpath(".")
     if os.path.abspath(".") != real:
         os.chdir(real)
@@ -1097,6 +1097,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions, then pass relevant ids to `tyf propose --source-ref <id>`.
+- If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
 - If the author edits `manuscript/` directly, use `tyf adopt work <unit> --evidence "<what happened>"` before the next controlled write.
@@ -1192,7 +1193,7 @@ def _scaffold(root, create=True):
     return created, present
 
 def cmd_init(args):
-    root = os.path.abspath(args.name)
+    root = os.path.abspath(args.name or ".")
     existed = os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml"))
     if not existed and os.path.isdir(root) and os.listdir(root) and not getattr(args, "force", False):
         sys.exit(f"Refused: {root} is a non-empty directory and not a TYF workspace. "
@@ -1515,10 +1516,12 @@ def cmd_start(args):
         work_id = arrival["work_id"]
     else:
         work_id, _created, _unused = _work_for_start(args)
-    runway, draft = _write_start_runway(work_id, arrival)
+    runway, draft, preserved_existing = _write_start_runway(work_id, arrival)
     log_event(".", "start", work_id, f"runway={runway} draft={draft}")
     print("Writing runway opened.")
     print("  Work: this book folder")
+    if preserved_existing:
+        print("  Existing writing runway preserved; use `tyf resume` to return without losing session notes.")
     if arrival:
         print(f"  Preserved arrival: {arrival['preserved']}")
         print(f"  Arrival orientation: {arrival['orientation']}")
@@ -2271,7 +2274,18 @@ def _write_start_runway(work_id, arrival=None):
     orientation = arrival.get("orientation") if arrival else ""
     preserved = arrival.get("preserved") if arrival else ""
     starter, _seed = _ensure_first_session_packet(work_id)
-    write(runway, f"""# Writing runway
+    preserved_existing = os.path.exists(runway)
+    if preserved_existing:
+        if orientation or preserved:
+            append(runway, f"""
+## Later start: {now()}
+
+{f"- Arrival orientation: `{orientation.replace(os.sep, '/')}`" if orientation else "- No arrival orientation was created in this command."}
+{f"- Raw material preserved at: `{preserved.replace(os.sep, '/')}`" if preserved else "- No new raw material was preserved in this command."}
+- Existing runway text above was preserved. Use `tyf resume` to return without losing session notes.
+""")
+    else:
+        write(runway, f"""# Writing runway
 
 Work: `{work_id}`
 
@@ -2314,7 +2328,7 @@ certainty.
 answers, or one remembered image. Keep unresolved facts in brackets.]
 
 """)
-    return runway, draft
+    return runway, draft, preserved_existing
 
 def _git(args):
     import subprocess
@@ -3831,7 +3845,7 @@ def _require_event_journal_ready(root="."):
 def main():
     p = argparse.ArgumentParser(prog="tyf", description="TYF workspace helper")
     sub = p.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("init"); s.add_argument("name"); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
+    s = sub.add_parser("init"); s.add_argument("name", nargs="?", default="."); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)
     s = sub.add_parser("status"); s.set_defaults(fn=cmd_status)
     s = sub.add_parser("new-work"); s.add_argument("id"); s.add_argument("--type", default="book"); s.add_argument("--register", default=None); s.add_argument("--language", default=None); s.set_defaults(fn=cmd_new_work)
     s = sub.add_parser("start", help="open the writing runway, optionally preserving an arrival first")
@@ -3928,6 +3942,7 @@ def main():
     s.set_defaults(fn=cmd_snapshot)
     s = sub.add_parser("check")
     s.add_argument("--quiet", action="store_true", help="print only problems")
+    s.add_argument("--strict", dest="strict", action="store_true", help="strict mode is the default")
     s.add_argument("--no-strict", dest="strict", action="store_false", help="warn only; exit 0 even on drift")
     s.set_defaults(fn=cmd_check, strict=True)
     s = sub.add_parser("notice", help="surface forgotten or unfinished items; never modifies")

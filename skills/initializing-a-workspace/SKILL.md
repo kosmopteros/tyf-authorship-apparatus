@@ -15,7 +15,7 @@ This is the front door. Until the structure exists, the other passes have nowher
 
 Scaffold first, then elicit, then write the substrate. Do not draft, and do not invent the author's thesis or registers while setting up. Initialization produces empty, labelled structure plus whatever intake legitimately fills.
 
-1. **Scaffold.** Create the `workspace/` tree (see `working-the-workspace`). Prefer the helper: `tyf init <name>`. Init is idempotent: it creates only missing structure and never overwrites existing files, so it safely heals a partial workspace. It also initializes apparatus memory: `.tyf/events.jsonl` for the hash-chained action journal and `.tyf/ledger.db` for the derived notice index. Run `tyf doctor --repair` any time to restore missing structure. Write `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, and the router/standing-instructions file.
+1. **Scaffold.** Create the `workspace/` tree (see `working-the-workspace`). Prefer the helper: `tyf init` in the book folder, or `tyf init <name>` near it. Init is idempotent: it creates only missing structure and never overwrites existing files, so it safely heals a partial workspace. It also initializes apparatus memory: `.tyf/events.jsonl` for the hash-chained action journal and `.tyf/ledger.db` for the derived notice index. Run `tyf doctor --repair` any time to restore missing structure. Write `WORKSPACE_STATE.yaml`, `manifest.yaml`, `ASSUMPTIONS.md`, and the router/standing-instructions file.
 2. **Run intake.** Invoke `ingesting-sources` for any material the author brings, then `interviewing-the-author` for tacit knowledge, thesis, and registers.
 3. **Seed the substrate.** Write at least one register to the voice registers via `managing-voice`, seed the knowledge base via `structuring-knowledge`, and start the redactor canon and the running style sheet via `keeping-the-redactor-canon`.
 4. **Open the writing runway.** For a book that needs a first writing session, use `tyf start`; if the author brings existing material, run `tyf start <path>`. The helper creates or reuses the root single work, records any supplied title/language, creates or reuses `sources/interviews/work-first-session.md`, preserves arrivals through the import lane, writes `.review/writing-runway.md`, and creates `drafts/candidate-draft.md` for candidate prose.
@@ -43,7 +43,8 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 ## Commands
 
 ```
-tyf init <workspace-name>       # scaffold the tree and state files
+tyf init                        # scaffold this book folder
+tyf init <workspace-name>       # or scaffold a named book folder nearby
 tyf start [path]                # preserve an optional arrival and open the writing runway
 tyf start --title "<title>" --language "<writing language>"
 tyf import <path>               # preserve existing material and create an orientation packet

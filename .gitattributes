@@ -12,9 +12,9 @@ bin/tyf   text eol=lf
 fbs.yaml export-ignore
 .claude/commands/fbs-* export-ignore
 .claude/settings.json export-ignore
-AGENTS.md export-ignore
-CLAUDE.md export-ignore
-GEMINI.md export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
+/GEMINI.md export-ignore
 .pytest_cache/** export-ignore
 **/__pycache__/** export-ignore
 *.pyc export-ignore

@@ -44,7 +44,7 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 
 ## Where TYF is fooling itself
 
-1. **Partial proof is partial proof.** The command-backed helper/SOLO contract is no longer paper-only: 106/106 Be have direct RED proof, and the stdlib helper suite has 142 tests. Superpowers earned its confidence through usage; TYF still has only a first prompt-level subagent pressure run. GREEN passed 11/11, but the RED baseline was weak, so skill-pressure proof remains partial rather than settled.
+1. **Partial proof is partial proof.** The command-backed helper/SOLO contract is no longer paper-only: 106/106 Be have direct RED proof, and the stdlib helper suite has 144 tests including exported release-tree check/install smoke coverage. Superpowers earned its confidence through usage; TYF still has only a first prompt-level subagent pressure run. GREEN passed 11/11, but the RED baseline was weak, so skill-pressure proof remains partial rather than settled.
 2. **Surface-area-to-usage ratio.** TYF has 16 skills, a broad helper CLI, a SQLite layer, visible reflex hooks, and an opt-in LLM pass, for zero real users. Superpowers grew its surface from usage. TYF risks being over-engineered for problems no author has actually hit.
 3. **Gentleness as a liability.** TYF's tone is faithful and warm. Superpowers learned that under pressure, agents need blunt imperatives. TYF's softer dispatch may rationalize more easily, the exact failure its rationalization tables try to prevent.
 4. **The redactor/voice substrates are unproven at scale.** They are elegant on paper. Whether an agent actually consults them at every band, every pass, under a long real project, is unknown.

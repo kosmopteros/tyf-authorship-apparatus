@@ -459,7 +459,9 @@ def run_doc_check(root=None):
             if dead in txt:
                 problems.append(f"{rel}: dead command reference '{dead}'")
 
-    # 4. the three context files must be byte-identical
+    # 4. contributor context files must be byte-identical. Author-facing release
+    #    exports intentionally omit these root files and ship author-context/*
+    #    templates instead.
     ctx = [os.path.join(root, f) for f in ("CLAUDE.md", "AGENTS.md", "GEMINI.md")]
     present = [c for c in ctx if os.path.isfile(c)]
     if len(present) == 3:
@@ -469,7 +471,12 @@ def run_doc_check(root=None):
         else:
             notes.append("context files identical")
     else:
-        problems.append("one or more context files missing (CLAUDE/AGENTS/GEMINI)")
+        author_ctx = [os.path.join(root, "author-context", f)
+                      for f in ("CLAUDE.md", "AGENTS.md", "GEMINI.md")]
+        if not present and all(os.path.isfile(c) for c in author_ctx):
+            notes.append("release export uses author-context templates")
+        else:
+            problems.append("one or more context files missing (CLAUDE/AGENTS/GEMINI)")
 
     # 5. manifests parse as JSON
     for j in (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",

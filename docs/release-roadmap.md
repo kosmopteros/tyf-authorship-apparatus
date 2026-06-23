@@ -15,7 +15,7 @@
 - Shipped 0.5.0 Single Book Folder on top of the writing runway: beta launch workspaces treat the book folder as the single work, with root `work.yaml`, `outline/`, `drafts/`, `manuscript/`, `style-sheet.md`, and `.review/`.
 - Keep improving the complete source-to-manuscript vertical slice: claim/example provenance, proposal generation from preserved evidence, audit, author review, author decision, and write record.
 - Promote the current canonical event journal from action history toward the authority for derived SQLite projections.
-- Windows PowerShell install now has a local smoke test; add release-archive install validation for macOS and Linux next.
+- Windows PowerShell install and exported release-tree check/install now have local smoke tests; add macOS and Linux host validation for published archives next.
 
 ## Later workbench surface
 

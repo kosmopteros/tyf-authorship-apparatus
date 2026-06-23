@@ -260,9 +260,9 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
     Then Exit code is 0
 
-  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:tests/test_tyf.py @tool-check:cli
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: release export ignores workshop debris
-    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris DocCheck.test_release_archive_keeps_author_context_templates -v"
+    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris DocCheck.test_release_archive_keeps_author_context_templates DocCheck.test_release_archive_runs_check_from_exported_tree Installer.test_release_archive_installs_from_exported_tree_with_bash -v"
     Then Exit code is 0
 
   @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.opencode/INSTALL.md @bind-file:tests/test_tyf.py @tool-check:cli

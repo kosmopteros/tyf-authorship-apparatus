@@ -45,6 +45,18 @@ def run_tyf(args, cwd):
     return p.returncode, (p.stdout + p.stderr)
 
 
+def archive_treeish():
+    """Return a tree-ish for the current tracked worktree, or HEAD if clean."""
+    p = subprocess.run(
+        ["git", "stash", "create", "tyf-test-worktree-archive"],
+        cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+        errors="replace",
+    )
+    if p.returncode == 0 and p.stdout.strip():
+        return p.stdout.strip()
+    return "HEAD"
+
+
 def event_record_hash(record):
     payload = {k: record[k] for k in sorted(record) if k != "hash"}
     data = json.dumps(payload, ensure_ascii=False, sort_keys=True,
@@ -2123,6 +2135,57 @@ class DocCheck(unittest.TestCase):
                     "author-context/GEMINI.md"):
             self.assertIn(f"{rel}: export-ignore: unspecified", out)
 
+    def test_release_archive_runs_check_from_exported_tree(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-release-export-"))
+        try:
+            archive = tmp / "tyf.zip"
+            exported = tmp / "exported"
+            exported.mkdir()
+            p = subprocess.run(
+                ["git", "archive", "--worktree-attributes", "--format=zip",
+                 "-o", str(archive), archive_treeish()],
+                cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            with zipfile.ZipFile(archive) as zf:
+                zf.extractall(exported)
+
+            for rel in (
+                    ".fbs",
+                    "fbs.yaml",
+                    ".claude/settings.json",
+                    ".claude/commands/fbs-document.md",
+                    "AGENTS.md",
+                    "CLAUDE.md",
+                    "GEMINI.md",
+                    ".pytest_cache",
+                    "build",
+                    "dist"):
+                self.assertFalse((exported / rel).exists(), f"{rel} should not ship")
+            for rel in (
+                    "skills/using-tyf/SKILL.md",
+                    "scripts/tyf.py",
+                    "scripts/install.sh",
+                    "scripts/install.ps1",
+                    "bin/tyf",
+                    "author-context/AGENTS.md",
+                    ".codex-plugin/plugin.json",
+                    ".claude-plugin/plugin.json",
+                    "README.md",
+                    "docs/START_HERE.md"):
+                self.assertTrue((exported / rel).exists(), f"{rel} should ship")
+
+            p = subprocess.run(
+                [sys.executable, str(exported / "scripts" / "tyf.py"),
+                 "check", "--strict", "--quiet"],
+                cwd=str(exported), capture_output=True, text=True,
+                encoding="utf-8", errors="replace", env=ENV,
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_readme_pressure_status_matches_validation_evidence(self):
         readme = (REPO / "README.md").read_text(encoding="utf-8")
         self.assertNotIn("have not yet been run against a subagent", readme)
@@ -2217,6 +2280,66 @@ class Installer(unittest.TestCase):
         out = p.stdout + p.stderr
         self.assertEqual(p.returncode, 0, out)
         self.assertIn("skill directories", out)
+
+    @unittest.skipUnless(shutil.which("bash"), "bash not available")
+    def test_release_archive_installs_from_exported_tree_with_bash(self):
+        def bash_path(path):
+            fallback = str(path)
+            m = re.match(r"^([A-Za-z]):[\\/](.*)$", fallback)
+            if m:
+                fallback = f"/mnt/{m.group(1).lower()}/{m.group(2).replace(os.sep, '/')}"
+            p = subprocess.run(
+                ["bash", "-lc", "command -v cygpath >/dev/null && cygpath -u \"$1\" || printf '%s' \"$2\"",
+                 "_", str(path), fallback],
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+            )
+            return (p.stdout or fallback).strip()
+
+        def shell_quote(value):
+            return "'" + value.replace("'", "'\"'\"'") + "'"
+
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-release-install-"))
+        try:
+            archive = tmp / "tyf.zip"
+            exported = tmp / "exported"
+            exported.mkdir()
+            p = subprocess.run(
+                ["git", "archive", "--worktree-attributes", "--format=zip",
+                 "-o", str(archive), archive_treeish()],
+                cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            with zipfile.ZipFile(archive) as zf:
+                zf.extractall(exported)
+
+            skills_dir = tmp / "codex-skills"
+            bin_dir = tmp / "bin"
+            install_cmd = (
+                f"BIN_DIR={shell_quote(bash_path(bin_dir))} "
+                f"bash scripts/install.sh {shell_quote(bash_path(skills_dir))}"
+            )
+            p = subprocess.run(
+                ["bash", "-lc", install_cmd],
+                cwd=str(exported), capture_output=True, text=True,
+                encoding="utf-8", errors="replace", env=ENV,
+            )
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            self.assertTrue((skills_dir / "using-tyf" / "SKILL.md").is_file())
+            self.assertTrue((skills_dir / "composing-as-amanuensis" / "SKILL.md").is_file())
+            self.assertTrue(os.path.lexists(bin_dir / "tyf"))
+            self.assertIn("Clean author-context templates", out)
+
+            check_cmd = f"TYF_NO_DOC_HOOK=1 {shell_quote(bash_path(bin_dir / 'tyf'))} check --strict --quiet"
+            p = subprocess.run(
+                ["bash", "-lc", check_cmd],
+                cwd=str(tmp), capture_output=True, text=True, encoding="utf-8",
+                errors="replace", env=ENV,
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def test_codex_install_targets_current_skill_root(self):
         script = (REPO / "scripts" / "install.sh").read_text(encoding="utf-8")

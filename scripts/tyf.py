@@ -1323,21 +1323,23 @@ def _untitled_work_id():
         i += 1
     return candidate
 
-def _write_begin_packet(work_id, title=None, language=None):
-    label = _one_line(title, work_id)
-    language = _one_line(language, "undetermined")
-    base = _work_base(work_id)
-    _ensure_real_dir(os.path.join("sources", "interviews"), "sources/interviews/")
-    starter = os.path.join("sources", "interviews", f"{work_id}-first-session.md")
-    seed = os.path.join(base, "outline", "seed.md")
-    runway = os.path.join(base, ".review", "first-session.md")
-    if os.path.exists(starter):
-        sys.exit(f"Refused: first-session packet already exists: {starter}")
-    write(starter, f"""# Start here: {label}
+def _first_session_packet_text(label, language, heading):
+    return f"""# {heading}: {label}
 
 This is an author-owned first-session packet. It is source/interview evidence, not candidate prose. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
 
 Writing language: {language}
+
+## Gentle attention deck
+
+These are invitations, not a test of certainty. Answer only what helps us begin one candidate passage; leave the rest blank.
+
+- [PROMPT: what should TYF hold with most care in this book right now?]
+- [PROMPT: what lived pressure, question, image, or contradiction makes the work necessary?]
+- [PROMPT: what must not be flattened, explained away, or made too neat?]
+- [PROMPT: whose words, memory, scene, or source should stay close to the page?]
+- [PROMPT: which register should the first passage try: plain, lyrical, argumentative, intimate, comic, severe, or another?]
+- [PROMPT: one first passage could begin from which scene, claim, question, or phrase?]
 
 ## What is already true
 
@@ -1358,7 +1360,20 @@ Writing language: {language}
 ## Candidate draft target
 
 - No manuscript text here yet. Candidate prose may be drafted later in `drafts/` only after source, register, and structure are present.
-""")
+"""
+
+
+def _write_begin_packet(work_id, title=None, language=None):
+    label = _one_line(title, work_id)
+    language = _one_line(language, "undetermined")
+    base = _work_base(work_id)
+    _ensure_real_dir(os.path.join("sources", "interviews"), "sources/interviews/")
+    starter = os.path.join("sources", "interviews", f"{work_id}-first-session.md")
+    seed = os.path.join(base, "outline", "seed.md")
+    runway = os.path.join(base, ".review", "first-session.md")
+    if os.path.exists(starter):
+        sys.exit(f"Refused: first-session packet already exists: {starter}")
+    write(starter, _first_session_packet_text(label, language, "Start here"))
     write(seed, f"""# Seed outline: {label}
 
 ## Working promise
@@ -1413,32 +1428,7 @@ def _ensure_first_session_packet(work_id, title=None, language=None):
     starter = os.path.join("sources", "interviews", f"{work_id}-first-session.md")
     seed = os.path.join(base, "outline", "seed.md")
     if not os.path.exists(starter):
-        write(starter, f"""# First-session evidence: {label}
-
-This is an author-owned first-session packet. It is source/interview evidence, not candidate prose. Fill it with source, images, fragments, objections, questions, and pressure. TYF may ask, organize, and propose, but it must not invent book content here. Do not invent what the author has not supplied.
-
-Writing language: {language}
-
-## What is already true
-
-- [PROMPT: name the lived pressure, question, or image that makes this book necessary]
-
-## Source fragments
-
-- [PROMPT: paste notes, memories, observations, phrases, or cited material]
-
-## Voice samples
-
-- [PROMPT: lines that sound like the book, even if they are rough]
-
-## Open questions
-
-- [PROMPT: what must be elicited before drafting]
-
-## Candidate draft target
-
-- No manuscript text here yet. Candidate prose may be drafted later in `drafts/` only after source, register, and structure are present.
-""")
+        write(starter, _first_session_packet_text(label, language, "First-session evidence"))
     else:
         lines = open(starter, encoding="utf-8").read().splitlines()
         refreshed = []
@@ -2282,11 +2272,12 @@ certainty.
 1. If there is an arrival orientation, read it first and pick a simple
    organization principle: chronology, voice, scene, question, chapter, or
    source type.
-2. Ask only the questions needed to begin one passage, and store the answers in
+2. Use the gentle attention deck in the first-session packet. Do not ask the author to answer every prompt before drafting; one strong source, image, question, or voice cue is enough to begin.
+3. Ask only the questions needed to begin one passage, and store the answers in
    `{starter.replace(os.sep, '/')}`.
-3. Write candidate prose in `{draft.replace(os.sep, "/")}`.
-4. Keep uncertainty visible in brackets rather than solving it silently.
-5. Leave `manuscript/` empty until the author later chooses to pass material
+4. Write candidate prose in `{draft.replace(os.sep, "/")}`.
+5. Keep uncertainty visible in brackets rather than solving it silently.
+6. Leave `manuscript/` empty until the author later chooses to pass material
    through proposal, review, acceptance, and controlled write.
 
 ## Non-Blocking Rules

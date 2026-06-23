@@ -1445,6 +1445,22 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Draft runway", out)
         self.assertNotIn("Work id:", out)
 
+    def test_start_first_session_packet_has_gentle_attention_deck(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        starter = (ws / "sources" / "interviews" / "work-first-session.md").read_text(encoding="utf-8")
+        runway = (ws / ".review" / "writing-runway.md").read_text(encoding="utf-8")
+        self.assertIn("## Gentle attention deck", starter)
+        self.assertIn("Answer only what helps us begin one candidate passage", starter)
+        self.assertIn("what should TYF hold with most care", starter)
+        self.assertIn("what must not be flattened", starter)
+        self.assertIn("one first passage could begin from", starter)
+        self.assertIn("These are invitations, not a test of certainty", starter)
+        self.assertIn("Use the gentle attention deck", runway)
+        self.assertIn("Do not ask the author to answer every prompt before drafting", runway)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
     def test_start_updates_root_title_language_and_evidence_packet(self):
         ws = self.ws()
         rc, out = run_tyf(["start", "--title", "My Great Book", "--language", "English"], ws)

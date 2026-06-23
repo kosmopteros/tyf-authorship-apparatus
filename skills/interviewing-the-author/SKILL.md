@@ -15,6 +15,8 @@ This is an Elicit pass at the knowledge bands. It is the highest-value work in T
 
 The temptation is to propose a thesis, an outline, or a voice on the author's behalf and let them nod along. That inverts the apparatus. You pressure what the author already believes until it is sharp. You never invent what they should believe or want.
 
+**First sitting.** When `tyf start` has created `sources/interviews/work-first-session.md`, use its gentle attention deck before inventing a new interview plan. The author does not have to answer every prompt. One strong source, image, pressure, voice cue, or first-passage target is enough to begin candidate prose; unanswered prompts stay visible as invitations.
+
 **Thesis interrogation.** Do not proceed past the argument band until the author has stated, in one paragraph, the thesis and the tension it resolves. Push on it. Ask what breaks if the thesis is wrong, who disagrees, and what it costs to believe. You sharpen the author's thesis; you do not author one.
 
 **Eliciting voice.** Ask for annotated example passages of the author's own prose, or stated preferences, or both. Capture register names the author uses for themselves. Hand these to `managing-voice`.

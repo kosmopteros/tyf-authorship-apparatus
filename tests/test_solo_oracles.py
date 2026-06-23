@@ -21,7 +21,7 @@ def check_helper() -> None:
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
         "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
-        "attend", "consult-character", "feedback", "session",
+        "attend", "consult-character", "feedback", "session", "diagnose",
     }
     missing = sorted(
         command for command in required
@@ -31,7 +31,7 @@ def check_helper() -> None:
     for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_attend", "cmd_character",
                     "cmd_consult_character", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
-                    "cmd_adopt", "cmd_feedback", "cmd_session"):
+                    "cmd_adopt", "cmd_feedback", "cmd_session", "cmd_diagnose"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
     assert "--language" in source, "work creation must expose writing-language metadata"
@@ -415,11 +415,48 @@ def check_continuing_work() -> None:
     assert "continuing-the-work" in readme
 
 
+def check_diagnostic_isolation() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    contract = (ROOT / "docs" / "WORKSPACE_CONTRACT.md").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    diagnosing = (ROOT / "skills" / "diagnosing-text" / "SKILL.md").read_text(encoding="utf-8")
+    comparison = (ROOT / "docs" / "COMPARISON_SUPERPOWERS.md").read_text(encoding="utf-8")
+
+    for token in (
+        "def cmd_diagnose(",
+        ".review/diagnostics",
+        "current-diagnosis.md",
+        "review-only diagnostic isolation packet",
+        "Cause hypotheses",
+        "one next experiment",
+        "Source and register reminders",
+        "No manuscript text was written",
+    ):
+        assert token in source, f"diagnostic-isolation runtime missing {token}"
+    for name in (
+        "test_diagnose_writes_review_only_isolation_packet",
+        "test_diagnose_defaults_to_candidate_draft_and_respects_focus",
+        "test_diagnose_refuses_missing_unit_or_bad_band_without_side_effects",
+    ):
+        assert name in tests, f"missing {name}"
+    assert "tyf diagnose" in diagnosing
+    assert "review-only diagnostic isolation packet" in diagnosing
+    assert "one next experiment" in diagnosing
+    assert "No manuscript" in diagnosing
+    assert "diagnosing-text" in using
+    assert "tyf diagnose" in using
+    assert "diagnostic isolation" in readme
+    assert ".review/diagnostics" in contract
+    assert "systematic isolation" in comparison
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -448,6 +485,8 @@ def main(argv: list[str] | None = None) -> int:
         check_feedback_triage()
     elif args.oracle == "continuing-work":
         check_continuing_work()
+    elif args.oracle == "diagnostic-isolation":
+        check_diagnostic_isolation()
     else:
         check_gate()
     return 0

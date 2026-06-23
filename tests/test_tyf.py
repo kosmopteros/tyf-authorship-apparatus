@@ -1630,6 +1630,75 @@ class CLIBehaviour(unittest.TestCase):
         self.assertFalse((ws / ".review" / "sessions").exists())
         self.assertFalse((ws / ".review" / "current-session.md").exists())
 
+    def test_diagnose_writes_review_only_isolation_packet(self):
+        ws = self.ws()
+        draft = ws / "drafts" / "candidate-draft.md"
+        draft.write_text(
+            "The archive opened before the aunt arrived.\n"
+            "Then it mattered because the weather changed.\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["diagnose", "work", "--unit", "drafts/candidate-draft.md",
+             "--band", "section", "--symptom", "the turn does not land"],
+            ws,
+        )
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Diagnostic packet", out)
+        self.assertIn("No manuscript text was written", out)
+
+        diagnostics = list((ws / ".review" / "diagnostics").glob("*.md"))
+        self.assertEqual(len(diagnostics), 1)
+        current = ws / ".review" / "current-diagnosis.md"
+        self.assertTrue(current.is_file())
+        packet = diagnostics[0].read_text(encoding="utf-8")
+        self.assertEqual(current.read_text(encoding="utf-8"), packet)
+        self.assertIn("review-only diagnostic isolation packet", packet)
+        self.assertIn("Band: section", packet)
+        self.assertIn("Reader symptom: the turn does not land", packet)
+        self.assertIn("Cause hypotheses", packet)
+        self.assertIn("one next experiment", packet)
+        self.assertIn("Source and register reminders", packet)
+        self.assertIn("not a rewrite", packet)
+        self.assertIn("No manuscript text was written", packet)
+        self.assertIn("drafts/candidate-draft.md", packet)
+        self.assertIn("The archive opened", packet)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_diagnose_defaults_to_candidate_draft_and_respects_focus(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "--language", "Portuguese"], ws)
+        self.assertEqual(rc, 0, out)
+        (ws / "drafts" / "candidate-draft.md").write_text(
+            "A casa lembra, mas a frase ainda foge.\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(
+            ["diagnose", "--focus", "why the sentence feels weightless"],
+            ws,
+        )
+        self.assertEqual(rc, 0, out)
+        packet = next((ws / ".review" / "diagnostics").glob("*.md")).read_text(encoding="utf-8")
+        self.assertIn("drafts/candidate-draft.md", packet)
+        self.assertIn("Focus: why the sentence feels weightless", packet)
+        self.assertIn("language: Portuguese", packet)
+        self.assertIn("A casa lembra", packet)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_diagnose_refuses_missing_unit_or_bad_band_without_side_effects(self):
+        ws = self.ws()
+        rc, out = run_tyf(["diagnose", "work", "--unit", "drafts/missing.md"], ws)
+        self.assertNotEqual(rc, 0, "diagnose should not invent a missing passage")
+        self.assertRegex(out.lower(), r"diagnos|unit|missing")
+        self.assertFalse((ws / ".review" / "diagnostics").exists())
+        self.assertFalse((ws / ".review" / "current-diagnosis.md").exists())
+
+        rc, out = run_tyf(["diagnose", "work", "--band", "whole vibes"], ws)
+        self.assertNotEqual(rc, 0, "diagnose should keep the band explicit and bounded")
+        self.assertRegex(out.lower(), r"band|argument|architecture|section|paragraph|sentence|glyph")
+        self.assertFalse((ws / ".review" / "diagnostics").exists())
+        self.assertFalse((ws / ".review" / "current-diagnosis.md").exists())
+
     def test_capture_requires_existing_work(self):
         ws = self.ws()
         rc, out = run_tyf(

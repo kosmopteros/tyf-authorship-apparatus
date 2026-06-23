@@ -20,6 +20,7 @@ Commands:
   tyf attend [work-id]                    write a source-grounded gentle attention packet
   tyf feedback [work-id]                  preserve external critique and write triage
   tyf session [work-id]                   write a review-only writing session packet
+  tyf diagnose [work-id]                  write a review-only diagnostic isolation packet
   tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
@@ -51,7 +52,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, import, capture,
-  structure, attend, feedback, session, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
+  structure, attend, feedback, session, diagnose, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -1109,6 +1110,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id>` and use `.review/gentle-attention.md` as hidden amanuensis guidance, then pass relevant ids to `tyf propose --source-ref <id>`.
+- If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
 - If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
@@ -2435,6 +2437,132 @@ Stop when the time box ends, when one candidate passage exists, or when the next
     log_event(".", "session", f"{work_id}/{session_id}", current_path)
     print(f"Session packet: {packet_path.replace(os.sep, '/')}")
     print(f"Current session: {current_path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+
+
+_DIAGNOSTIC_BANDS = ("argument", "architecture", "section", "paragraph", "sentence", "glyph")
+
+
+def _diagnostic_unit_path(work_id, unit):
+    rel = _one_line(unit, os.path.join("drafts", "candidate-draft.md"))
+    norm = rel.replace("\\", "/")
+    if os.path.isabs(rel) or norm.startswith("../") or "/../" in norm or norm in (".", ".."):
+        sys.exit(f"Refused: diagnostic unit must be a relative workspace path: {rel}")
+    allowed = ("drafts/", "manuscript/")
+    if not any(norm == prefix[:-1] or norm.startswith(prefix) for prefix in allowed):
+        sys.exit("Refused: diagnostic unit must live under drafts/ or manuscript/ for read-only diagnosis.")
+    path = _work_path(work_id, *norm.split("/"))
+    _reject_symlink_components(path, "diagnostic unit")
+    root = os.path.realpath(_work_base(work_id))
+    if not _within(root, path):
+        sys.exit("Refused: diagnostic unit resolves outside the work.")
+    if not os.path.isfile(path):
+        sys.exit(f"Refused: missing diagnostic unit: {norm}")
+    return norm, path
+
+
+def _diagnostic_excerpt(text, limit=12):
+    lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return "> (empty unit)"
+    return "\n".join(f"> {line}" for line in lines[:limit])
+
+
+def _diagnostic_cause_lines(band, text, symptom, focus):
+    low = text.lower()
+    causes = []
+    if "[author:" in low:
+        causes.append("- visible author gap may be interrupting the reader's trust or forward motion")
+    if any(token in low for token in ("because", "therefore", "so ", "since")):
+        causes.append("- causal signal is present; check whether the passage earned it before the turn")
+    else:
+        causes.append("- causal bridge may be missing or implicit")
+    if any(token in low for token in ("this", "that", "it", "they")):
+        causes.append("- pronoun or referent chain may need a closer look")
+    if band in ("section", "architecture", "argument"):
+        causes.append("- promise, turn, and payoff may be sitting at different bands")
+    if band in ("paragraph", "sentence", "glyph"):
+        causes.append("- local cadence or register may be carrying more weight than the structure can support")
+    if symptom and "confus" in symptom.lower():
+        causes.append("- reader confusion may be a missing setup, not a sentence-level defect")
+    if focus:
+        causes.append(f"- focus to test: {focus}")
+    return "\n".join(dict.fromkeys(causes))
+
+
+def cmd_diagnose(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work or _active_work_id() or ROOT_WORK_ID)
+    _confine_work(work_id)
+    _require_work(work_id)
+    band = _one_line(args.band, "section").lower()
+    if band not in _DIAGNOSTIC_BANDS:
+        sys.exit("Refused: diagnostic band must be one of argument, architecture, section, paragraph, sentence, glyph.")
+    unit_rel, unit_path = _diagnostic_unit_path(work_id, args.unit)
+    try:
+        text = _read(unit_path)
+    except UnicodeDecodeError:
+        sys.exit("Refused: diagnostic unit is not UTF-8 text.")
+    if not text.strip():
+        sys.exit("Refused: diagnostic unit is empty; there is not enough text to diagnose.")
+
+    wy = read_state(_work_path(work_id, "work.yaml"))
+    language = get(wy, "language") or "undetermined"
+    status = get(wy, "status") or "unknown"
+    title = get(wy, "title") or "unknown"
+    symptom = _one_line(getattr(args, "symptom", None), "the passage does not yet land as intended")
+    focus = _one_line(getattr(args, "focus", None), "isolate the smallest cause before proposing edits")
+    diag_id = _record_id("diag", work_id, unit_rel, band, symptom, focus, hashlib.sha256(text.encode("utf-8")).hexdigest())
+    diag_dir = _work_path(work_id, ".review", "diagnostics")
+    _ensure_real_dir(diag_dir, ".review/diagnostics/")
+    packet_path = os.path.join(diag_dir, f"{diag_id}.md")
+    current_path = _work_path(work_id, ".review", "current-diagnosis.md")
+
+    source_refs = _latest_review_paths(work_id, os.path.join(".review", "feedback"), limit=2)
+    review_context = "\n".join(f"- {path.replace(os.sep, '/')}" for path in source_refs) if source_refs else "- no active external reader packet found"
+    causes = _diagnostic_cause_lines(band, text, symptom, focus)
+    packet = f"""# TYF diagnostic isolation: {diag_id}
+
+This is a review-only diagnostic isolation packet. It helps the amanuensis find the smallest likely reason a passage fails to land.
+
+No manuscript text was written. This is not a rewrite, not a verdict on the author's judgment, and not acceptance into manuscript/.
+
+## Work
+
+- work: {work_id}
+- title: {title}
+- language: {language}
+- status: {status}
+- unit: {unit_rel}
+- Band: {band}
+- Reader symptom: {symptom}
+- Focus: {focus}
+
+## Source and register reminders
+
+- Read the relevant source fragments, style sheet, and voice/register notes before proposing changes.
+- If source support is missing, mark `[AUTHOR: needed - what]`; do not invent support to make the passage land.
+- Keep taste separate from defect. The author owns taste.
+- Related review context:
+{review_context}
+
+## Cause hypotheses
+
+{causes}
+
+## one next experiment
+
+Make one candidate experiment in `drafts/`, or ask one gentle question if the smallest cause is missing author knowledge. Do not edit `manuscript/` from this packet.
+
+## Passage excerpt
+
+{_diagnostic_excerpt(text)}
+"""
+    atomic_write(packet_path, packet)
+    atomic_write(current_path, packet)
+    log_event(".", "diagnose", f"{work_id}/{diag_id}", current_path)
+    print(f"Diagnostic packet: {packet_path.replace(os.sep, '/')}")
+    print(f"Current diagnosis: {current_path.replace(os.sep, '/')}")
     print("No manuscript text was written.")
 
 
@@ -4299,7 +4427,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "character",
+        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "character",
         "consult-character", "open", "mark-ready",
         "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
@@ -4370,6 +4498,13 @@ def main():
     s.add_argument("--focus", default=None, help="optional focus for this writing session")
     s.add_argument("--minutes", type=int, default=None, help="optional positive time box for this sitting")
     s.set_defaults(fn=cmd_session)
+    s = sub.add_parser("diagnose", help="write a review-only diagnostic isolation packet")
+    s.add_argument("work", nargs="?", default=None)
+    s.add_argument("--unit", default=None, help="drafts/ or manuscript/ text unit to diagnose; defaults to drafts/candidate-draft.md")
+    s.add_argument("--band", default="section", help="argument, architecture, section, paragraph, sentence, or glyph")
+    s.add_argument("--symptom", default=None, help="observed reader symptom, such as the turn does not land")
+    s.add_argument("--focus", default=None, help="optional craft focus for the isolation pass")
+    s.set_defaults(fn=cmd_diagnose)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")
     s.add_argument("--knowledge", default=None)
@@ -4454,7 +4589,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

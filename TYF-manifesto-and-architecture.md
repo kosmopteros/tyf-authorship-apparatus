@@ -231,7 +231,7 @@ overrides:
 
 **Apparatus memory is separate from the work.** Everything above is the author's, in plain text. Machine bookkeeping lives under `.tyf/`: `.tyf/events.jsonl` is the human-readable hash-chained journal of apparatus actions, while `.tyf/ledger.db` (stdlib SQLite, no third-party dependency) is the derived content-addressed notice index for statuses, dismissals, and real timestamps. The notice index is rebuildable by re-scanning content and mirrorable to Markdown with `tyf reconcile --export`. See `docs/ATTENTIVENESS.md` and `docs/WORKSPACE_CONTRACT.md`.
 
-**The `tyf` helper** performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
+**The `tyf` helper** performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
 
 ## 10. Portability: one skill, many runtimes
 
@@ -286,7 +286,7 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 1. **Testing.** The helper suite and hidden development behaviours now cover the runtime contract, and the pressure scenarios have had an initial run. The remaining testing gap is realistic harness evaluation across Codex, Claude Cowork, Gemini, macOS, Linux, Windows, and longer author sessions.
 2. **Register inheritance semantics.** When a work overrides a workspace-level register, how does the override compose with the base: replace, merge, layer, or per-rule? `manifest.yaml` currently defaults to layer.
 3. **Promoting the knowledge-band disciplines.** Thesis interrogation, the argument spine, and the claims index are embedded in three skills; promoting them to their own cells remains later roadmap work.
-4. **Missing disciplines vs the reference.** No debugging/isolation skill yet. The continuing-work and receiving-critique disciplines now exist, but need real long-form author, editor, and beta-reader use before they can be called mature.
+4. **Usage maturity vs the reference.** Diagnostic isolation, continuing-work, and receiving-critique now exist as command-backed packets, but need real long-form author, editor, and beta-reader use before they can be called mature.
 5. **Distribution.** No update path for an installed pack; superpowers' plugin-shim-plus-skills-repo split is the model to study.
 6. **Token budget.** A full multi-band parallel review is roughly 15x a single chat. TYF runs sequential by default; parallelism is opt-in.
 

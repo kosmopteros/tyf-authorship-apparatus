@@ -515,6 +515,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py continuing-work"
     Then Exit code is 0
 
+  @covers:tyf-diagnostic-isolation-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: diagnostic isolation writes a review-only packet
+    When Run "python tests/test_tyf.py CLIBehaviour.test_diagnose_writes_review_only_isolation_packet -v"
+    Then Exit code is 0
+
+  @covers:tyf-diagnostic-isolation-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: diagnostic isolation defaults to the candidate draft
+    When Run "python tests/test_tyf.py CLIBehaviour.test_diagnose_defaults_to_candidate_draft_and_respects_focus -v"
+    Then Exit code is 0
+
+  @covers:tyf-diagnostic-isolation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: diagnostic isolation refuses missing unit and loose band without side effects
+    When Run "python tests/test_tyf.py CLIBehaviour.test_diagnose_refuses_missing_unit_or_bad_band_without_side_effects -v"
+    Then Exit code is 0
+
+  @covers:tyf-diagnostic-isolation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/diagnosing-text/SKILL.md @bind-file:skills/using-tyf/SKILL.md @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/COMPARISON_SUPERPOWERS.md @tool-check:cli
+  Scenario: diagnostic isolation structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py diagnostic-isolation"
+    Then Exit code is 0
+
   @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
   Scenario: character consultation stays contained as hidden amanuensis machinery
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained CLIBehaviour.test_character_consultation_refuses_missing_dossier CLIBehaviour.test_character_dossier_supports_non_latin_names -v"

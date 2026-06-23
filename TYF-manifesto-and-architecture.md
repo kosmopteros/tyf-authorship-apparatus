@@ -67,7 +67,7 @@ The design is a synthesis. Lineage matters for an open-source project, both for 
 | Zotero / Scite via MCP; claims index | 54yyyu/zotero-mcp; Scite MCP | **Keep** for citation discipline. |
 | Parallel specialist reviewers, each with clean context | hamy.xyz code-review setup | **Keep as a pattern** for capable harnesses; TYF runs sequential by default. |
 | Multi-agent token cost (~15x a single chat) | Anthropic multi-agent engineering post | **Keep as a constraint**, surfaced in budgeting. |
-| Hooks, context management, self-extension as a personal-infrastructure harness; "code over prompts" | PAI (danielmiessler/PAI) and similar | **Keep at the pattern level.** Becomes the iterative-phase architecture and the deterministic-first stance of the `tyf` helper. |
+| Hooks, context management, self-extension as a portable deterministic harness; "code over prompts" | personal-infrastructure and agent-harness patterns | **Keep at the pattern level.** Becomes the iterative-phase architecture and the deterministic-first stance of the `tyf` helper. |
 | "Fully autonomous, prompt in / book out" | forsonny/Claude-Code-Novel-Writer; KDP "publishing assistants" | **Reject.** The anti-pattern TYF exists to refuse. |
 
 ## 4. Four engines, one workspace
@@ -245,7 +245,7 @@ A runtime is a place TYF runs, never part of its doctrine. The core is the skill
 
 ## 11. The iteration harness: hooks, context, attentiveness
 
-After intake scaffolds a workspace and a work, what follows is iterative, not a pipeline. Drafting, revising, restructuring, walking away, returning, changing one's mind about chapter three. TYF handles this phase with a harness, taken at the pattern level from PAI-style infrastructure and its "code over prompts" discipline.
+After intake scaffolds a workspace and a work, what follows is iterative, not a pipeline. Drafting, revising, restructuring, walking away, returning, changing one's mind about chapter three. TYF handles this phase with a portable harness, taken at the pattern level from deterministic agent infrastructure and its "code over prompts" discipline.
 
 - **Contextual hooks.** Events trigger small, named, inspectable actions. Saving a chapter fires an AI-tell scan and a register-fence check. Opening a chapter loads only the relevant registers, the claims touching this chapter, the running style sheet, and the latest `.review/`. Marking a unit ready fires the adversarial audit. Hooks are declared in `manifest.yaml`, readable and disableable.
 - **Efficient context.** A workspace does not fit in one context window. The harness loads only what the active band, pass, and work need. Progressive disclosure is the default; the author can override.
@@ -269,7 +269,7 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 
 ## 13. Scope, resolved questions, and what remains
 
-**The current pack ships 16 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
+**The current pack ships 17 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `receiving-critique`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
 
 **Resolved decisions** (were open questions in the original design):
 
@@ -283,10 +283,10 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 
 **Genuine open questions and known gaps** (see `docs/COMPARISON_SUPERPOWERS.md` for the benchmark against the reference pack):
 
-1. **Testing.** The helper suite and SOLO behaviours now cover the runtime contract, and the pressure scenarios have had an initial run. The remaining testing gap is realistic harness evaluation across Codex, Claude Cowork, Gemini, macOS, Linux, Windows, and longer author sessions.
+1. **Testing.** The helper suite and hidden development behaviours now cover the runtime contract, and the pressure scenarios have had an initial run. The remaining testing gap is realistic harness evaluation across Codex, Claude Cowork, Gemini, macOS, Linux, Windows, and longer author sessions.
 2. **Register inheritance semantics.** When a work overrides a workspace-level register, how does the override compose with the base: replace, merge, layer, or per-rule? `manifest.yaml` currently defaults to layer.
 3. **Promoting the knowledge-band disciplines.** Thesis interrogation, the argument spine, and the claims index are embedded in three skills; promoting them to their own cells remains later roadmap work.
-4. **Missing disciplines vs the reference.** No execution-to-completion skill, no debugging/isolation skill, no receiving-critique skill. The last is the most TYF-native and highest-value to add next.
+4. **Missing disciplines vs the reference.** No execution-to-completion skill and no debugging/isolation skill. The receiving-critique discipline now exists, but needs real author, editor, and beta-reader use before it can be called mature.
 5. **Distribution.** No update path for an installed pack; superpowers' plugin-shim-plus-skills-repo split is the model to study.
 6. **Token budget.** A full multi-band parallel review is roughly 15x a single chat. TYF runs sequential by default; parallelism is opt-in.
 

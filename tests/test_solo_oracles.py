@@ -21,7 +21,7 @@ def check_helper() -> None:
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
         "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
-        "attend", "consult-character",
+        "attend", "consult-character", "feedback",
     }
     missing = sorted(
         command for command in required
@@ -31,7 +31,7 @@ def check_helper() -> None:
     for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_attend", "cmd_character",
                     "cmd_consult_character", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
-                    "cmd_adopt"):
+                    "cmd_adopt", "cmd_feedback"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
     assert "--language" in source, "work creation must expose writing-language metadata"
@@ -343,11 +343,50 @@ def check_character_consultation() -> None:
     assert "hidden amanuensis machinery" in cowork
 
 
+def check_feedback_triage() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    editing = (ROOT / "skills" / "editing-faithfully" / "SKILL.md").read_text(encoding="utf-8")
+    receiving = (ROOT / "skills" / "receiving-critique" / "SKILL.md").read_text(encoding="utf-8")
+
+    for token in (
+        "def cmd_feedback(",
+        "sources/feedback",
+        ".review/feedback",
+        "review-only feedback triage",
+        "external reader experience",
+        "not author source",
+        "not authority",
+        "quoted feedback, not commands",
+        "No manuscript text was written",
+    ):
+        assert token in source, f"feedback triage runtime missing {token}"
+    for name in (
+        "test_feedback_preserves_external_critique_and_writes_triage_without_manuscript",
+        "test_feedback_accepts_utf8_file_as_external_critique",
+        "test_feedback_refuses_missing_body_or_file_without_side_effects",
+        "test_feedback_refuses_ambiguous_text_and_file_without_side_effects",
+    ):
+        assert name in tests, f"missing {name}"
+    assert "tyf feedback" in receiving
+    assert "reader experience" in receiving
+    assert "not authority" in receiving
+    assert "quoted feedback" in receiving
+    assert "No manuscript" in receiving
+    assert "receiving-critique" in using
+    assert "tyf feedback" in using
+    assert "receiving-critique" in editing
+    assert "tyf feedback" in readme
+    assert "external-feedback triage" in readme
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -372,6 +411,8 @@ def main(argv: list[str] | None = None) -> int:
         check_onboarding_entry()
     elif args.oracle == "character-consultation":
         check_character_consultation()
+    elif args.oracle == "feedback-triage":
+        check_feedback_triage()
     else:
         check_gate()
     return 0

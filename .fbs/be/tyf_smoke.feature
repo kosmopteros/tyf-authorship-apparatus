@@ -470,6 +470,31 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_attend_refuses_tampered_source_fragment_without_packet -v"
     Then Exit code is 0
 
+  @covers:tyf-feedback-triage-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:skills/receiving-critique/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  Scenario: feedback triage preserves external critique without manuscript writes
+    When Run "python tests/test_tyf.py CLIBehaviour.test_feedback_preserves_external_critique_and_writes_triage_without_manuscript -v"
+    Then Exit code is 0
+
+  @covers:tyf-feedback-triage-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: feedback triage accepts UTF-8 feedback files
+    When Run "python tests/test_tyf.py CLIBehaviour.test_feedback_accepts_utf8_file_as_external_critique -v"
+    Then Exit code is 0
+
+  @covers:tyf-feedback-triage-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: feedback triage refuses missing bodies or files
+    When Run "python tests/test_tyf.py CLIBehaviour.test_feedback_refuses_missing_body_or_file_without_side_effects -v"
+    Then Exit code is 0
+
+  @covers:tyf-feedback-triage-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: feedback triage refuses ambiguous body sources
+    When Run "python tests/test_tyf.py CLIBehaviour.test_feedback_refuses_ambiguous_text_and_file_without_side_effects -v"
+    Then Exit code is 0
+
+  @covers:tyf-feedback-triage-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/receiving-critique/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  Scenario: feedback triage structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py feedback-triage"
+    Then Exit code is 0
+
   @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
   Scenario: character consultation stays contained as hidden amanuensis machinery
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained CLIBehaviour.test_character_consultation_refuses_missing_dossier CLIBehaviour.test_character_dossier_supports_non_latin_names -v"

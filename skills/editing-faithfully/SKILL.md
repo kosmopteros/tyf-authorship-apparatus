@@ -14,6 +14,10 @@ The editor has two stances, and they are separate by design.
 
 The default stance is Propose. Crossing into Revise requires `controlling-manuscript-writes`.
 
+If the input is someone else's feedback rather than the author's own edit request,
+load `receiving-critique` first. Critique is reader experience to triage before it
+becomes an editorial proposal.
+
 ## The disciplined move
 
 **Read the register first.** Edits preserve the author's voice and register. Identify the register from the voice registers before proposing anything. Preserve productive strangeness; do not standardize toward generic polish.

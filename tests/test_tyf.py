@@ -57,6 +57,24 @@ def archive_treeish():
     return "HEAD"
 
 
+def bash_path(path):
+    fallback = str(path)
+    m = re.match(r"^([A-Za-z]):[\\/](.*)$", fallback)
+    if m:
+        fallback = f"/mnt/{m.group(1).lower()}/{m.group(2).replace(os.sep, '/')}"
+    p = subprocess.run(
+        ["bash", "-lc",
+         "command -v cygpath >/dev/null && cygpath -u \"$1\" || printf '%s' \"$2\"",
+         "_", str(path), fallback],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    return (p.stdout or fallback).strip()
+
+
+def shell_quote(value):
+    return "'" + value.replace("'", "'\"'\"'") + "'"
+
+
 def event_record_hash(record):
     payload = {k: record[k] for k in sorted(record) if k != "hash"}
     data = json.dumps(payload, ensure_ascii=False, sort_keys=True,
@@ -2283,21 +2301,6 @@ class Installer(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("bash"), "bash not available")
     def test_release_archive_installs_from_exported_tree_with_bash(self):
-        def bash_path(path):
-            fallback = str(path)
-            m = re.match(r"^([A-Za-z]):[\\/](.*)$", fallback)
-            if m:
-                fallback = f"/mnt/{m.group(1).lower()}/{m.group(2).replace(os.sep, '/')}"
-            p = subprocess.run(
-                ["bash", "-lc", "command -v cygpath >/dev/null && cygpath -u \"$1\" || printf '%s' \"$2\"",
-                 "_", str(path), fallback],
-                capture_output=True, text=True, encoding="utf-8", errors="replace",
-            )
-            return (p.stdout or fallback).strip()
-
-        def shell_quote(value):
-            return "'" + value.replace("'", "'\"'\"'") + "'"
-
         tmp = Path(tempfile.mkdtemp(prefix="tyf-release-install-"))
         try:
             archive = tmp / "tyf.zip"
@@ -2338,6 +2341,96 @@ class Installer(unittest.TestCase):
                 errors="replace", env=ENV,
             )
             self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    @unittest.skipUnless(shutil.which("bash"), "bash not available")
+    def test_exported_codex_install_starts_fresh_book_workspace(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-author-start-"))
+        try:
+            archive = tmp / "tyf.zip"
+            exported = tmp / "exported"
+            exported.mkdir()
+            p = subprocess.run(
+                ["git", "archive", "--worktree-attributes", "--format=zip",
+                 "-o", str(archive), archive_treeish()],
+                cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            with zipfile.ZipFile(archive) as zf:
+                zf.extractall(exported)
+
+            skills_dir = tmp / "codex-skills"
+            bin_dir = tmp / "bin"
+            install_cmd = (
+                f"BIN_DIR={shell_quote(bash_path(bin_dir))} "
+                f"bash scripts/install.sh {shell_quote(bash_path(skills_dir))}"
+            )
+            p = subprocess.run(
+                ["bash", "-lc", install_cmd],
+                cwd=str(exported), capture_output=True, text=True,
+                encoding="utf-8", errors="replace", env=ENV,
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertTrue((skills_dir / "using-tyf" / "SKILL.md").is_file())
+            self.assertTrue(os.path.lexists(bin_dir / "tyf"))
+
+            book = tmp / "new-book"
+            book.mkdir()
+            arrival = tmp / "arrival-chat.txt"
+            arrival.write_text(
+                "Claim: The family archive begins with a silence.\n"
+                "Question: What does Mark refuse to explain?\n",
+                encoding="utf-8",
+            )
+            helper = shell_quote(bash_path(bin_dir / "tyf"))
+            init_cmd = f"cd {shell_quote(bash_path(book))} && TYF_NO_DOC_HOOK=1 {helper} init"
+            p = subprocess.run(
+                ["bash", "-lc", init_cmd],
+                cwd=str(tmp), capture_output=True, text=True, encoding="utf-8",
+                errors="replace", env=ENV,
+            )
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertIn("Founded workspace", p.stdout + p.stderr)
+            context = (book / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("tyf start", context)
+            self.assertIn("single work", context.lower())
+            self.assertNotIn("SOLO Reflex", context)
+            self.assertNotIn("using-solo", context)
+
+            start_cmd = (
+                f"cd {shell_quote(bash_path(book))} && TYF_NO_DOC_HOOK=1 {helper} "
+                f"start {shell_quote(bash_path(arrival))} --kind chat "
+                f"--title {shell_quote('The Kin')} --language English"
+            )
+            p = subprocess.run(
+                ["bash", "-lc", start_cmd],
+                cwd=str(tmp), capture_output=True, text=True, encoding="utf-8",
+                errors="replace", env=ENV,
+            )
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            self.assertIn("Writing runway opened", out)
+            self.assertIn("Preserved arrival", out)
+            self.assertIn("No manuscript text was written", out)
+
+            work_yaml = (book / "work.yaml").read_text(encoding="utf-8")
+            self.assertIn('title: "The Kin"', work_yaml)
+            self.assertIn('language: "English"', work_yaml)
+            self.assertTrue((book / ".review" / "writing-runway.md").is_file())
+            self.assertTrue((book / "drafts" / "candidate-draft.md").is_file())
+            self.assertTrue((book / "sources" / "interviews" / "work-first-session.md").is_file())
+            self.assertEqual(list((book / "manuscript").iterdir()), [])
+
+            orientations = list((book / "sources" / "imports").glob("*orientation.md"))
+            self.assertEqual(len(orientations), 1)
+            orientation = orientations[0].read_text(encoding="utf-8")
+            self.assertIn("tyf structure work --source-ref", orientation)
+            self.assertTrue((book / "sources" / "fragments.jsonl").is_file())
+            runway = (book / ".review" / "writing-runway.md").read_text(encoding="utf-8")
+            self.assertIn("Arrival orientation", runway)
+            self.assertIn("drafts/candidate-draft.md", runway)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

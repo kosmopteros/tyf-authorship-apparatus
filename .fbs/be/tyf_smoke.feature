@@ -515,6 +515,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py codex-skill"
     Then Exit code is 0
 
+  @covers:tyf-codex-skill-book-repo @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:docs/START_HERE.md @tool-check:cli
+  Scenario: exported Codex install opens a fresh book workspace
+    When Run "python tests/test_tyf.py Installer.test_exported_codex_install_starts_fresh_book_workspace -v"
+    Then Exit code is 0
+
   @covers:tyf-codex-skill-book-repo @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: Codex skill doc honesty catches stale install and title routing
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_stale_writing_runway_routing Installer.test_codex_install_targets_current_skill_root -v"

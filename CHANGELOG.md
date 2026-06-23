@@ -11,7 +11,7 @@ Release label: "Single Book Folder".
 - Added inspectable Markdown audit notes beside audit JSON records, active-work status output in `tyf status`, and manifest-version drift detection in `tyf check`; aligned the nested Claude plugin manifest with the active release version.
 - Updated `tyf.portable.json` to `format_version: "0.5.0"` with `single_work: true` and root-level canonical text state.
 - Aligned public onboarding, generated context files, Codex/Claude/Gemini repo contexts, and workspace skills around the single-work beta surface.
-- Expanded the helper smoke suite to 144 tests, including exported release-tree check/install smoke coverage, and SOLO Be coverage to 106 scenarios with 106/106 direct RED proof.
+- Expanded the helper smoke suite to 145 tests, including exported release-tree check/install smoke coverage and a fresh exported Codex install opening a separate book workspace from an arrival scaffold; SOLO Be coverage is now 107 scenarios with 107/107 direct RED proof.
 
 ## 0.4.1
 

@@ -2011,9 +2011,15 @@ class Installer(unittest.TestCase):
             target = tmp / "codex-home" / "skills"
             self.assertTrue((target / "using-tyf" / "SKILL.md").is_file(), out)
             self.assertTrue((target / "composing-as-amanuensis" / "SKILL.md").is_file(), out)
-            helper = tmp / "bin" / "tyf.cmd"
-            self.assertTrue(helper.is_file(), out)
-            p2 = subprocess.run([str(helper), "check"], cwd=str(REPO),
+            helper_cmd = tmp / "bin" / "tyf.cmd"
+            helper_ps1 = tmp / "bin" / "tyf.ps1"
+            self.assertTrue(helper_cmd.is_file(), out)
+            self.assertTrue(helper_ps1.is_file(), out)
+            if os.name == "nt":
+                helper_run = [str(helper_cmd), "check"]
+            else:
+                helper_run = [ps, "-NoProfile", "-File", str(helper_ps1), "check"]
+            p2 = subprocess.run(helper_run, cwd=str(REPO),
                                 capture_output=True, text=True, env=ENV)
             out2 = p2.stdout + p2.stderr
             self.assertEqual(p2.returncode, 0, out2)

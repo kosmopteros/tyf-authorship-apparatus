@@ -2,7 +2,7 @@
 
 > **Tested target vs portability targets.** The canonical, tested target for v1 is Cowork (and the same skills via manual drop-in on Claude Code). The other harness manifests in this repo are portability *targets*: the skills themselves are plain `SKILL.md` and run without change, but each harness's plugin or extension manifest schema must be validated against that harness's current plugin documentation before you publish there. Treat anything beyond Cowork plus manual skills as unverified until you run it.
 
-TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same seventeen skills plus a context file under the filename that harness expects. The pack-root context files are contributor context for this development repository; author workspaces should use the generated context from `tyf init` or the clean templates in `author-context/`.
+TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same eighteen skills plus a context file under the filename that harness expects. The pack-root context files are contributor context for this development repository; author workspaces should use the generated context from `tyf init` or the clean templates in `author-context/`.
 
 ## Portable Workspace Format
 
@@ -96,4 +96,4 @@ Plugin and extension manifest schemas evolve per harness. The install commands a
 
 ## Verify the install
 
-Ask the agent to list its TYF skills. It should return all seventeen and route any authorship request through `using-tyf` first. If it drafts finished prose from a vague prompt without checking the skills, the context file did not load; re-place it and restart the session.
+Ask the agent to list its TYF skills. It should return all eighteen and route any authorship request through `using-tyf` first. If it drafts finished prose from a vague prompt without checking the skills, the context file did not load; re-place it and restart the session.

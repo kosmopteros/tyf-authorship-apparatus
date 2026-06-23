@@ -269,7 +269,7 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 
 ## 13. Scope, resolved questions, and what remains
 
-**The current pack ships 17 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `receiving-critique`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
+**The current pack ships 18 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `continuing-the-work`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `receiving-critique`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
 
 **Resolved decisions** (were open questions in the original design):
 
@@ -286,7 +286,7 @@ The redactor has three jobs: it occupies the lower zoom bands directly; it is th
 1. **Testing.** The helper suite and hidden development behaviours now cover the runtime contract, and the pressure scenarios have had an initial run. The remaining testing gap is realistic harness evaluation across Codex, Claude Cowork, Gemini, macOS, Linux, Windows, and longer author sessions.
 2. **Register inheritance semantics.** When a work overrides a workspace-level register, how does the override compose with the base: replace, merge, layer, or per-rule? `manifest.yaml` currently defaults to layer.
 3. **Promoting the knowledge-band disciplines.** Thesis interrogation, the argument spine, and the claims index are embedded in three skills; promoting them to their own cells remains later roadmap work.
-4. **Missing disciplines vs the reference.** No execution-to-completion skill and no debugging/isolation skill. The receiving-critique discipline now exists, but needs real author, editor, and beta-reader use before it can be called mature.
+4. **Missing disciplines vs the reference.** No debugging/isolation skill yet. The continuing-work and receiving-critique disciplines now exist, but need real long-form author, editor, and beta-reader use before they can be called mature.
 5. **Distribution.** No update path for an installed pack; superpowers' plugin-shim-plus-skills-repo split is the model to study.
 6. **Token budget.** A full multi-band parallel review is roughly 15x a single chat. TYF runs sequential by default; parallelism is opt-in.
 

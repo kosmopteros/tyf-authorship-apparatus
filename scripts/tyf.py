@@ -19,6 +19,7 @@ Commands:
                                           append author source/voice/claim/question notes
   tyf attend [work-id]                    write a source-grounded gentle attention packet
   tyf feedback [work-id]                  preserve external critique and write triage
+  tyf session [work-id]                   write a review-only writing session packet
   tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
@@ -50,7 +51,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, import, capture,
-  structure, attend, feedback, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
+  structure, attend, feedback, session, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -2344,6 +2345,99 @@ No manuscript text was written.
     print("No manuscript text was written.")
 
 
+def _latest_review_paths(work_id, rel_dir, limit=3):
+    base = _work_path(work_id, rel_dir)
+    if not os.path.isdir(base):
+        return []
+    found = []
+    for name in sorted(os.listdir(base)):
+        path = os.path.join(base, name)
+        if os.path.isfile(path):
+            found.append(path)
+    return found[-limit:]
+
+
+def _session_context_lines(work_id):
+    lines = []
+    first_session = _work_path(work_id, "sources", "interviews", f"{work_id}-first-session.md")
+    if os.path.isfile(first_session):
+        lines.append(f"- first-session evidence: {first_session.replace(os.sep, '/')}")
+    draft = _work_path(work_id, "drafts", "candidate-draft.md")
+    if os.path.isfile(draft):
+        lines.append(f"- draft runway: {draft.replace(os.sep, '/')}")
+    attention = _work_path(work_id, ".review", "gentle-attention.md")
+    if os.path.isfile(attention):
+        lines.append(f"- gentle attention: {attention.replace(os.sep, '/')}")
+    feedback = _latest_review_paths(work_id, os.path.join(".review", "feedback"))
+    if feedback:
+        lines.append("- Review context:")
+        for path in feedback:
+            lines.append(f"  - {path.replace(os.sep, '/')}")
+    proposals = _latest_review_paths(work_id, os.path.join(".review", "proposals"), limit=1)
+    if proposals:
+        lines.append("- latest proposal awaiting review/audit/decision:")
+        for path in proposals:
+            lines.append(f"  - {path.replace(os.sep, '/')}")
+    return lines or ["- no prior packets found; start from the writing runway or capture source first"]
+
+
+def cmd_session(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work or _active_work_id() or ROOT_WORK_ID)
+    _confine_work(work_id)
+    _require_work(work_id)
+    minutes = getattr(args, "minutes", None)
+    if minutes is not None and (minutes < 1 or minutes > 600):
+        sys.exit("Refused: session minutes must be a positive number between 1 and 600.")
+
+    wy = read_state(_work_path(work_id, "work.yaml"))
+    title = get(wy, "title") or "unknown"
+    language = get(wy, "language") or "undetermined"
+    status = get(wy, "status") or "unknown"
+    focus = _one_line(getattr(args, "focus", None), "continue the work from the freshest live packet")
+    time_box = f"{minutes} minutes" if minutes else "one humane sitting"
+    session_id = _record_id("ses", work_id, focus)
+    session_dir = _work_path(work_id, ".review", "sessions")
+    _ensure_real_dir(session_dir, ".review/sessions/")
+    packet_path = os.path.join(session_dir, f"{session_id}.md")
+    current_path = _work_path(work_id, ".review", "current-session.md")
+
+    context = "\n".join(_session_context_lines(work_id))
+    text = f"""# TYF writing session packet: {session_id}
+
+This is a review-only writing session packet. It helps the amanuensis sustain the work across sessions without turning continuity into pressure.
+
+No manuscript text was written. manuscript/ remains Gate-only.
+
+## Work
+
+- work: {work_id}
+- title: {title}
+- language: {language}
+- status: {status}
+- focus: {focus}
+- time box: {time_box}
+
+## Current context
+
+{context}
+
+## one small next move
+
+Open `drafts/candidate-draft.md` and make one candidate passage or one revision that serves the focus above. Keep gaps visible as `[AUTHOR: needed — what]`. If the available material is not enough, ask one gentle question before drafting.
+
+## Stop condition
+
+Stop when the time box ends, when one candidate passage exists, or when the next missing author decision becomes clear. Leave the draft in `drafts/`; use the Gate only after the author accepts material for `manuscript/`.
+"""
+    atomic_write(packet_path, text)
+    atomic_write(current_path, text)
+    log_event(".", "session", f"{work_id}/{session_id}", current_path)
+    print(f"Session packet: {packet_path.replace(os.sep, '/')}")
+    print(f"Current session: {current_path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+
+
 def cmd_capture(args):
     _require_workspace()
     work_id = _safe_work_id(args.work)
@@ -4205,7 +4299,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "character",
+        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "character",
         "consult-character", "open", "mark-ready",
         "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
@@ -4271,6 +4365,11 @@ def main():
     s.add_argument("--text", default=None, help="feedback text to preserve")
     s.add_argument("--file", default=None, help="UTF-8 text file containing feedback to preserve")
     s.set_defaults(fn=cmd_feedback)
+    s = sub.add_parser("session", help="write a review-only writing session packet")
+    s.add_argument("work", nargs="?", default=None)
+    s.add_argument("--focus", default=None, help="optional focus for this writing session")
+    s.add_argument("--minutes", type=int, default=None, help="optional positive time box for this sitting")
+    s.set_defaults(fn=cmd_session)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")
     s.add_argument("--knowledge", default=None)
@@ -4355,7 +4454,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

@@ -1573,6 +1573,63 @@ class CLIBehaviour(unittest.TestCase):
         self.assertFalse((ws / "sources" / "feedback").exists())
         self.assertFalse((ws / ".review" / "feedback").exists())
 
+    def test_session_writes_review_only_packet_with_one_next_move(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "--title", "Kin", "--language", "English"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["session", "work", "--focus", "open the first weather scene", "--minutes", "45"],
+            ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Session packet", out)
+        self.assertIn("No manuscript text was written", out)
+
+        sessions = list((ws / ".review" / "sessions").glob("*.md"))
+        self.assertEqual(len(sessions), 1)
+        current = ws / ".review" / "current-session.md"
+        self.assertTrue(current.is_file())
+        packet = sessions[0].read_text(encoding="utf-8")
+        self.assertEqual(current.read_text(encoding="utf-8"), packet)
+        self.assertIn("writing session packet", packet)
+        self.assertIn("one small next move", packet)
+        self.assertIn("Stop condition", packet)
+        self.assertIn("open the first weather scene", packet)
+        self.assertIn("45 minutes", packet)
+        self.assertIn("title: Kin", packet)
+        self.assertIn("language: English", packet)
+        self.assertIn("drafts/candidate-draft.md", packet)
+        self.assertIn("No manuscript text was written", packet)
+        self.assertIn("manuscript/ remains Gate-only", packet)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_session_defaults_to_active_work_and_surfaces_review_context(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["feedback", "work", "--from", "Beta reader",
+             "--text", "The opening made me want to know who was absent."],
+            ws)
+        self.assertEqual(rc, 0, out)
+        feedback_id = re.search(r"Feedback:\s+(\S+)", out).group(1)
+
+        rc, out = run_tyf(["session"], ws)
+        self.assertEqual(rc, 0, out)
+        packet = next((ws / ".review" / "sessions").glob("*.md")).read_text(encoding="utf-8")
+        self.assertIn("Review context", packet)
+        self.assertIn(".review/feedback", packet)
+        self.assertIn(feedback_id, packet)
+        self.assertIn("one small next move", packet)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_session_refuses_invalid_minutes_without_side_effects(self):
+        ws = self.ws()
+        rc, out = run_tyf(["session", "work", "--minutes", "0"], ws)
+        self.assertNotEqual(rc, 0, "session duration should be a positive number of minutes")
+        self.assertRegex(out.lower(), r"minutes|positive|session")
+        self.assertFalse((ws / ".review" / "sessions").exists())
+        self.assertFalse((ws / ".review" / "current-session.md").exists())
+
     def test_capture_requires_existing_work(self):
         ws = self.ws()
         rc, out = run_tyf(
@@ -2309,6 +2366,7 @@ class DocCheck(unittest.TestCase):
             "skills/using-tyf/SKILL.md",
             "skills/initializing-a-workspace/SKILL.md",
             "skills/working-the-workspace/SKILL.md",
+            "skills/continuing-the-work/SKILL.md",
             "skills/interviewing-the-author/SKILL.md",
             "skills/structuring-knowledge/SKILL.md",
             "skills/composing-as-amanuensis/SKILL.md",

@@ -495,6 +495,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_solo_oracles.py feedback-triage"
     Then Exit code is 0
 
+  @covers:tyf-continuing-work-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:skills/continuing-the-work/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  Scenario: continuing work writes a review-only session packet
+    When Run "python tests/test_tyf.py CLIBehaviour.test_session_writes_review_only_packet_with_one_next_move -v"
+    Then Exit code is 0
+
+  @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: continuing work carries active review context
+    When Run "python tests/test_tyf.py CLIBehaviour.test_session_defaults_to_active_work_and_surfaces_review_context -v"
+    Then Exit code is 0
+
+  @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: continuing work refuses invalid duration without side effects
+    When Run "python tests/test_tyf.py CLIBehaviour.test_session_refuses_invalid_minutes_without_side_effects -v"
+    Then Exit code is 0
+
+  @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/continuing-the-work/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  Scenario: continuing work structural oracle remains wired
+    When Run "python tests/test_solo_oracles.py continuing-work"
+    Then Exit code is 0
+
   @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
   Scenario: character consultation stays contained as hidden amanuensis machinery
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained CLIBehaviour.test_character_consultation_refuses_missing_dossier CLIBehaviour.test_character_dossier_supports_non_latin_names -v"

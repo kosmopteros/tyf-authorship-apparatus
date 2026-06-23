@@ -21,7 +21,7 @@ def check_helper() -> None:
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
         "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
-        "attend", "consult-character", "feedback",
+        "attend", "consult-character", "feedback", "session",
     }
     missing = sorted(
         command for command in required
@@ -31,7 +31,7 @@ def check_helper() -> None:
     for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_attend", "cmd_character",
                     "cmd_consult_character", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
-                    "cmd_adopt", "cmd_feedback"):
+                    "cmd_adopt", "cmd_feedback", "cmd_session"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
     assert "--language" in source, "work creation must expose writing-language metadata"
@@ -382,11 +382,44 @@ def check_feedback_triage() -> None:
     assert "external-feedback triage" in readme
 
 
+def check_continuing_work() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    continuing = (ROOT / "skills" / "continuing-the-work" / "SKILL.md").read_text(encoding="utf-8")
+
+    for token in (
+        "def cmd_session(",
+        ".review/sessions",
+        "current-session.md",
+        "writing session packet",
+        "one small next move",
+        "Stop condition",
+        "No manuscript text was written",
+        "manuscript/ remains Gate-only",
+    ):
+        assert token in source, f"continuing-work runtime missing {token}"
+    for name in (
+        "test_session_writes_review_only_packet_with_one_next_move",
+        "test_session_defaults_to_active_work_and_surfaces_review_context",
+        "test_session_refuses_invalid_minutes_without_side_effects",
+    ):
+        assert name in tests, f"missing {name}"
+    assert "tyf session" in continuing
+    assert "one small next move" in continuing
+    assert "Stop condition" in continuing
+    assert "No manuscript text" in continuing
+    assert "continuing-the-work" in using
+    assert "tyf session" in using
+    assert "continuing-the-work" in readme
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -413,6 +446,8 @@ def main(argv: list[str] | None = None) -> int:
         check_character_consultation()
     elif args.oracle == "feedback-triage":
         check_feedback_triage()
+    elif args.oracle == "continuing-work":
+        check_continuing_work()
     else:
         check_gate()
     return 0

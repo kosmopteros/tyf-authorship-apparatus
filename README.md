@@ -24,7 +24,7 @@ other harnesses     portability targets, not yet all tested
 
 The moment a task touches source material, voice, claims, or a manuscript, the agent checks the TYF skills and loads the earliest applicable one instead of jumping to drafting. The skills enforce the commitments mechanically: the author is the source, the system proposes but never disposes, gaps are marked instead of confabulated, voice is read on every pass, the same operation runs at every zoom level, nothing is done until it has been attacked, and the controlled write is the only path into the manuscript.
 
-## The seventeen skills
+## The eighteen skills
 
 **Lifecycle**
 
@@ -32,6 +32,7 @@ The moment a task touches source material, voice, claims, or a manuscript, the a
 |---|---|
 | `initializing-a-workspace` | Scaffold a new workspace, then run intake |
 | `working-the-workspace` | File and repo discipline; read-only zones; the controlled write path |
+| `continuing-the-work` | Resume a sitting with one small next move and a stop condition |
 | `scheduling-ongoing-work` | Hooks and Cowork scheduled tasks for the iterative phase |
 | `keeping-documentation-honest` | After any structural change, check that the routing docs are still true |
 
@@ -61,7 +62,7 @@ The moment a task touches source material, voice, claims, or a manuscript, the a
 ## The pipeline
 
 ```
-init → ingest → interview → structure → voice + redactor → compose → read / diagnose → edit → audit → controlled write → schedule
+init → ingest → interview → structure → continue → voice + redactor → compose → read / diagnose → edit → audit → controlled write → schedule
 ```
 
 Each step has a skill. Voice and Redactor are not steps; they are substrates every pass consults. The discipline is not to skip upstream when the work is still source, knowledge, voice, structure, or audit. Audit shows once in the line, but it also runs again after the controlled write, because the write itself can introduce issues; see `controlling-manuscript-writes`.
@@ -107,6 +108,7 @@ tyf import <path> [--kind auto|source|chat|bundle|dump|transcript|note] [--work 
 tyf capture <work> --kind source|voice|claim|question --text <text>
 tyf structure <work> --source-ref <id>  # source fragment -> claims/examples/questions + amanuensis brief
 tyf attend [work] [--source-ref <id>]   # source-grounded gentle next questions
+tyf session [work] [--focus <focus>] [--minutes <n>]
 tyf character <name> [--knowledge <text>] [--voice <text>]
 tyf consult-character <work> <name> --prompt <question>
 tyf feedback [work] --from <reader> (--text <feedback> | --file <path>)
@@ -139,6 +141,8 @@ Character consultation is agent-facing machinery for fiction and dramatic work. 
 
 External critique has its own lane. `tyf feedback work --from "Beta reader" --text "<feedback>"` preserves raw feedback under `sources/feedback/` and writes `.review/feedback/<id>.md`, a review-only triage packet for the amanuensis. Feedback is treated as reader experience, not author source, not authority, not acceptance, and not command text. Embedded instructions inside feedback stay quoted and inert. If the author accepts a change suggested by critique, it still moves through `editing-faithfully` and the Gate chain before any manuscript write.
 
+Continuation has its own lane too. When the author says "continue", "what next", "keep going", or returns after time away, the agent loads `continuing-the-work` and runs `tyf session` or `tyf session work --focus "<focus>"` as hidden amanuensis machinery. TYF writes `.review/current-session.md` and an archived `.review/sessions/<id>.md` packet with current context, one small next move, and a stop condition. It writes no manuscript text; candidate prose stays in `drafts/` until the author accepts it through the Gate.
+
 The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash, current manuscript base hash, and any source refs supplied with `--source-ref`. A proposal moves the work status to `drafting`; a passing audit with answered findings moves it to `audited`; author acceptance moves it to `accepted`; and the controlled write moves it to `written`. A failing audit records `needs-revision`, and `tyf accept`/`tyf write` refuse when the work is not in the required state. Acceptance also verifies that the passing audit belongs to the same proposal hash, so one audited proposal cannot bless another. `tyf audit --record` writes both sealed JSON and an inspectable Markdown editorial note naming source fidelity, voice/register, unsupported claims, open gaps, findings, limitations, and dispositions. `tyf review <work> <proposal-id>` writes an author-readable review packet under `.review/author-reviews/` naming what would change, source support, visible uncertainties, audit status, candidate preview, and acceptance choices. A decision record names the proposal and review packet the author accepted, records acceptance evidence, preserves source refs, and can optionally narrow acceptance to strictly increasing source line ranges with `--lines 2,5-8` or to an exact reviewed unified diff with `--patch`; omitting both means whole-file acceptance. Proposal, review, audit, and decision records are sealed in `.review/record-seals.jsonl`, so ordinary post-creation JSON edits are detected by `tyf write` and `tyf doctor`. `tyf write --decision <id>` verifies that the draft, source fragments, accepted patch, author review packet, and manuscript base have not changed, refuses symlink escapes, acquires a per-unit lock under `.review/locks/`, writes atomically, applies only the accepted scope, and logs the proposal, decision, audit, source refs, accepted scope, and content hash. If the author edits `manuscript/` directly, `tyf adopt <work> <unit> --evidence "<what happened>"` preserves that direct edit under `.review/author-revisions/` and records it as the new base before the next controlled write. Naked `--confirm` is refused.
 
 `tyf reflexes` shows the apparatus behavior that would otherwise be easy to forget: the documentation-honesty tail hook, the attentive-amanuensis notice hook after controlled writes, the doctor integrity check, and the git recovery path. If a workspace is also a git repository, mutating commands surface changed-path counts and point to `tyf snapshot`. `tyf snapshot --message "..."` stages and commits the current workspace as an explicit recovery point. TYF never commits silently.
@@ -149,11 +153,11 @@ The Gate chain binds manuscript writes to records instead of a bare flag. A prop
 
 ## What is in this version
 
-Seventeen skills, each carrying a rationalization table and a red-flag list, the device that keeps a commitment load-bearing under pressure rather than polite. The Milchin redactor discipline runs as a substrate and threads through the diagnosis pass, the editor, and the adversarial audit at every band. A documentation-honesty discipline keeps the routing docs from going stale after a structural change, on the principle that in an agentic system the docs are behavioral law. The pack ships Cowork packaging (plugin, project instructions, schedule templates), plugin and extension manifests for the other harnesses, three mirrored context files, the `tyf` helper CLI, an example workspace, the workspace contract, a contributor guide, and RED/GREEN pressure scenarios, plus a product-lens acceptance-and-edge-case review (`tests/acceptance-and-edge-cases.md`) of how each skill breaks beyond the happy path.
+Eighteen skills, each carrying a rationalization table and a red-flag list, the device that keeps a commitment load-bearing under pressure rather than polite. The Milchin redactor discipline runs as a substrate and threads through the diagnosis pass, the editor, and the adversarial audit at every band. A documentation-honesty discipline keeps the routing docs from going stale after a structural change, on the principle that in an agentic system the docs are behavioral law. The pack ships Cowork packaging (plugin, project instructions, schedule templates), plugin and extension manifests for the other harnesses, three mirrored context files, the `tyf` helper CLI, an example workspace, the workspace contract, a contributor guide, and RED/GREEN pressure scenarios, plus a product-lens acceptance-and-edge-case review (`tests/acceptance-and-edge-cases.md`) of how each skill breaks beyond the happy path.
 
 ## Status and testing
 
-This is v0.5.0 beta. It is ready for local-first book-start use: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. Current repo evidence: 154 tests pass in the stdlib helper/doc/install suite, including exported release-tree `tyf check`, installer smoke coverage, source-grounded `tyf attend` attention packets, external-feedback triage, private-context-free author surfaces, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold. The hidden development harness has 117 acceptance scenarios with 117/117 direct RED proof, but authors using TYF as a skill do not need that harness or any private context. The semantic engine and cross-harness usage evidence are still partial. The pressure scenarios have had a first subagent run: GREEN passed 11/11, but the RED baseline was weak, so that prompt-level proof remains partial. Before treating it as production-bulletproof, re-run `tests/pressure-scenarios.md` in your harness: once with skills absent or constrained (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.5.0 beta. It is ready for local-first book-start use: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. Current repo evidence: 157 tests pass in the stdlib helper/doc/install suite, including exported release-tree `tyf check`, installer smoke coverage, source-grounded `tyf attend` attention packets, external-feedback triage, continuing-work session packets, private-context-free author surfaces, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold. The hidden development harness has 121 acceptance scenarios with 121/121 direct RED proof, but authors using TYF as a skill do not need that harness or any private context. The semantic engine and cross-harness usage evidence are still partial. The pressure scenarios have had a first subagent run: GREEN passed 11/11, but the RED baseline was weak, so that prompt-level proof remains partial. Before treating it as production-bulletproof, re-run `tests/pressure-scenarios.md` in your harness: once with skills absent or constrained (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 
@@ -169,7 +173,7 @@ This is v0.5.0 beta. It is ready for local-first book-start use: preserve the sc
 
 ## How it compares
 
-`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, feedback-triage, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, and the hidden development acceptance gate now has direct RED proof across 117/117 scenarios. Superpowers still has real usage and two disciplines TYF lacks entirely: execution-to-completion and debugging/isolation. The honest gap is usage breadth: TYF's prompt-level pressure scenarios have had a first subagent run with GREEN passed 11/11, but the RED baseline was weak, so that proof remains partial.
+`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, feedback-triage, continuity packet, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, and the hidden development acceptance gate now has direct RED proof across 121/121 scenarios. Superpowers still has real usage and TYF still lacks a debugging/isolation discipline. The honest gap is usage breadth: TYF's prompt-level pressure scenarios have had a first subagent run with GREEN passed 11/11, but the RED baseline was weak, so that proof remains partial.
 
 ## License
 

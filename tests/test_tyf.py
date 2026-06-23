@@ -2788,10 +2788,12 @@ class DocCheck(unittest.TestCase):
         self.assertIn("roadmap", release.lower())
 
     def test_author_facing_surfaces_do_not_require_private_development_context(self):
-        public_author_surfaces = [
+        optional_contributor_surfaces = [
             "AGENTS.md",
             "CLAUDE.md",
             "GEMINI.md",
+        ]
+        public_author_surfaces = [
             "docs/START_HERE.md",
             "docs/WORKSPACE_CONTRACT.md",
             "docs/PORTABILITY.md",
@@ -2811,7 +2813,16 @@ class DocCheck(unittest.TestCase):
         ]
         forbidden = private_context_tokens(include_cli_word=True)
         for rel in public_author_surfaces:
-            text = (REPO / rel).read_text(encoding="utf-8")
+            path = REPO / rel
+            self.assertTrue(path.is_file(), f"{rel} should ship in author-facing release archives")
+            text = path.read_text(encoding="utf-8")
+            for token in forbidden:
+                self.assertNotIn(token, text, f"{rel} must not require {token}")
+        for rel in optional_contributor_surfaces:
+            path = REPO / rel
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
             for token in forbidden:
                 self.assertNotIn(token, text, f"{rel} must not require {token}")
         p = subprocess.run(

@@ -168,6 +168,7 @@ This is v0.5.0 beta. It is ready for local-first book-start use: preserve the sc
 - `docs/START_HERE.md`: paste-ready Codex and Claude Cowork prompts for non-technical authors
 - `docs/TYF_FOUNDATION.md`: roles, the single vocabulary, the Zoom x Pass matrix
 - `docs/WORKSPACE_CONTRACT.md`: the author's workspace state files
+- `docs/RELEASE_READINESS.md`: maintainer-facing beta acceptance checklist
 - `docs/ATTENTIVENESS.md`: the notice ledger, memory without git, the discrepancy stance
 - `docs/LEARN_PASS.md`: the opt-in, unwired semantic layer
 - `docs/PORTABILITY.md`: per-harness install and the manifest-schema caveat

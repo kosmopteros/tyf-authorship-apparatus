@@ -1922,11 +1922,14 @@ class DocCheck(unittest.TestCase):
     def test_install_docs_route_author_workspaces_away_from_dev_context(self):
         install = (REPO / "scripts" / "install.sh").read_text(encoding="utf-8")
         portability = (REPO / "docs" / "PORTABILITY.md").read_text(encoding="utf-8")
+        start_here = (REPO / "docs" / "START_HERE.md").read_text(encoding="utf-8")
         self.assertIn("For a book workspace, run `tyf init`", install)
         self.assertIn("Do not copy the pack development context", install)
         self.assertIn("author-context", install)
         self.assertIn("author-context", portability)
         self.assertIn("run `tyf init`", portability)
+        self.assertIn("scripts/install.ps1", portability)
+        self.assertIn("scripts/install.ps1", start_here)
         self.assertNotIn(
             "place the matching context file where the harness reads session context",
             portability,
@@ -1967,8 +1970,56 @@ class Installer(unittest.TestCase):
 
     def test_codex_install_targets_current_skill_root(self):
         script = (REPO / "scripts" / "install.sh").read_text(encoding="utf-8")
+        ps_script = (REPO / "scripts" / "install.ps1").read_text(encoding="utf-8")
         self.assertIn('${CODEX_HOME:-$HOME/.codex}/skills', script)
         self.assertNotIn('$HOME/.agents/skills', script)
+        self.assertIn("$env:CODEX_HOME", ps_script)
+        self.assertIn(".codex\\skills", ps_script)
+        self.assertNotIn(".agents", ps_script)
+
+    def test_powershell_installer_has_windows_author_contract(self):
+        script = (REPO / "scripts" / "install.ps1").read_text(encoding="utf-8")
+        self.assertIn("$env:CODEX_HOME", script)
+        self.assertIn(".codex", script)
+        self.assertIn("TYF_PACK_ROOT", script)
+        self.assertIn("tyf init", script)
+        self.assertIn("author-context", script)
+        self.assertNotIn(".agents", script)
+
+    def test_powershell_installer_writes_pack_root_launchers(self):
+        script = (REPO / "scripts" / "install.ps1").read_text(encoding="utf-8")
+        self.assertIn("tyf.cmd", script)
+        self.assertIn("tyf.ps1", script)
+        self.assertIn('set "TYF_PACK_ROOT=$Root"', script)
+        self.assertIn("$env:TYF_PACK_ROOT = '$EscapedRoot'", script)
+        self.assertIn("scripts\\tyf.py", script)
+
+    @unittest.skipUnless(shutil.which("powershell") or shutil.which("pwsh"), "PowerShell not available")
+    def test_powershell_installer_installs_codex_skills_and_helper(self):
+        ps = shutil.which("powershell") or shutil.which("pwsh")
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-ps-install-"))
+        try:
+            env = {**ENV, "CODEX_HOME": str(tmp / "codex-home"),
+                   "BIN_DIR": str(tmp / "bin")}
+            cmd = [ps, "-NoProfile"]
+            if Path(ps).name.lower() == "powershell.exe":
+                cmd += ["-ExecutionPolicy", "Bypass"]
+            cmd += ["-File", str(REPO / "scripts" / "install.ps1"), "codex"]
+            p = subprocess.run(cmd, cwd=str(REPO), capture_output=True, text=True, env=env)
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            target = tmp / "codex-home" / "skills"
+            self.assertTrue((target / "using-tyf" / "SKILL.md").is_file(), out)
+            self.assertTrue((target / "composing-as-amanuensis" / "SKILL.md").is_file(), out)
+            helper = tmp / "bin" / "tyf.cmd"
+            self.assertTrue(helper.is_file(), out)
+            p2 = subprocess.run([str(helper), "check"], cwd=str(REPO),
+                                capture_output=True, text=True, env=ENV)
+            out2 = p2.stdout + p2.stderr
+            self.assertEqual(p2.returncode, 0, out2)
+            self.assertIn("skill directories", out2)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 class UpdateCheck(unittest.TestCase):

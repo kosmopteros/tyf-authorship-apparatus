@@ -245,6 +245,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris -v"
     Then Exit code is 0
 
+  @covers:tyf-windows-installer-contract @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Windows installer installs Codex skills and helper launchers
+    When Run "python tests/test_tyf.py Installer.test_powershell_installer_installs_codex_skills_and_helper -v"
+    Then Exit code is 0
+
+  @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Windows installer targets current Codex skill roots
+    When Run "python tests/test_tyf.py Installer.test_codex_install_targets_current_skill_root -v"
+    Then Exit code is 0
+
+  @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Windows installer preserves pack-root launchers
+    When Run "python tests/test_tyf.py Installer.test_powershell_installer_writes_pack_root_launchers -v"
+    Then Exit code is 0
+
+  @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:docs/PORTABILITY.md @bind-file:docs/START_HERE.md @tool-check:cli
+  Scenario: Windows installer docs expose no-bash path
+    When Run "python tests/test_tyf.py Installer.test_powershell_installer_has_windows_author_contract DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    Then Exit code is 0
+
   @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
   Scenario: workspace initializes a portable text-first bundle marker
     When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_portable_workspace_marker -v"

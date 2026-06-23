@@ -56,6 +56,12 @@ For manual Codex use, copy the TYF skills into `$CODEX_HOME/skills` or `~/.codex
 bash scripts/install.sh codex
 ```
 
+On Windows without bash:
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 codex
+```
+
 That installs the global dispatcher skill (`using-tyf`). A book repository still needs its local workspace context: run `tyf init <workspace-name>` in or near the book repo, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf start` rather than a title-gated setup.
 
 **Cursor** (agent chat):
@@ -76,6 +82,12 @@ gemini extensions install https://github.com/kosmopteros/tyf-authorship-apparatu
 
 ```
 bash scripts/install.sh claude     # or: codex | cursor | <explicit path>
+```
+
+On Windows without bash:
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 claude
 ```
 
 ## A note on manifest schemas

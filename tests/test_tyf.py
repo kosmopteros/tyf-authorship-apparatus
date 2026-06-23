@@ -1021,6 +1021,25 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Next useful move", out)
         self.assertIn("sources/interviews", out)
 
+    def test_resume_does_not_report_prompt_with_answer_beneath_it(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        interview = ws / "sources" / "interviews" / "work-first-session.md"
+        body = interview.read_text(encoding="utf-8")
+        body = body.replace(
+            "- [PROMPT: what should TYF hold with most care in this book right now?]",
+            "- [PROMPT: what should TYF hold with most care in this book right now?]\n"
+            "Answer: the inherited warning hidden in ordinary family tenderness.",
+        )
+        interview.write_text(body, encoding="utf-8")
+
+        rc, out = run_tyf(["resume"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("open prompts:", out)
+        self.assertNotIn("what should TYF hold with most care", out)
+        self.assertIn("what lived pressure", out)
+
     def test_resume_surfaces_current_review_packets_for_returning_author(self):
         ws = self.ws()
         rc, out = run_tyf(["start"], ws)
@@ -1334,6 +1353,63 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("These are nudges of attention, not doubts in the author's judgment.", brief)
         self.assertIn("Loose image of rain on the kitchen window.", brief)
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_structure_accepts_language_neutral_record_for_non_english_source(self):
+        ws = self.ws()
+        text = "\n".join([
+            "Утверждение: штормовые имена сначала семейные, а потом погодные.",
+            "Пример: тетя хранит список штормов возле чайника.",
+            "Вопрос: чье имя ребенок слышит первым?",
+        ])
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "русские заметки", "--text", text],
+            ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        record = ws / "structure-record.json"
+        record.write_text(json.dumps({
+            "source_ref": fragment,
+            "language": "Russian",
+            "claims": ["штормовые имена сначала семейные, а потом погодные."],
+            "examples": ["тетя хранит список штормов возле чайника."],
+            "questions": ["чье имя ребенок слышит первым?"],
+        }, ensure_ascii=False), encoding="utf-8")
+
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment, "--record", str(record)], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Claims: 1", out)
+        self.assertIn("Examples: 1", out)
+        self.assertIn("Open questions: 1", out)
+        claims = (ws / "knowledge-base" / "claims.md").read_text(encoding="utf-8")
+        examples = (ws / "knowledge-base" / "examples" / "work.md").read_text(encoding="utf-8")
+        questions = (ws / "knowledge-base" / "open-questions" / "work.md").read_text(encoding="utf-8")
+        self.assertIn("штормовые имена", claims)
+        self.assertIn("список штормов", examples)
+        self.assertIn("чье имя", questions)
+        index = (ws / "knowledge-base" / "retrieval-index.jsonl").read_text(encoding="utf-8")
+        self.assertIn("штормовые имена", index)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_structure_record_refuses_ambiguous_multi_source_without_source_ref(self):
+        ws = self.ws()
+        fragments = []
+        for label in ("one", "two"):
+            rc, out = run_tyf(
+                ["capture", "work", "--kind", "source", "--title", label,
+                 "--text", f"Claim: {label} pressure."],
+                ws)
+            self.assertEqual(rc, 0, out)
+            fragments.append(re.search(r"Source fragment:\s+(\S+)", out).group(1))
+        record = ws / "ambiguous-structure.json"
+        record.write_text(json.dumps({"claims": ["unbound claim"]}), encoding="utf-8")
+
+        rc, out = run_tyf(
+            ["structure", "work", "--source-ref", fragments[0], "--source-ref", fragments[1],
+             "--record", str(record)],
+            ws)
+        self.assertNotEqual(rc, 0)
+        self.assertRegex(out.lower(), r"source_ref|ambiguous|fragments")
+        self.assertFalse((ws / "knowledge-base" / "retrieval-index.jsonl").exists())
 
     def test_attend_writes_source_grounded_gentle_questions_without_manuscript(self):
         ws = self.ws()
@@ -2094,6 +2170,59 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Arrival orientation", out)
         self.assertIn("Next: write in", out)
 
+    def test_first_sitting_rehearsal_from_example_scaffold_reaches_candidate_session(self):
+        ws = self.ws()
+        arrival = REPO / "examples" / "first-sitting-arrival" / "scaffold.txt"
+        self.assertTrue(arrival.is_file(), "public first-sitting example scaffold should exist")
+
+        rc, out = run_tyf(
+            ["start", str(arrival), "--kind", "chat",
+             "--title", "The Storm Index", "--language", "English"],
+            ws,
+        )
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Writing runway opened", out)
+        self.assertIn("Preserved arrival", out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Claims: 2", out)
+        self.assertIn("Examples: 1", out)
+        self.assertIn("Open questions: 1", out)
+
+        retrieval_index = ws / "knowledge-base" / "retrieval-index.jsonl"
+        self.assertTrue(retrieval_index.is_file())
+        self.assertIn("Storm names are family names", retrieval_index.read_text(encoding="utf-8"))
+
+        rc, out = run_tyf(["attend", "work", "--source-ref", fragment, "--query", "storm ritual"], ws)
+        self.assertEqual(rc, 0, out)
+        attention = (ws / ".review" / "gentle-attention.md").read_text(encoding="utf-8")
+        self.assertIn("## Transparent local retrieval", attention)
+        self.assertIn("Query: storm ritual", attention)
+        self.assertIn("Storm names are family names", attention)
+        self.assertIn("Ask this first, then stop if candidate prose can begin.", attention)
+
+        draft = ws / "drafts" / "candidate-draft.md"
+        draft.write_text(
+            "# Candidate passage\n\n"
+            "The first storm name did not arrive as weather. It arrived as a family name, "
+            "spoken softly enough that the child understood it was both shelter and warning.\n",
+            encoding="utf-8",
+        )
+        rc, out = run_tyf(["session", "work", "--focus", "first candidate passage", "--minutes", "25"], ws)
+        self.assertEqual(rc, 0, out)
+        current_session = (ws / ".review" / "current-session.md").read_text(encoding="utf-8")
+        self.assertIn("first candidate passage", current_session)
+        self.assertIn("No manuscript text was written", current_session)
+
+        rc, out = run_tyf(["resume"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("The Storm Index", out)
+        self.assertIn("gentle-attention.md", out)
+        self.assertIn("current-session.md", out)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
     def test_status_reports_active_work_status_from_work_yaml(self):
         ws = self.ws()
         raw = (ws / "work.yaml").read_text(encoding="utf-8")
@@ -2539,6 +2668,28 @@ class DocCheck(unittest.TestCase):
                             for p in problems),
                         f"expected manifest version divergence, got {problems}")
 
+    def test_check_flags_manifest_context_path_missing(self):
+        root = self.min_pack()
+        path = root / ".cursor-plugin" / "plugin.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "name": "tyf",
+            "version": "0.5.0",
+            "context_file": "author-context/AGENTS.md",
+        }) + "\n", encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("context path missing" in p.lower() for p in problems),
+                        f"expected missing manifest context path problem, got {problems}")
+
+    def test_check_inspects_hidden_portability_docs_for_skill_count_drift(self):
+        root = self.min_pack()
+        path = root / ".opencode" / "INSTALL.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Confirm the sixteen skills are discoverable.\n", encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any(".opencode" in p and "skill count" in p.lower() for p in problems),
+                        f"expected hidden portability doc skill-count drift, got {problems}")
+
     def test_author_context_templates_do_not_include_private_development_reflex(self):
         for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
             path = REPO / "author-context" / name
@@ -2553,6 +2704,18 @@ class DocCheck(unittest.TestCase):
             self.assertIn("amanuensis", text.lower())
             for token in private_context_tokens(include_cli_word=True):
                 self.assertNotIn(token.strip(), text)
+
+    def test_composition_skill_distinguishes_exploratory_from_structured_drafts(self):
+        composing = (REPO / "skills" / "composing-as-amanuensis" / "SKILL.md").read_text(encoding="utf-8")
+        initializing = (REPO / "skills" / "initializing-a-workspace" / "SKILL.md").read_text(encoding="utf-8")
+        using = (REPO / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Exploratory passage", composing)
+        self.assertIn("Structured candidate draft", composing)
+        self.assertIn("one preserved source or author statement", composing)
+        self.assertIn("one provisional voice cue", composing)
+        self.assertIn("approved structural move", composing)
+        self.assertIn("exploratory passage", initializing.lower())
+        self.assertIn("exploratory passage", using.lower())
 
     def test_author_facing_surfaces_do_not_require_private_development_context(self):
         public_author_surfaces = [
@@ -2651,11 +2814,19 @@ class DocCheck(unittest.TestCase):
                     "scripts/install.ps1",
                     "bin/tyf",
                     "author-context/AGENTS.md",
+                    "author-context/GEMINI.md",
                     ".codex-plugin/plugin.json",
                     ".claude-plugin/plugin.json",
+                    ".cursor-plugin/plugin.json",
+                    "gemini-extension.json",
                     "README.md",
                     "docs/START_HERE.md"):
                 self.assertTrue((exported / rel).exists(), f"{rel} should ship")
+            cursor = json.loads((exported / ".cursor-plugin" / "plugin.json").read_text(encoding="utf-8"))
+            gemini = json.loads((exported / "gemini-extension.json").read_text(encoding="utf-8"))
+            for rel in (cursor.get("context_file"), gemini.get("contextFileName")):
+                self.assertTrue(rel, "manifest should declare a context path")
+                self.assertTrue((exported / rel).is_file(), f"manifest context path should ship: {rel}")
 
             p = subprocess.run(
                 [sys.executable, str(exported / "scripts" / "tyf.py"),
@@ -2677,8 +2848,11 @@ class DocCheck(unittest.TestCase):
     def test_release_status_counts_match_current_evidence(self):
         suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
         test_count = suite.countTestCases()
-        be_text = (REPO / ".fbs" / "be" / "tyf_smoke.feature").read_text(encoding="utf-8")
-        be_count = sum(1 for line in be_text.splitlines() if line.lstrip().startswith("Scenario:"))
+        be_path = REPO / ".fbs" / "be" / "tyf_smoke.feature"
+        be_count = None
+        if be_path.is_file():
+            be_text = be_path.read_text(encoding="utf-8")
+            be_count = sum(1 for line in be_text.splitlines() if line.lstrip().startswith("Scenario:"))
         targets = {
             "README.md": (REPO / "README.md").read_text(encoding="utf-8"),
             "VALIDATION.md": (REPO / "VALIDATION.md").read_text(encoding="utf-8"),
@@ -2686,9 +2860,11 @@ class DocCheck(unittest.TestCase):
         }
         for rel, text in targets.items():
             self.assertIn(f"{test_count} tests", text, rel)
-            self.assertIn(f"{be_count}", text, rel)
+            if be_count is not None:
+                self.assertIn(f"{be_count}", text, rel)
         comparison = (REPO / "docs" / "COMPARISON_SUPERPOWERS.md").read_text(encoding="utf-8")
-        self.assertIn(f"{be_count}/{be_count}", comparison)
+        if be_count is not None:
+            self.assertIn(f"{be_count}/{be_count}", comparison)
         self.assertNotIn("has not actually run the RED/GREEN loop", comparison)
 
     def test_install_docs_route_author_workspaces_away_from_dev_context(self):

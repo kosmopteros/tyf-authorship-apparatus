@@ -27,7 +27,7 @@ Structure is not summary. The job is to expose the architecture of what the auth
 tyf structure work --source-ref <id>
 ```
 
-This pass extracts only explicit author-supplied `Claim:`, `Example:`, and `Question:` lines, appends source-linked knowledge records, writes `.review/amanuensis-brief.md`, updates the derived `knowledge-base/retrieval-index.jsonl` with plain-file anchors and sample questions, and leaves unclassified source material visible for the author. Its questions are gentle nudges of attention, not doubts in the author's judgment. It is not a summarizer, not an interrogation, and not a drafting pass.
+This pass appends source-linked knowledge records, writes `.review/amanuensis-brief.md`, updates the derived `knowledge-base/retrieval-index.jsonl` with plain-file anchors and sample questions, and leaves unclassified source material visible for the author. The helper can extract explicit English `Claim:`, `Example:`, and `Question:` labels as a convenience, but interpretation belongs to the skill-guided amanuensis. For non-English, unlabeled, or nuanced material, read the source and provide a language-neutral JSON record to `tyf structure work --source-ref <id> --record <file>` with `claims`, `examples`, `questions`, and `unclassified` arrays. The helper then validates, IDs, stores, and links; it does not become the judge of meaning. Its questions are gentle nudges of attention, not doubts in the author's judgment. It is not a summarizer, not an interrogation, and not a drafting pass.
 
 When the next sitting needs a small source-grounded question set, run:
 

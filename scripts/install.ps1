@@ -117,7 +117,15 @@ Write-Host "  Use the generated context files."
 Write-Host "  Do not copy the pack development context into a book workspace."
 Write-Host "  Clean author-context templates are available at: $Root\author-context\"
 Write-Host ""
-Write-Host "Contributor context for working on this TYF pack:"
-Write-Host "  $Root\$(Context-File-For $Harness)"
+$ContextHint = Context-File-For $Harness
+$ContextPath = Join-Path $Root $ContextHint
+if (Test-Path -LiteralPath $ContextPath -PathType Leaf) {
+    Write-Host "Contributor context for working on this TYF pack:"
+    Write-Host "  $ContextPath"
+} else {
+    Write-Host "Contributor context:"
+    Write-Host "  This author release archive does not include pack-root contributor context files."
+    Write-Host "  Use $Root\author-context\ before workspace init, or run tyf init in a book folder."
+}
 Write-Host ""
 Write-Host "Then verify: ask the agent to list its TYF skills; it should route through 'using-tyf' first."

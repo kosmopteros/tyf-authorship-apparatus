@@ -146,6 +146,7 @@ def check_amanuensis_entry() -> None:
     for token in ("title_status", "_untitled_work_id", "sources/imports",
                   "sources/interviews", "cmd_import", "cmd_attend", "gentle-attention.md", "cmd_resume", "cmd_adopt",
                   "Analysis Pass For The Agent", "Containment", "_looks_tyf_shaped",
+                  "_load_structure_record", "--record", "language-neutral JSON",
                   "_one_attention_question", "Ask this first, then stop if candidate prose can begin",
                   "Do not interview the author as if this were a form",
                   "_retrieved_attention_records", "retrieval-index.jsonl", "Transparent local retrieval",
@@ -165,6 +166,8 @@ def check_amanuensis_entry() -> None:
         "test_attend_can_focus_on_one_source_ref",
         "test_attend_refuses_missing_or_unsafe_source_ref_without_packet",
         "test_attend_refuses_tampered_source_fragment_without_packet",
+        "test_structure_accepts_language_neutral_record_for_non_english_source",
+        "test_resume_does_not_report_prompt_with_answer_beneath_it",
     ):
         assert test_name in tests, f"missing test {test_name}"
     assert "title optional" in readme.lower() or "without a title" in readme.lower()
@@ -187,8 +190,12 @@ def check_writing_runway() -> None:
     for token in ("cmd_start", "_write_start_runway", "Writing runway",
                   "candidate-draft.md", "No manuscript text was written",
                   "let the Gate come later", "sources/interviews",
-                  "Ask one question at a time", "Stop asking once candidate prose can begin"):
+                  "Ask one question at a time", "Stop asking once candidate prose can begin",
+                  "Source fragment: {arrival['fragment']['id']}"):
         assert token in source, f"writing runway runtime missing {token}"
+    assert (ROOT / "examples" / "first-sitting-arrival" / "scaffold.txt").is_file()
+    assert "test_first_sitting_rehearsal_from_example_scaffold_reaches_candidate_session" in tests
+    assert "First Sitting Rehearsal" in (ROOT / "docs" / "FIRST_SITTING_REHEARSAL.md").read_text(encoding="utf-8")
     assert "cmd_today" not in source, "today command must not survive as an alias"
     assert '"today"' not in source.replace('"tyf today"', ""), "today must not be event-journal protected"
     assert "test_start_without_arrival_opens_titleless_writing_runway" in tests
@@ -274,10 +281,24 @@ def check_codex_skill() -> None:
     portability = (ROOT / "docs" / "PORTABILITY.md").read_text(encoding="utf-8")
     using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
     openai_yaml = ROOT / "skills" / "using-tyf" / "agents" / "openai.yaml"
-    contexts = [(ROOT / name).read_text(encoding="utf-8") for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md")]
+    contexts = [
+        (ROOT / "author-context" / name).read_text(encoding="utf-8")
+        for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md")
+    ]
+    contexts.extend(
+        (ROOT / name).read_text(encoding="utf-8")
+        for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md")
+        if (ROOT / name).is_file()
+    )
 
     assert manifest["version"] == "0.5.0"
     assert manifest["skills"] == "./skills/"
+    cursor = json.loads((ROOT / ".cursor-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    gemini = json.loads((ROOT / "gemini-extension.json").read_text(encoding="utf-8"))
+    assert cursor["context_file"] == "author-context/AGENTS.md"
+    assert gemini["contextFileName"] == "author-context/GEMINI.md"
+    assert (ROOT / cursor["context_file"]).is_file()
+    assert (ROOT / gemini["contextFileName"]).is_file()
     assert '${CODEX_HOME:-$HOME/.codex}/skills' in install
     assert "~/.codex/skills/" in portability
     assert "$CODEX_HOME/skills" in portability
@@ -310,6 +331,8 @@ def check_private_context_boundary() -> None:
         ROOT / "cowork",
         ROOT / ".codex-plugin",
         ROOT / ".claude-plugin",
+        ROOT / ".cursor-plugin",
+        ROOT / ".opencode",
     ]
     forbidden = private_context_tokens()
     inspected = 0

@@ -87,7 +87,14 @@ echo "  Use the generated context files."
 echo "  Do not copy the pack development context into a book workspace."
 echo "  Clean author-context templates are available at: $ROOT/author-context/"
 echo
-echo "Contributor context for working on this TYF pack:"
-echo "  $ROOT/$(ctx_file_for "$HARNESS")"
+ctx_hint="$(ctx_file_for "$HARNESS")"
+if [ -f "$ROOT/$ctx_hint" ]; then
+  echo "Contributor context for working on this TYF pack:"
+  echo "  $ROOT/$ctx_hint"
+else
+  echo "Contributor context:"
+  echo "  This author release archive does not include pack-root contributor context files."
+  echo "  Use $ROOT/author-context/ before workspace init, or run tyf init in a book folder."
+fi
 echo
 echo "Then verify: ask the agent to list its TYF skills; it should route through 'using-tyf' first."

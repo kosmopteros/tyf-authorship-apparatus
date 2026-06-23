@@ -137,7 +137,12 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-writing-runway-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
   Scenario: start preserves a cold-start scaffold before drafting
-    When Run "python tests/test_tyf.py CLIBehaviour.test_start_with_folder_arrival_preserves_scaffold_and_opens_runway -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_start_with_folder_arrival_preserves_scaffold_and_opens_runway CLIBehaviour.test_first_sitting_rehearsal_from_example_scaffold_reaches_candidate_session -v"
+    Then Exit code is 0
+
+  @covers:tyf-writing-runway-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/using-tyf/SKILL.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: composition discipline distinguishes exploratory and structured candidates
+    When Run "python tests/test_tyf.py DocCheck.test_composition_skill_distinguishes_exploratory_from_structured_drafts -v"
     Then Exit code is 0
 
   @covers:tyf-writing-runway-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -240,6 +245,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_controlled_write_chain_without_review_packet -v"
     Then Exit code is 0
 
+  @covers:tyf-doc-drift-command-contract @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:.cursor-plugin/plugin.json @bind-file:.opencode/INSTALL.md @bind-file:gemini-extension.json @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags release manifest and hidden portability drift
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_manifest_context_path_missing DocCheck.test_check_inspects_hidden_portability_docs_for_skill_count_drift -v"
+    Then Exit code is 0
+
   @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:docs/COMPARISON_SUPERPOWERS.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: README pressure status matches validation evidence
     When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence DocCheck.test_release_status_counts_match_current_evidence -v"
@@ -265,7 +275,7 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
     Then Exit code is 0
 
-  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:.cursor-plugin/plugin.json @bind-file:gemini-extension.json @bind-file:author-context/AGENTS.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: release export ignores workshop debris
     When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris DocCheck.test_release_archive_keeps_author_context_templates DocCheck.test_release_archive_runs_check_from_exported_tree Installer.test_release_archive_installs_from_exported_tree_with_bash -v"
     Then Exit code is 0
@@ -445,6 +455,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_structure_source_fragment_builds_knowledge_and_amanuensis_brief -v"
     Then Exit code is 0
 
+  @covers:tyf-knowledge-structuring-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/structuring-knowledge/SKILL.md @tool-check:cli
+  Scenario: structure accepts language-neutral records for non-English source
+    When Run "python tests/test_tyf.py CLIBehaviour.test_structure_accepts_language_neutral_record_for_non_english_source CLIBehaviour.test_structure_record_refuses_ambiguous_multi_source_without_source_ref -v"
+    Then Exit code is 0
+
   @covers:tyf-knowledge-structuring-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: source fragment structuring is idempotent and tamper-resistant
     When Run "python tests/test_tyf.py CLIBehaviour.test_structure_source_fragment_builds_knowledge_and_amanuensis_brief CLIBehaviour.test_structure_source_fragment_is_idempotent CLIBehaviour.test_structure_refuses_tampered_source_fragment CLIBehaviour.test_import_text_orientation_points_to_structure_pass -v"
@@ -515,6 +530,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_session_defaults_to_active_work_and_surfaces_review_context -v"
     Then Exit code is 0
 
+  @covers:tyf-continuing-work-contract @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: resume does not resurface answered first-session prompts
+    When Run "python tests/test_tyf.py CLIBehaviour.test_resume_does_not_report_prompt_with_answer_beneath_it -v"
+    Then Exit code is 0
+
   @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: continuing work refuses invalid duration without side effects
     When Run "python tests/test_tyf.py CLIBehaviour.test_session_refuses_invalid_minutes_without_side_effects -v"
@@ -580,7 +600,7 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_author_facing_surfaces_do_not_require_private_development_context -v"
     Then Exit code is 0
 
-  @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @covers:tyf-codex-skill-book-repo @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:scripts/tyf.py @bind-file:docs/ @bind-file:skills/ @bind-file:author-context/ @bind-file:cowork/ @bind-file:.codex-plugin/ @bind-file:.claude-plugin/ @bind-file:tests/test_independent_oracles.py @tool-check:cli
+  @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @covers:tyf-codex-skill-book-repo @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:scripts/tyf.py @bind-file:docs/ @bind-file:skills/ @bind-file:author-context/ @bind-file:cowork/ @bind-file:.codex-plugin/ @bind-file:.claude-plugin/ @bind-file:.cursor-plugin/ @bind-file:.opencode/ @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: hidden development harness never appears in TYF-visible surfaces
     When Run "python tests/test_independent_oracles.py private-context-boundary"
     Then Exit code is 0

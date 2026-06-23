@@ -17,7 +17,7 @@ When a passage or unit feels off, run:
 tyf diagnose [work] --unit drafts/candidate-draft.md --band section --symptom "<what the reader experiences>"
 ```
 
-The helper writes `.review/current-diagnosis.md` and an archived `.review/diagnostics/<id>.md` review-only diagnostic isolation packet. Read it before answering. The packet is hidden amanuensis machinery: it surfaces band, reader symptom, cause hypotheses, source/register reminders, and one next experiment. No manuscript text is written.
+The helper writes `.review/current-diagnosis.md` and an archived `.review/diagnostics/<id>.md` review-only diagnostic isolation packet. Read it before answering. The packet is hidden amanuensis machinery: it surfaces band, reader symptom, source/register reminders, mechanical diagnostic frame prompts, and one next experiment. It is not the diagnosis itself. No manuscript text is written.
 
 ## The bands
 

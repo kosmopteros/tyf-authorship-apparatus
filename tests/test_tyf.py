@@ -35,6 +35,20 @@ import tyf  # noqa: E402
 ENV = {**os.environ, "TYF_NO_DOC_HOOK": "1"}
 
 
+def private_context_tokens(include_cli_word=False):
+    tokens = (
+        "Alex" + "ander",
+        "Peg" + "asus",
+        "P" + "AI",
+        "SO" + "LO",
+        "F" + "BS",
+        "using-" + "solo",
+    )
+    if include_cli_word:
+        return tokens + (("f" + "bs "),)
+    return tokens
+
+
 def run_tyf(args, cwd):
     """Invoke the real CLI. Returns (returncode, combined_output)."""
     p = subprocess.run(
@@ -2075,9 +2089,8 @@ class CLIBehaviour(unittest.TestCase):
             self.assertIn("tyf attend work --source-ref", text)
             self.assertIn("drafts/", text)
             self.assertNotIn("works/*/drafts", text)
-            self.assertNotIn("SOLO", text)
-            self.assertNotIn("FBS", text)
-            self.assertNotIn("using-solo", text)
+            for token in private_context_tokens():
+                self.assertNotIn(token, text)
 
     def test_new_work_adds_event_log_entry(self):
         ws = self.ws()
@@ -2482,7 +2495,7 @@ class DocCheck(unittest.TestCase):
                             for p in problems),
                         f"expected manifest version divergence, got {problems}")
 
-    def test_author_context_templates_do_not_include_solo_development_reflex(self):
+    def test_author_context_templates_do_not_include_private_development_reflex(self):
         for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
             path = REPO / "author-context" / name
             self.assertTrue(path.is_file(), f"{name} author context template should exist")
@@ -2494,9 +2507,8 @@ class DocCheck(unittest.TestCase):
             self.assertIn("tyf attend work --source-ref", text)
             self.assertIn("tyf consult-character", text)
             self.assertIn("amanuensis", text.lower())
-            self.assertNotIn("SOLO Reflex", text)
-            self.assertNotIn("using-solo", text)
-            self.assertNotIn("fbs", text.lower())
+            for token in private_context_tokens(include_cli_word=True):
+                self.assertNotIn(token.strip(), text)
 
     def test_author_facing_surfaces_do_not_require_private_development_context(self):
         public_author_surfaces = [
@@ -2520,7 +2532,7 @@ class DocCheck(unittest.TestCase):
             "author-context/CLAUDE.md",
             "author-context/GEMINI.md",
         ]
-        forbidden = ("Alexander", "Pegasus", "PAI", "SOLO", "FBS", "using-solo", "fbs ")
+        forbidden = private_context_tokens(include_cli_word=True)
         for rel in public_author_surfaces:
             text = (REPO / rel).read_text(encoding="utf-8")
             for token in forbidden:
@@ -2803,8 +2815,8 @@ class Installer(unittest.TestCase):
             context = (book / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("tyf start", context)
             self.assertIn("single work", context.lower())
-            self.assertNotIn("SOLO Reflex", context)
-            self.assertNotIn("using-solo", context)
+            for token in private_context_tokens():
+                self.assertNotIn(token, context)
 
             start_cmd = (
                 f"cd {shell_quote(bash_path(book))} && TYF_NO_DOC_HOOK=1 {helper} "

@@ -13,7 +13,7 @@ build/
 dist/
 *.egg-info/
 
-# SOLO local runtime scratch
+# Local runtime scratch
 .fbs/.solo-ledger.lock
 .fbs/recover-live.log
 .fbs/runs/

@@ -451,7 +451,7 @@ def run_doc_check(root=None):
         "VALIDATION.md",
         os.path.join("scripts", "tyf.py"),
         os.path.join("tests", "test_tyf.py"),
-        os.path.join("tests", "test_solo_oracles.py"),
+        os.path.join("tests", "test_independent_oracles.py"),
     }
     for p in _iter_files(root, (".md", ".sh", ".yaml", ".yml", ".py", ".json")):
         rel = os.path.relpath(p, root)

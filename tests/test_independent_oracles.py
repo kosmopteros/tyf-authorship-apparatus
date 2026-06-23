@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Small independent SOLO oracles for TYF's immediate feature claims.
+"""Small independent structural oracles for TYF's immediate feature claims.
 
 These complement the broad unittest smoke suite and the Codex plugin validator
-with direct structural checks, so SOLO can see more than one executable oracle.
+with direct structural checks from a second verification angle.
 """
 
 from __future__ import annotations
@@ -14,6 +14,18 @@ import sys
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+def private_context_tokens() -> tuple[str, ...]:
+    return (
+        "SO" + "LO",
+        "F" + "BS",
+        "." + "fbs",
+        "using-" + "solo",
+        "Alex" + "ander",
+        "Peg" + "asus",
+        "P" + "AI",
+    )
 
 
 def check_helper() -> None:
@@ -274,7 +286,7 @@ def check_codex_skill() -> None:
     assert not any("after getting a title" in text for text in contexts)
 
 
-def check_hidden_harness_boundary() -> None:
+def check_private_context_boundary() -> None:
     public_surfaces = [
         ROOT / "AGENTS.md",
         ROOT / "CLAUDE.md",
@@ -291,7 +303,7 @@ def check_hidden_harness_boundary() -> None:
         ROOT / ".codex-plugin",
         ROOT / ".claude-plugin",
     ]
-    forbidden = ("SOLO", "FBS", ".fbs", "using-solo", "Alexander", "Pegasus", "PAI")
+    forbidden = private_context_tokens()
     inspected = 0
     for surface in public_surfaces:
         paths = [surface] if surface.is_file() else [
@@ -303,7 +315,7 @@ def check_hidden_harness_boundary() -> None:
             inspected += 1
             for token in forbidden:
                 assert token not in text, f"{path.relative_to(ROOT)} leaks private development context token {token!r}"
-    assert inspected > 20, "hidden harness boundary oracle inspected too few TYF-visible files"
+    assert inspected > 20, "private context boundary oracle inspected too few TYF-visible files"
 
 
 def check_onboarding() -> None:
@@ -492,7 +504,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "hidden-harness-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "private-context-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -501,8 +513,8 @@ def main(argv: list[str] | None = None) -> int:
         check_plugin()
     elif args.oracle == "codex-skill":
         check_codex_skill()
-    elif args.oracle == "hidden-harness-boundary":
-        check_hidden_harness_boundary()
+    elif args.oracle == "private-context-boundary":
+        check_private_context_boundary()
     elif args.oracle == "provenance":
         check_provenance()
     elif args.oracle == "amanuensis-entry":

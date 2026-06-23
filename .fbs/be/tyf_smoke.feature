@@ -5,17 +5,17 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway CLIBehaviour.test_write_with_decision_copies_and_logs -v"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-helper-current-contract @bind-file:scripts/tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper command surface stays visible
-    When Run "python tests/test_solo_oracles.py helper"
+    When Run "python tests/test_independent_oracles.py helper"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper enforces proposal audit decision write gate
-    When Run "python tests/test_solo_oracles.py gate"
+    When Run "python tests/test_independent_oracles.py gate"
     Then Exit code is 0
 
-  @covers:tyf-work-state-machine-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-work-state-machine-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper advances work status through proposal audit accept write
     When Run "python tests/test_tyf.py CLIBehaviour.test_gate_updates_work_status_across_transitions -v"
     Then Exit code is 0
@@ -30,29 +30,29 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_audit_record_writes_inspectable_editorial_note -v"
     Then Exit code is 0
 
-  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses acceptance before audited state
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_refuses_before_passing_audit_state -v"
     Then Exit code is 0
 
-  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses acceptance after failed audit state
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_refuses_after_failed_audit_state -v"
     Then Exit code is 0
 
-  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses acceptance using another proposal audit
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_requires_audit_for_the_same_proposal -v"
     Then Exit code is 0
 
-  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-work-state-machine-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses write outside accepted state
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_when_work_status_is_not_accepted -v"
     Then Exit code is 0
 
-  @covers:tyf-amanuensis-entry-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-amanuensis-entry-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: amanuensis entry structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py amanuensis-entry"
+    When Run "python tests/test_independent_oracles.py amanuensis-entry"
     Then Exit code is 0
 
   @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -110,17 +110,17 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_resume_reports_active_work_state_and_next_useful_move -v"
     Then Exit code is 0
 
-  @covers:tyf-amanuensis-entry-contract @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-amanuensis-entry-contract @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: resume surfaces the live return context stack
     When Run "python tests/test_tyf.py CLIBehaviour.test_resume_surfaces_current_review_packets_for_returning_author -v"
     Then Exit code is 0
 
-  @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: writing runway structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py writing-runway"
+    When Run "python tests/test_independent_oracles.py writing-runway"
     Then Exit code is 0
 
-  @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: start opens a titleless writing runway
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_without_arrival_opens_titleless_writing_runway -v"
     Then Exit code is 0
@@ -170,9 +170,9 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_beta_portable_marker_declares_single_work_bundle -v"
     Then Exit code is 0
 
-  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SCHEDULED_TASKS.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-single-work-beta-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SCHEDULED_TASKS.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: beta public docs do not teach multi-work startup
-    When Run "python tests/test_solo_oracles.py single-work"
+    When Run "python tests/test_independent_oracles.py single-work"
     Then Exit code is 0
 
   @covers:tyf-single-work-beta-contract @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:tests/test_tyf.py @tool-check:cli
@@ -247,17 +247,17 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: author context templates stay clean and install docs avoid dev context
-    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_solo_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_private_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
     Then Exit code is 0
 
   @covers:tyf-release-packaging-contract @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: release packaging has clean author context happy path
-    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_solo_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
+    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_private_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
     Then Exit code is 0
 
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: author context templates contain no development reflex
-    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_solo_development_reflex -v"
+    When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_private_development_reflex -v"
     Then Exit code is 0
 
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
@@ -300,17 +300,17 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_check_accepts_advertised_strict_flag -v"
     Then Exit code is 0
 
-  @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
+  @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
   Scenario: workspace initializes a portable text-first bundle marker
     When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_portable_workspace_marker -v"
     Then Exit code is 0
 
-  @covers:tyf-portable-workspace-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
+  @covers:tyf-portable-workspace-contract @bind-file:scripts/tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:docs/PORTABILITY.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
   Scenario: portable workspace structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py portability"
+    When Run "python tests/test_independent_oracles.py portability"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses tampered Gate review records
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_tampered_decision_record CLIBehaviour.test_write_refuses_tampered_audit_record CLIBehaviour.test_doctor_flags_tampered_gate_record CLIBehaviour.test_doctor_flags_missing_gate_record_seal -v"
     Then Exit code is 0
@@ -320,37 +320,37 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_requires_author_review_packet CLIBehaviour.test_write_and_doctor_refuse_tampered_author_review_packet -v"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper locks manuscript units during controlled writes
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_existing_manuscript_unit_lock CLIBehaviour.test_doctor_flags_manuscript_unit_lock -v"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper applies only accepted source line ranges
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_line_ranges_writes_only_selected_lines CLIBehaviour.test_accept_line_ranges_refuses_invalid_or_out_of_range_selection -v"
     Then Exit code is 0
 
-  @covers:tyf-patch-acceptance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-patch-acceptance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper applies an exact accepted patch
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_patch_applies_exact_unified_diff_to_manuscript_base -v"
     Then Exit code is 0
 
-  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses mixed line and patch acceptance
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_patch_refuses_mixed_line_scope -v"
     Then Exit code is 0
 
-  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses malformed accepted patch hunk counts
     When Run "python tests/test_tyf.py CLIBehaviour.test_accept_patch_refuses_hunk_count_mismatch -v"
     Then Exit code is 0
 
-  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper refuses accepted patch tampering at write time
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_refuses_tampered_accepted_patch_file -v"
     Then Exit code is 0
 
-  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-patch-acceptance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper doctor reports missing accepted patch files
     When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_missing_accepted_patch_file -v"
     Then Exit code is 0
@@ -380,32 +380,32 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_notice_reports_style_lag_for_unlogged_manuscript_change -v"
     Then Exit code is 0
 
-  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper records explicit writing language for multilingual works
     When Run "python tests/test_tyf.py CLIBehaviour.test_start_records_non_latin_title_without_id_gate CLIBehaviour.test_start_records_explicit_writing_language CLIBehaviour.test_gate_preserves_utf8_manuscript_text_for_declared_language CLIBehaviour.test_user_yaml_values_are_safely_quoted -v"
     Then Exit code is 0
 
-  @covers:tyf-canonical-event-journal-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-canonical-event-journal-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: helper records a canonical hash-chained event journal
     When Run "python tests/test_tyf.py CLIBehaviour.test_canonical_event_journal_records_core_actions_with_hash_chain -v"
     Then Exit code is 0
 
-  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: doctor detects a rewritten event by hash-chain mismatch
     When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_tampered_canonical_event_journal -v"
     Then Exit code is 0
 
-  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: doctor detects a deleted event journal before trusting history
     When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_missing_canonical_event_journal -v"
     Then Exit code is 0
 
-  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: doctor detects an invalid JSON line in the event journal
     When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_flags_malformed_canonical_event_journal -v"
     Then Exit code is 0
 
-  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: mutation refuses to recreate a lost event history
     When Run "python tests/test_tyf.py CLIBehaviour.test_mutating_command_refuses_missing_canonical_event_journal -v"
     Then Exit code is 0
@@ -430,14 +430,14 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_propose_refuses_fragment_file_and_index_rewritten_under_same_id -v"
     Then Exit code is 0
 
-  @covers:tyf-source-provenance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-source-provenance-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: accepted source provenance remains enforced by write and doctor
     When Run "python tests/test_tyf.py CLIBehaviour.test_write_and_doctor_refuse_tampered_source_fragment_after_decision -v"
     Then Exit code is 0
 
-  @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: source provenance structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py provenance"
+    When Run "python tests/test_independent_oracles.py provenance"
     Then Exit code is 0
 
   @covers:tyf-knowledge-structuring-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -455,12 +455,12 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_structure_refuses_tampered_source_fragment -v"
     Then Exit code is 0
 
-  @covers:tyf-knowledge-structuring-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-knowledge-structuring-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: source fragment orientation routes agents to structuring
     When Run "python tests/test_tyf.py CLIBehaviour.test_import_text_orientation_points_to_structure_pass -v"
     Then Exit code is 0
 
-  @covers:tyf-amanuensis-attention-pass-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:README.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @tool-check:cli
+  @covers:tyf-amanuensis-attention-pass-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:README.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @tool-check:cli
   Scenario: amanuensis attention pass writes source-grounded questions
     When Run "python tests/test_tyf.py CLIBehaviour.test_attend_writes_source_grounded_gentle_questions_without_manuscript -v"
     Then Exit code is 0
@@ -500,9 +500,9 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_feedback_refuses_ambiguous_text_and_file_without_side_effects -v"
     Then Exit code is 0
 
-  @covers:tyf-feedback-triage-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/receiving-critique/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  @covers:tyf-feedback-triage-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:skills/receiving-critique/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
   Scenario: feedback triage structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py feedback-triage"
+    When Run "python tests/test_independent_oracles.py feedback-triage"
     Then Exit code is 0
 
   @covers:tyf-continuing-work-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:skills/continuing-the-work/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
@@ -520,9 +520,9 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_session_refuses_invalid_minutes_without_side_effects -v"
     Then Exit code is 0
 
-  @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/continuing-the-work/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
+  @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:skills/continuing-the-work/SKILL.md @bind-file:skills/using-tyf/SKILL.md @tool-check:cli
   Scenario: continuing work structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py continuing-work"
+    When Run "python tests/test_independent_oracles.py continuing-work"
     Then Exit code is 0
 
   @covers:tyf-diagnostic-isolation-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -540,12 +540,12 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_diagnose_refuses_missing_unit_or_bad_band_without_side_effects -v"
     Then Exit code is 0
 
-  @covers:tyf-diagnostic-isolation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/diagnosing-text/SKILL.md @bind-file:skills/using-tyf/SKILL.md @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/COMPARISON_SUPERPOWERS.md @tool-check:cli
+  @covers:tyf-diagnostic-isolation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:skills/diagnosing-text/SKILL.md @bind-file:skills/using-tyf/SKILL.md @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/COMPARISON_SUPERPOWERS.md @tool-check:cli
   Scenario: diagnostic isolation structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py diagnostic-isolation"
+    When Run "python tests/test_independent_oracles.py diagnostic-isolation"
     Then Exit code is 0
 
-  @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
+  @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
   Scenario: character consultation stays contained as hidden amanuensis machinery
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained CLIBehaviour.test_character_consultation_refuses_missing_dossier CLIBehaviour.test_character_dossier_supports_non_latin_names -v"
     Then Exit code is 0
@@ -560,19 +560,19 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained -v"
     Then Exit code is 0
 
-  @covers:tyf-character-consultation-contract @bind-file:scripts/tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
+  @covers:tyf-character-consultation-contract @bind-file:scripts/tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
   Scenario: character consultation structural oracle remains wired
-    When Run "python tests/test_solo_oracles.py character-consultation"
+    When Run "python tests/test_independent_oracles.py character-consultation"
     Then Exit code is 0
 
-  @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: public onboarding has paste-ready author prompts
-    When Run "python tests/test_solo_oracles.py onboarding"
+    When Run "python tests/test_independent_oracles.py onboarding"
     Then Exit code is 0
 
-  @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: public onboarding entrypoint is visible from the README
-    When Run "python tests/test_solo_oracles.py onboarding-entry"
+    When Run "python tests/test_independent_oracles.py onboarding-entry"
     Then Exit code is 0
 
   @covers:tyf-public-onboarding-contract @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:docs/START_HERE.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:skills/interviewing-the-author/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SETUP.md @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
@@ -580,19 +580,19 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_author_facing_surfaces_do_not_require_private_development_context -v"
     Then Exit code is 0
 
-  @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @covers:tyf-codex-skill-book-repo @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:scripts/tyf.py @bind-file:docs/ @bind-file:skills/ @bind-file:author-context/ @bind-file:cowork/ @bind-file:.codex-plugin/ @bind-file:.claude-plugin/ @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @covers:tyf-codex-skill-book-repo @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:scripts/tyf.py @bind-file:docs/ @bind-file:skills/ @bind-file:author-context/ @bind-file:cowork/ @bind-file:.codex-plugin/ @bind-file:.claude-plugin/ @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: hidden development harness never appears in TYF-visible surfaces
-    When Run "python tests/test_solo_oracles.py hidden-harness-boundary"
+    When Run "python tests/test_independent_oracles.py private-context-boundary"
     Then Exit code is 0
 
-  @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: public onboarding does not make the author operate the CLI first
-    When Run "python tests/test_solo_oracles.py onboarding"
+    When Run "python tests/test_independent_oracles.py onboarding"
     Then Exit code is 0
 
-  @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: public onboarding stays linked into the active skills
-    When Run "python tests/test_solo_oracles.py onboarding"
+    When Run "python tests/test_independent_oracles.py onboarding"
     Then Exit code is 0
 
   @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
@@ -600,9 +600,9 @@ Feature: TYF helper smoke suite
     When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
     Then Exit code is 0
 
-  @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: Codex plugin manifest has independent structural shape
-    When Run "python tests/test_solo_oracles.py plugin"
+    When Run "python tests/test_independent_oracles.py plugin"
     Then Exit code is 0
 
   @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
@@ -615,9 +615,9 @@ Feature: TYF helper smoke suite
     When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
     Then Exit code is 0
 
-  @covers:tyf-codex-skill-book-repo @bind-file:.codex-plugin/plugin.json @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @bind-file:scripts/install.sh @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:docs/PORTABILITY.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  @covers:tyf-codex-skill-book-repo @bind-file:.codex-plugin/plugin.json @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @bind-file:scripts/install.sh @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:docs/PORTABILITY.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
   Scenario: Codex skill surface routes book repos through the writing runway
-    When Run "python tests/test_solo_oracles.py codex-skill"
+    When Run "python tests/test_independent_oracles.py codex-skill"
     Then Exit code is 0
 
   @covers:tyf-codex-skill-book-repo @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:docs/START_HERE.md @tool-check:cli

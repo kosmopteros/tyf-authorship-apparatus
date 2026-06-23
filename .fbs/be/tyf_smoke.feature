@@ -75,6 +75,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment CLIBehaviour.test_import_zip_preserves_bundle_without_manuscript_write -v"
     Then Exit code is 0
 
+  @covers:tyf-amanuensis-entry-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/START_HERE.md @bind-file:skills/ingesting-sources/SKILL.md @tool-check:cli
+  Scenario: unreadable and huge arrivals are preserved with extraction-needed guidance
+    When Run "python tests/test_tyf.py CLIBehaviour.test_import_unreadable_binary_marks_extraction_needed_without_fragment CLIBehaviour.test_import_large_text_marks_chunking_needed_without_implying_read DocCheck.test_import_docs_describe_unreadable_arrival_extraction_boundary -v"
+    Then Exit code is 0
+
   @covers:tyf-portable-workspace-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @tool-check:cli
   Scenario: text and zip arrivals stay portable without manuscript writes
     When Run "python tests/test_tyf.py CLIBehaviour.test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment CLIBehaviour.test_import_zip_preserves_bundle_without_manuscript_write -v"

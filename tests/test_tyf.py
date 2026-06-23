@@ -1491,6 +1491,42 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn('title_status: "working"', work_yaml)
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
+    def test_import_unreadable_binary_marks_extraction_needed_without_fragment(self):
+        ws = self.ws()
+        scan = self.tmp / "scanned-notes.pdf"
+        scan.write_bytes(b"%PDF-1.4\n% image-only scan placeholder\n")
+
+        rc, out = run_tyf(["import", str(scan), "--kind", "source"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Extraction needed", out)
+        self.assertNotIn("Source fragment:", out)
+        imports = list((ws / "sources" / "imports").glob("*scanned-notes.pdf"))
+        self.assertEqual(len(imports), 1)
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
+        self.assertIn("Extraction needed", orientation_text)
+        self.assertIn("OCR or transcription", orientation_text)
+        self.assertIn("Do not invent contents from this file", orientation_text)
+        self.assertIn("No source fragment was minted", orientation_text)
+        self.assertFalse((ws / "sources" / "fragments.jsonl").exists())
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_import_large_text_marks_chunking_needed_without_implying_read(self):
+        ws = self.ws()
+        large = self.tmp / "giant-chat.txt"
+        large.write_text("Claim: too much context\n" * 120000, encoding="utf-8")
+
+        rc, out = run_tyf(["import", str(large), "--kind", "chat"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Extraction needed", out)
+        self.assertNotIn("Source fragment:", out)
+        orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
+        orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
+        self.assertIn("too large for automatic text extraction", orientation_text)
+        self.assertIn("chunk explicitly", orientation_text)
+        self.assertIn("Do not imply the full file was read", orientation_text)
+        self.assertFalse((ws / "sources" / "fragments.jsonl").exists())
+
     def test_import_folder_preserves_tree_and_lists_without_live_merge(self):
         ws = self.ws()
         dump = self.tmp / "random-dump"
@@ -2109,6 +2145,13 @@ class DocCheck(unittest.TestCase):
             "place the matching context file where the harness reads session context",
             portability,
         )
+
+    def test_import_docs_describe_unreadable_arrival_extraction_boundary(self):
+        for rel in ("README.md", "docs/WORKSPACE_CONTRACT.md", "docs/START_HERE.md"):
+            text = (REPO / rel).read_text(encoding="utf-8")
+            self.assertIn("OCR or transcription", text, rel)
+            self.assertIn("Do not invent contents", text, rel)
+            self.assertIn("chunk explicitly", text, rel)
 
     def test_opencode_install_routes_to_helper_and_author_context(self):
         install = (REPO / ".opencode" / "INSTALL.md").read_text(encoding="utf-8")

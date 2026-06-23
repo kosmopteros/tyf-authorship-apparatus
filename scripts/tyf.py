@@ -2058,17 +2058,26 @@ def _work_for_arrival(args):
     return work_id, True
 
 
+_TEXT_IMPORT_EXTS = {".txt", ".md", ".markdown", ".csv", ".json", ".jsonl", ".yaml", ".yml", ".rtf"}
+_BINARY_SOURCE_EXTS = {
+    ".pdf", ".doc", ".docx", ".odt", ".pages",
+    ".mp3", ".m4a", ".wav", ".aac", ".ogg", ".flac",
+    ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".heic", ".webp",
+}
+_AUTO_TEXT_LIMIT = 2 * 1024 * 1024
+
+
 def _read_import_text(path):
     if not os.path.isfile(path):
         return None
     ext = os.path.splitext(path)[1].lower()
-    if ext not in {".txt", ".md", ".markdown", ".csv", ".json", ".jsonl", ".yaml", ".yml", ".rtf"}:
+    if ext not in _TEXT_IMPORT_EXTS:
         return None
     try:
         size = os.path.getsize(path)
     except OSError:
         return None  # degradation: ok: raw arrival is still preserved; text extraction is opportunistic
-    if size > 2 * 1024 * 1024:
+    if size > _AUTO_TEXT_LIMIT:
         return None
     try:
         with open(path, encoding="utf-8") as f:
@@ -2081,6 +2090,28 @@ def _read_import_text(path):
             return None  # degradation: ok: raw arrival is still preserved; text extraction is opportunistic
     except OSError:
         return None  # degradation: ok: raw arrival is still preserved; text extraction is opportunistic
+
+
+def _extraction_needed_note(path, text):
+    if text and text.strip():
+        return ""
+    if os.path.isdir(path) or zipfile.is_zipfile(path):
+        return ""
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        size = os.path.getsize(path)
+    except OSError:
+        size = None
+    if ext in _TEXT_IMPORT_EXTS and size is not None and size > _AUTO_TEXT_LIMIT:
+        return ("text-like arrival is too large for automatic text extraction; "
+                "chunk explicitly before structuring. Do not imply the full file was read.")
+    if ext in _BINARY_SOURCE_EXTS:
+        return ("binary or unreadable source preserved; use OCR or transcription before structuring. "
+                "Do not invent contents from this file.")
+    if os.path.isfile(path):
+        return ("source preserved, but no readable text was extracted automatically. "
+                "Inspect or convert it before structuring, and do not invent contents from this file.")
+    return ""
 
 
 def _zip_entries(path):
@@ -2137,7 +2168,7 @@ def _arrival_listing(path):
     return [os.path.basename(path)]
 
 
-def _write_import_orientation(work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped):
+def _write_import_orientation(work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped, extraction_note=""):
     label = os.path.splitext(os.path.basename(preserved.rstrip(os.sep)))[0]
     orientation = os.path.join("sources", "imports", f"{label}-orientation.md")
     if os.path.exists(orientation):
@@ -2150,7 +2181,9 @@ def _write_import_orientation(work_id, src, preserved, kind, fragment, created_w
             f"- Structuring pass: `tyf structure {work_id} --source-ref {fragment['id']}`"
         )
     else:
-        frag_line = "- Source fragment: none minted automatically for this arrival"
+        frag_line = "- No source fragment was minted automatically for this arrival."
+    if extraction_note:
+        frag_line += f"\n- Extraction needed: {extraction_note}"
     write(orientation, f"""# Arrival orientation: {os.path.basename(src)}
 
 Work: `this book folder`
@@ -2181,9 +2214,10 @@ No manuscript text was written.
 1. Classify each item as source, prior draft, voice sample, claim/example, metadata, or unknown.
 2. Identify an organizing principle before moving anything: chronology, source type, work unit, theme, scene, chapter, or another author-approved map.
 3. If the bundle is TYF-shaped, compare its book, `sources/`, `knowledge-base/`, and `voice/` surfaces to this workspace and propose a merge plan instead of copying over live files.
-4. For random dumps, ask the author which materials are authoritative, private, obsolete, or exploratory.
-5. Mint additional source fragments only for text the author wants preserved as evidence.
-6. Keep candidate prose in `{_work_display_path(work_id, "drafts")}/`; manuscript still requires proposal, audit, author review, author decision, and `tyf write --decision`.
+4. For unreadable files, OCR, transcribe, convert, or chunk explicitly before deriving claims. Do not invent contents from preserved artifacts.
+5. For random dumps, ask the author which materials are authoritative, private, obsolete, or exploratory.
+6. Mint additional source fragments only for text the author wants preserved as evidence.
+7. Keep candidate prose in `{_work_display_path(work_id, "drafts")}/`; manuscript still requires proposal, audit, author review, author decision, and `tyf write --decision`.
 """)
     return orientation
 
@@ -2210,10 +2244,11 @@ def _import_arrival(args, announce=True):
     if text and text.strip():
         title = _one_line(args.title, os.path.basename(src))
         fragment = _mint_source_fragment(work_id, kind if kind != "auto" else "import", title, text.strip())
+    extraction_note = _extraction_needed_note(src, text)
     listing = _arrival_listing(src)
     zip_tyf_shaped = zipfile.is_zipfile(src) and _looks_tyf_shaped(listing)
     orientation = _write_import_orientation(
-        work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped)
+        work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped, extraction_note)
     log_event(".", "import", f"{work_id}/{os.path.basename(preserved)}",
               f"kind={kind} orientation={orientation} fragment={fragment['id'] if fragment else 'none'}")
     result = {
@@ -2232,6 +2267,8 @@ def _import_arrival(args, announce=True):
         print(f"  Orientation: {orientation}")
         if fragment:
             print(f"Source fragment: {fragment['id']}")
+        if extraction_note:
+            print(f"Extraction needed: {extraction_note}")
         print("No manuscript text was written.")
         print("Next useful move: read the orientation packet, classify the arrival, and ask the author before promoting anything.")
     return result

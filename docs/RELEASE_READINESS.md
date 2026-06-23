@@ -17,7 +17,7 @@ step.
 ## Evidence-Green
 
 - `173` stdlib helper, documentation, installer, and packaging tests pass.
-- `136/136` internal acceptance scenarios have current direct RED proof.
+- `137/137` internal acceptance scenarios have current direct RED proof.
 - CI passes on the pull request for install, Python 3.9, and Python 3.12.
 - Public TYF-visible surfaces do not require private development context.
 - The exported author package excludes workshop debris and keeps clean author

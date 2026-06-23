@@ -2012,6 +2012,20 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("review-only spine recovery", orientation_text)
         self.assertIn("AI-drafted or uncertain passages", orientation_text)
         self.assertIn("Do not promote recovered text to `manuscript/`", orientation_text)
+        self.assertIn("Recovery packet", orientation_text)
+        recovery = ws / ".review" / "existing-work-recovery.md"
+        self.assertTrue(recovery.is_file())
+        recovery_text = recovery.read_text(encoding="utf-8")
+        self.assertIn("Existing work recovery", recovery_text)
+        self.assertIn("not a governed TYF manuscript", recovery_text)
+        self.assertIn("Read boundary", recovery_text)
+        self.assertIn("Extraction needed", recovery_text)
+        self.assertIn("section/spine recovery", recovery_text)
+        self.assertIn("source status", recovery_text)
+        self.assertIn("AI-drafted or uncertain passages", recovery_text)
+        self.assertIn("illustration inventory", recovery_text)
+        self.assertIn("open author decisions", recovery_text)
+        self.assertIn("Next writing move", recovery_text)
         self.assertFalse((ws / "sources" / "fragments.jsonl").exists())
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
@@ -2182,6 +2196,30 @@ class CLIBehaviour(unittest.TestCase):
         self.assertFalse((ws / "works").exists())
         self.assertIn("Arrival orientation", out)
         self.assertIn("Next: write in", out)
+
+    def test_start_with_existing_illustrated_folder_links_recovery_packet(self):
+        ws = self.ws()
+        old_book = self.tmp / "old-book-object"
+        (old_book / "chapters").mkdir(parents=True)
+        (old_book / "illustrations").mkdir(parents=True)
+        (old_book / "chapters" / "chapter-01.md").write_text(
+            "Half-raw prose and AI-drafted connective tissue.\n", encoding="utf-8")
+        (old_book / "illustrations" / "plate-01.jpg").write_bytes(b"image placeholder")
+
+        rc, out = run_tyf(["start", str(old_book), "--kind", "dump"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Existing-work recovery", out)
+        recovery = ws / ".review" / "existing-work-recovery.md"
+        self.assertTrue(recovery.is_file())
+        recovery_text = recovery.read_text(encoding="utf-8")
+        self.assertIn("chapters/chapter-01.md", recovery_text)
+        self.assertIn("illustrations/plate-01.jpg", recovery_text)
+        self.assertIn("section/spine recovery", recovery_text)
+        self.assertIn("accepted recovery map", recovery_text)
+        runway = (ws / ".review" / "writing-runway.md").read_text(encoding="utf-8")
+        self.assertIn("Existing-work recovery", runway)
+        self.assertIn(".review/existing-work-recovery.md", runway)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_first_sitting_rehearsal_from_example_scaffold_reaches_candidate_session(self):
         ws = self.ws()

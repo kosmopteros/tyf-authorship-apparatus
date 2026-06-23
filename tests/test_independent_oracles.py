@@ -147,7 +147,8 @@ def check_amanuensis_entry() -> None:
     for token in ("title_status", "_untitled_work_id", "sources/imports",
                   "sources/interviews", "cmd_import", "cmd_attend", "gentle-attention.md", "cmd_resume", "cmd_adopt",
                   "Analysis Pass For The Agent", "Containment", "_looks_tyf_shaped",
-                  "_existing_work_recovery_hints", "Existing Work Recovery", "illustration inventory",
+                  "_existing_work_recovery_hints", "_write_existing_work_recovery_packet",
+                  "Existing Work Recovery", "existing-work-recovery.md", "illustration inventory",
                   "_load_structure_record", "--record", "language-neutral JSON",
                   "_one_attention_question", "Ask this first, then stop if candidate prose can begin",
                   "Do not interview the author as if this were a form",
@@ -160,6 +161,8 @@ def check_amanuensis_entry() -> None:
         "test_import_zip_preserves_bundle_without_manuscript_write",
         "test_import_folder_preserves_tree_and_lists_without_live_merge",
         "test_import_tyf_shaped_zip_is_detected_without_merging",
+        "test_import_unreadable_binary_marks_extraction_needed_without_fragment",
+        "test_start_with_existing_illustrated_folder_links_recovery_packet",
         "test_source_fragments_are_workspace_owned_and_reusable_across_works",
         "test_adopt_author_manuscript_edit_updates_base_for_next_decision",
         "test_resume_reports_active_work_state_and_next_useful_move",
@@ -179,6 +182,7 @@ def check_amanuensis_entry() -> None:
     assert "orientation packet" in ingesting.lower()
     assert "organization principle" in ingesting.lower()
     assert "existing work recovery" in ingesting.lower()
+    assert "existing-work-recovery.md" in ingesting
     assert "illustration inventory" in ingesting.lower()
     assert "existing work recovery" in (ROOT / "skills" / "structuring-knowledge" / "SKILL.md").read_text(encoding="utf-8").lower()
     assert "tyf attend" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")

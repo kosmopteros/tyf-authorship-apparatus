@@ -1554,6 +1554,8 @@ def cmd_start(args):
     if arrival:
         print(f"  Preserved arrival: {arrival['preserved']}")
         print(f"  Arrival orientation: {arrival['orientation']}")
+        if arrival.get("recovery"):
+            print(f"  Existing-work recovery: {arrival['recovery']}")
         if arrival.get("fragment"):
             print(f"  Source fragment: {arrival['fragment']['id']}")
     print(f"  Runway: {runway}")
@@ -2962,6 +2964,8 @@ _BINARY_SOURCE_EXTS = {
     ".mp3", ".m4a", ".wav", ".aac", ".ogg", ".flac",
     ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".heic", ".webp",
 }
+_FORMATTED_WORK_EXTS = {".pages", ".doc", ".docx", ".odt", ".pdf", ".rtf"}
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".heic", ".webp", ".gif")
 _AUTO_TEXT_LIMIT = 2 * 1024 * 1024
 
 
@@ -3034,22 +3038,35 @@ def _looks_tyf_shaped(entries):
     )
 
 
-def _existing_work_recovery_hints(src, listing):
+def _existing_work_signals(src, listing):
     ext = os.path.splitext(src)[1].lower()
     lower_listing = [item.replace("\\", "/").lower() for item in listing]
-    formatted = ext in {".pages", ".doc", ".docx", ".odt", ".pdf", ".rtf"}
+    formatted = ext in _FORMATTED_WORK_EXTS
     prior_draft = formatted or any(
         token in item
         for item in lower_listing
         for token in ("manuscript", "draft", "chapter", "pages", "book")
     )
     illustrations = any(
-        item.endswith((".png", ".jpg", ".jpeg", ".tif", ".tiff", ".heic", ".webp", ".gif"))
+        item.endswith(_IMAGE_EXTS)
         or "illustration" in item
         or "image" in item
         or "art" in item
         for item in lower_listing
     )
+    return {
+        "formatted": formatted,
+        "prior_draft": prior_draft,
+        "illustrations": illustrations,
+        "detected": prior_draft or illustrations,
+    }
+
+
+def _existing_work_recovery_hints(src, listing):
+    signals = _existing_work_signals(src, listing)
+    formatted = signals["formatted"]
+    prior_draft = signals["prior_draft"]
+    illustrations = signals["illustrations"]
     if not prior_draft and not illustrations:
         return "- No obvious prior-manuscript or illustration signals were detected; still treat the arrival as source until the author classifies it."
 
@@ -3062,6 +3079,123 @@ def _existing_work_recovery_hints(src, listing):
         rows.append("- Preserve an illustration inventory with filenames, placement clues, captions, rights/source status, and whether each image is part of the argument or atmosphere.")
     rows.append("- Do not promote recovered text to `manuscript/`; place any reworked prose in `drafts/` after the author accepts the recovery map.")
     return "\n".join(rows)
+
+
+def _write_existing_work_recovery_packet(work_id, src, preserved, kind, fragment, listing, extraction_note=""):
+    signals = _existing_work_signals(src, listing)
+    if not signals["detected"]:
+        return ""
+    review_dir = _work_path(work_id, ".review")
+    _ensure_real_dir(review_dir, _work_display_path(work_id, ".review"))
+    packet = os.path.join(review_dir, "existing-work-recovery.md")
+    listing_rows = "\n".join(f"- {item}" for item in listing[:120]) or "- (no inspectable listing)"
+    preserved_display = preserved.replace(os.sep, "/")
+    if fragment:
+        read_boundary = (
+            f"- Text source fragment minted: `{fragment['id']}` ({fragment['path']}).\n"
+            "- Treat the fragment as extracted evidence, not as accepted manuscript."
+        )
+    elif extraction_note:
+        read_boundary = (
+            f"- Extraction needed: {extraction_note}\n"
+            "- Do not infer contents from the preserved artifact until OCR, transcription, conversion, or chunking has happened."
+        )
+    else:
+        read_boundary = (
+            "- No source fragment was minted automatically.\n"
+            "- Use the listing as a triage surface only; inspect files before deriving claims."
+        )
+    signal_rows = []
+    if signals["formatted"]:
+        signal_rows.append("- Formatted manuscript artifact detected.")
+    if signals["prior_draft"]:
+        signal_rows.append("- Prior-draft signals detected.")
+    if signals["illustrations"]:
+        signal_rows.append("- Illustration signals detected.")
+    signal_text = "\n".join(signal_rows) or "- Existing-work signals detected."
+    section = f"""# Existing work recovery
+
+Created: {now()}
+Work: `this book folder`
+Arrival kind: `{kind}`
+Raw material preserved at: `{preserved_display}`
+
+This artifact is not a governed TYF manuscript. It is preserved evidence for
+recovering intent, source, voice, and shape before any forward drafting.
+
+## Signals
+
+{signal_text}
+
+## Read boundary
+
+{read_boundary}
+
+## Recovery map to fill before forward drafting
+
+This packet asks for section/spine recovery, source status, AI-drafted or
+uncertain passages, illustration inventory, open author decisions, and a Next
+writing move.
+
+### Section/spine recovery
+
+- Working sections:
+- Central pressure:
+- Apparent through-line:
+- Missing or unstable transitions:
+
+### Source status
+
+- Source-backed material:
+- Material that needs author source:
+- Citations, dates, figures, or references needing verification:
+
+### Draft status
+
+- Author-originated passages:
+- Raw notes:
+- AI-drafted or uncertain passages:
+- Passages to discard, quarantine, or rework:
+
+### Voice clues
+
+- Passages that sound most like the author:
+- Phrases or rhythms to preserve:
+- Cadences that feel generic, inflated, or foreign:
+
+### Illustration inventory
+
+- Files, placement clues, captions, rights/source status:
+- Images that carry argument:
+- Images that are atmosphere, memory, or placeholder:
+
+### Open author decisions
+
+- What is this book trying to become?
+- What material is authoritative?
+- What should be rescued, rewritten, or abandoned?
+- Which image, section, or passage should guide the next sitting?
+
+### Next writing move
+
+- First candidate passage to draft in `drafts/` after the author accepts the recovery map:
+- One gentle question that would unlock that passage:
+
+## Arrival listing
+
+{listing_rows}
+
+## Boundary
+
+- Keep this packet review-only.
+- Do not promote recovered text to `manuscript/`.
+- Put reworked prose in `drafts/` only after there is an accepted recovery map.
+"""
+    if os.path.exists(packet):
+        append(packet, "\n---\n\n" + section)
+    else:
+        write(packet, section)
+    return packet
 
 
 def _copy_arrival(src, dest):
@@ -3096,7 +3230,7 @@ def _arrival_listing(path):
     return [os.path.basename(path)]
 
 
-def _write_import_orientation(work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped, extraction_note=""):
+def _write_import_orientation(work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped, recovery_packet="", extraction_note=""):
     label = os.path.splitext(os.path.basename(preserved.rstrip(os.sep)))[0]
     orientation = os.path.join("sources", "imports", f"{label}-orientation.md")
     if os.path.exists(orientation):
@@ -3104,6 +3238,11 @@ def _write_import_orientation(work_id, src, preserved, kind, fragment, created_w
     rows = "\n".join(f"- {item}" for item in listing[:120]) or "- (no inspectable listing)"
     shape = "TYF-shaped workspace/archive signals detected." if zip_tyf_shaped else "Classification required; do not assume this dump is already organized."
     recovery_hints = _existing_work_recovery_hints(src, listing)
+    recovery_line = (
+        f"- Recovery packet: `{recovery_packet.replace(os.sep, '/')}`"
+        if recovery_packet
+        else "- No dedicated recovery packet was created; use this orientation until the author classifies the arrival."
+    )
     if fragment:
         frag_line = (
             f"- Source fragment: `{fragment['id']}` ({fragment['path']})\n"
@@ -3137,6 +3276,8 @@ No manuscript text was written.
 ## Existing Work Recovery
 
 {recovery_hints}
+
+{recovery_line}
 
 ## Arrival Listing
 
@@ -3181,16 +3322,19 @@ def _import_arrival(args, announce=True):
     extraction_note = _extraction_needed_note(src, text)
     listing = _arrival_listing(src)
     zip_tyf_shaped = zipfile.is_zipfile(src) and _looks_tyf_shaped(listing)
+    recovery_packet = _write_existing_work_recovery_packet(
+        work_id, src, preserved, kind, fragment, listing, extraction_note)
     orientation = _write_import_orientation(
-        work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped, extraction_note)
+        work_id, src, preserved, kind, fragment, created_work, listing, zip_tyf_shaped, recovery_packet, extraction_note)
     log_event(".", "import", f"{work_id}/{os.path.basename(preserved)}",
-              f"kind={kind} orientation={orientation} fragment={fragment['id'] if fragment else 'none'}")
+              f"kind={kind} orientation={orientation} recovery={recovery_packet or 'none'} fragment={fragment['id'] if fragment else 'none'}")
     result = {
         "work_id": work_id,
         "created_work": created_work,
         "src": src,
         "preserved": preserved,
         "orientation": orientation,
+        "recovery": recovery_packet,
         "fragment": fragment,
         "kind": kind,
     }
@@ -3199,6 +3343,8 @@ def _import_arrival(args, announce=True):
         print(f"  Work id: {work_id}")
         print(f"  Preserved: {preserved}")
         print(f"  Orientation: {orientation}")
+        if recovery_packet:
+            print(f"  Existing-work recovery: {recovery_packet}")
         if fragment:
             print(f"Source fragment: {fragment['id']}")
         if extraction_note:
@@ -3244,6 +3390,7 @@ def _write_start_runway(work_id, arrival=None):
     runway, draft = _start_paths(work_id)
     orientation = arrival.get("orientation") if arrival else ""
     preserved = arrival.get("preserved") if arrival else ""
+    recovery = arrival.get("recovery") if arrival else ""
     starter, _seed = _ensure_first_session_packet(work_id)
     preserved_existing = os.path.exists(runway)
     if preserved_existing:
@@ -3253,6 +3400,7 @@ def _write_start_runway(work_id, arrival=None):
 
 {f"- Arrival orientation: `{orientation.replace(os.sep, '/')}`" if orientation else "- No arrival orientation was created in this command."}
 {f"- Raw material preserved at: `{preserved.replace(os.sep, '/')}`" if preserved else "- No new raw material was preserved in this command."}
+{f"- Existing-work recovery: `{recovery.replace(os.sep, '/')}`" if recovery else "- No existing-work recovery packet was created in this command."}
 - Existing runway text above was preserved. Use `tyf resume` to return without losing session notes.
 """)
     else:
@@ -3271,6 +3419,7 @@ A faithful next candidate beats an endless perfection pass.
 
 {f"- Arrival orientation: `{orientation.replace(os.sep, '/')}`" if orientation else "- No arrival was provided in this command."}
 {f"- Raw material preserved at: `{preserved.replace(os.sep, '/')}`" if preserved else "- Use the first-session packet and any existing sources."}
+{f"- Existing-work recovery: `{recovery.replace(os.sep, '/')}`" if recovery else "- Existing-work recovery: not needed yet, unless the author classifies a prior artifact as existing work."}
 - First-session evidence: `{starter.replace(os.sep, '/')}`
 
 ## Session Move

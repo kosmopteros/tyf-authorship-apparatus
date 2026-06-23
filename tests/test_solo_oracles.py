@@ -20,7 +20,7 @@ def check_helper() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
-        "audit", "accept", "adopt", "write", "doctor", "check", "structure", "character",
+        "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
         "consult-character",
     }
     missing = sorted(
@@ -30,7 +30,7 @@ def check_helper() -> None:
     assert not missing, f"missing TYF commands: {missing}"
     for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_character",
                     "cmd_consult_character", "cmd_resume",
-                    "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_accept",
+                    "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
                     "cmd_adopt"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
@@ -58,11 +58,12 @@ def check_gate() -> None:
     tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
     controlling = (ROOT / "skills" / "controlling-manuscript-writes" / "SKILL.md").read_text(encoding="utf-8")
 
-    for token in ("cmd_propose", "cmd_accept", "--decision", "--lines", "base_sha256",
+    for token in ("cmd_propose", "cmd_review", "cmd_accept", "--decision", "--lines", "base_sha256",
                   "src_sha256", "acceptance_evidence", "accepted_ranges",
                   "--patch", "accepted_patch", "_apply_unified_patch",
                   "_require_patch_file", "_accepted_patch_problems",
                   "_passing_audit_for", "_require_record_integrity", "_write_audit_report",
+                  "_write_author_review_packet", "_author_review_for", "author_review_packet",
                   "record-seals.jsonl", "_acquire_unit_lock", "_release_unit_lock",
                   ".lock.json", "atomic_write", "_set_work_status",
                   "_require_work_status", "ready-for-audit", "needs-revision",
@@ -90,8 +91,11 @@ def check_gate() -> None:
     assert "test_accept_refuses_before_passing_audit_state" in tests
     assert "test_accept_refuses_after_failed_audit_state" in tests
     assert "test_accept_requires_audit_for_the_same_proposal" in tests
+    assert "test_accept_requires_author_review_packet" in tests
+    assert "test_write_and_doctor_refuse_tampered_author_review_packet" in tests
     assert "test_write_refuses_when_work_status_is_not_accepted" in tests
     assert "proposal record" in controlling.lower()
+    assert "author review packet" in controlling.lower()
     assert "decision record" in controlling.lower()
     assert "record-seals.jsonl" in controlling
     assert "lock" in controlling.lower()

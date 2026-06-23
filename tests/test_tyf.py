@@ -97,6 +97,8 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", work, unit, "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", work, proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(["accept", work, proposal, "--evidence", "author accepted this proposal"], ws)
         self.assertEqual(rc, 0, out)
         m = re.search(r"Decision:\s+(\S+)", out)
@@ -188,8 +190,52 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", "demo", "ch1.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(["accept", "demo", proposal, "--evidence", "Alexander: accept this file"], ws)
         self.assertEqual(rc, 0, out)
+
+    def test_accept_requires_author_review_packet(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(
+            ws, name="chapter.md",
+            text="Claim: the house kept the weather.\n[AUTHOR: needed - date]\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        self.assertIn("tyf review", out)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: yes, accept this"], ws)
+        self.assertNotEqual(rc, 0, "acceptance must not proceed before author review")
+        self.assertRegex(out.lower(), r"review|author")
+
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
+        review = re.search(r"Author review:\s+(\S+)", out).group(1)
+        packet_path = ws / "works/demo/.review/author-reviews" / f"{review}.md"
+        self.assertTrue(packet_path.is_file(), out)
+        packet = packet_path.read_text(encoding="utf-8")
+        self.assertIn("What the author is approving", packet)
+        self.assertIn("What would change", packet)
+        self.assertIn("Source support", packet)
+        self.assertIn("Uncertainties", packet)
+        self.assertIn("[AUTHOR: needed - date]", packet)
+        self.assertIn("Author choices", packet)
+        self.assertIn("This is not manuscript text", packet)
+        self.assertEqual(list((ws / "works/demo/manuscript").iterdir()), [])
+
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: yes, accept this"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        decision_data = json.loads(
+            (ws / "works/demo/.review/decisions" / f"{decision}.json").read_text(encoding="utf-8"))
+        self.assertEqual(decision_data["author_review_id"], review)
 
     def test_gate_updates_work_status_across_transitions(self):
         ws = self.ws()
@@ -205,6 +251,8 @@ class CLIBehaviour(unittest.TestCase):
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
         self.assertEqual(self.work_status(ws), "audited")
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
         self.assertEqual(rc, 0, out)
@@ -284,6 +332,8 @@ class CLIBehaviour(unittest.TestCase):
         work_yaml = ws / "works/demo/work.yaml"
         work_yaml.write_text(work_yaml.read_text(encoding="utf-8").replace(
             "status: drafting", "status: audited"), encoding="utf-8")
+        rc, out = run_tyf(["review", "demo", second_proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", second_proposal,
              "--evidence", "Alexander: accept this second proposal"], ws)
@@ -329,6 +379,8 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1,3-4",
              "--evidence", "Alexander: accept lines 1, 3, and 4"], ws)
@@ -351,6 +403,8 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "2-1",
@@ -399,6 +453,8 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
              "--evidence", "Alexander: accept this exact patch"], ws)
@@ -427,6 +483,8 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         patches = ws / "works/demo/.review/patches"
         patches.mkdir(parents=True, exist_ok=True)
         (patches / "chapter.patch").write_text(
@@ -450,6 +508,8 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
         patches = ws / "works/demo/.review/patches"
         patches.mkdir(parents=True, exist_ok=True)
@@ -483,6 +543,8 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
@@ -520,6 +582,8 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
              "--evidence", "Alexander: accept this patch"], ws)
@@ -542,6 +606,8 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(
             ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1",
@@ -569,6 +635,8 @@ class CLIBehaviour(unittest.TestCase):
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
         audit = re.search(r"Audit:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
         self.assertEqual(rc, 0, out)
@@ -580,6 +648,37 @@ class CLIBehaviour(unittest.TestCase):
         audit_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
         self.assertNotEqual(rc, 0, "tampered audit records must not satisfy the Gate")
+        self.assertFalse((ws / "works/demo/manuscript/chapter.md").exists())
+
+    def test_write_and_doctor_refuse_tampered_author_review_packet(self):
+        ws = self.ws()
+        run_tyf(["new-work", "demo"], ws)
+        src = self.make_draft(ws, name="chapter.md", text="draft\n")
+        rc, out = run_tyf(["propose", "demo", "--from", src], ws)
+        self.assertEqual(rc, 0, out)
+        proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["audit", "demo", "chapter.md", "--record", "--proposal", proposal,
+             "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "demo", proposal], ws)
+        self.assertEqual(rc, 0, out)
+        review = re.search(r"Author review:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+        self.assertEqual(rc, 0, out)
+        decision = re.search(r"Decision:\s+(\S+)", out).group(1)
+        packet_path = ws / "works/demo/.review/author-reviews" / f"{review}.md"
+        packet_path.write_text(
+            packet_path.read_text(encoding="utf-8") + "\nUnaccepted change.\n",
+            encoding="utf-8",
+        )
+
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor must flag author review packets changed after review")
+        self.assertRegex(out.lower(), r"author review|packet|changed|hash|tamper")
+        rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
+        self.assertNotEqual(rc, 0, "write must refuse an author review packet changed after acceptance")
         self.assertFalse((ws / "works/demo/manuscript/chapter.md").exists())
 
     def test_doctor_flags_tampered_gate_record(self):
@@ -976,6 +1075,8 @@ class CLIBehaviour(unittest.TestCase):
             ["audit", "new-book", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "new-book", proposal], ws)
+        self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "new-book", proposal,
              "--evidence", "Alexander: accept this source-grounded proposal"], ws)
@@ -1077,6 +1178,8 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(
             ["audit", "new-book", "chapter.md", "--record", "--proposal", proposal,
              "--verdict", "pass", "--findings-answered"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["review", "new-book", proposal], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "new-book", proposal,

@@ -21,6 +21,7 @@ Commands:
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
   tyf propose <work-id> --from <draft>    create a manuscript proposal record
+  tyf review <work-id> <proposal-id>      write an author-readable review packet
   tyf audit <work-id> <unit>              print or record the audit checklist
   tyf accept <work-id> <proposal-id>      create an author decision record
   tyf adopt <work-id> <unit> --evidence E adopt a direct author manuscript edit
@@ -47,7 +48,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, import, capture,
-  propose, audit --record, accept, adopt, write, mark-ready) runs `check` as a
+  propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -1077,7 +1078,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions, then pass relevant ids to `tyf propose --source-ref <id>`.
-- Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author decision, and `tyf write --decision <id>`.
+- Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
 - If the author edits `manuscript/` directly, use `tyf adopt work <unit> --evidence "<what happened>"` before the next controlled write.
 - Use `tyf resume` to recover the active work, pending proposals, open prompts, and next move.
@@ -1405,7 +1406,7 @@ Active work: `{work_id}`
 4. Use `structuring-knowledge` to turn captured material into claims, gaps, and possible shape.
 5. Draft candidates only in `{_work_display_path(work_id, "drafts")}/`.
 6. Run `tyf audit {work_id} <unit>` before treating a unit as ready.
-7. Move text into `manuscript/` only after `tyf propose`, `tyf audit --record`, `tyf accept`, and `tyf write --decision`.
+7. Move text into `manuscript/` only after `tyf propose`, `tyf audit --record`, `tyf review`, `tyf accept`, and `tyf write --decision`.
 
 ## Guardrails
 
@@ -1485,7 +1486,7 @@ def cmd_begin(args):
     print(f"  seed outline         : {seed}")
     print(f"  review runway        : {runway}")
     print("Next: fill the packet, use `tyf capture` for short source notes,")
-    print("then draft candidates in drafts/ only. Manuscript writes require proposal, audit, decision, and `tyf write --decision`.")
+    print("then draft candidates in drafts/ only. Manuscript writes require proposal, audit, review, decision, and `tyf write --decision`.")
 
 def cmd_start(args):
     _require_workspace()
@@ -2160,7 +2161,7 @@ No manuscript text was written.
 3. If the bundle is TYF-shaped, compare its book, `sources/`, `knowledge-base/`, and `voice/` surfaces to this workspace and propose a merge plan instead of copying over live files.
 4. For random dumps, ask the author which materials are authoritative, private, obsolete, or exploratory.
 5. Mint additional source fragments only for text the author wants preserved as evidence.
-6. Keep candidate prose in `{_work_display_path(work_id, "drafts")}/`; manuscript still requires proposal, audit, author decision, and `tyf write --decision`.
+6. Keep candidate prose in `{_work_display_path(work_id, "drafts")}/`; manuscript still requires proposal, audit, author review, author decision, and `tyf write --decision`.
 """)
     return orientation
 
@@ -2683,6 +2684,54 @@ def _accepted_patch_problems(work, record):
     return []
 
 
+def _author_review_packet_problems(work, record):
+    if not isinstance(record, dict):
+        return []
+    review_id = record.get("author_review_id")
+    if review_id or record.get("author_review_packet"):
+        problems = []
+        if not review_id:
+            return [f"{work}: decision names an author review packet without a review id"]
+        review_path = _review_path(work, "reviews", review_id)
+        if not os.path.isfile(review_path):
+            return [f"{work}: missing author review record: {review_id}"]
+        try:
+            review = json.loads(_read(review_path))
+        except json.JSONDecodeError as e:
+            return [f"{work}: invalid author review record {review_id}: {e}"]
+        if review.get("proposal_id") != record.get("proposal_id"):
+            problems.append(f"{work}: author review {review_id} does not match decision proposal")
+        if record.get("author_review_packet") != review.get("packet"):
+            problems.append(f"{work}: decision points to a different author review packet than {review_id}")
+        problems.extend(_author_review_packet_problems(work, review))
+        return problems
+
+    packet = record.get("packet")
+    expected = record.get("packet_sha256")
+    if not packet and not expected:
+        return []
+    if not packet:
+        return [f"{work}: author review record has no packet path"]
+    if os.path.isabs(packet):
+        return [f"{work}: author review packet uses an absolute path"]
+    try:
+        _reject_symlink_components(packet, "author review packet")
+    except SystemExit as e:
+        return [str(e)]
+    root = os.path.realpath(".")
+    real = os.path.realpath(packet)
+    review_root = os.path.realpath(_work_path(work, ".review", "author-reviews"))
+    if not _within(root, real):
+        return [f"{work}: author review packet resolves outside the workspace: {packet}"]
+    if not _within(review_root, real):
+        return [f"{work}: author review packet is outside {_work_display_path(work, '.review/author-reviews')}/: {packet}"]
+    if not os.path.isfile(real):
+        return [f"{work}: missing author review packet: {packet}"]
+    if expected and _file_sha256(real) != expected:
+        return [f"{work}: author review packet hash mismatch; packet may be tampered: {packet}"]
+    return []
+
+
 def _patch_header_filename(line):
     parts = line.strip().split()
     if len(parts) < 2 or parts[1] == "/dev/null":
@@ -2911,12 +2960,165 @@ def cmd_propose(args):
     print(f"  destination: {proposal['dest']}")
     if source_refs:
         print("  source refs: " + ", ".join(ref["id"] for ref in source_refs))
-    print("Next: record an audit and author decision before writing.")
+    print(f"Next: record an audit, run `tyf review {work} {proposal_id}`, then accept only what the author approves.")
 
 
 def _review_rel(path):
     rel = path.replace(os.sep, "/")
     return rel[2:] if rel.startswith("./") else rel
+
+
+def _source_gap_lines(path, limit=8):
+    gaps = []
+    try:
+        for i, line in enumerate(_read(path).splitlines(), 1):
+            if "[AUTHOR:" in line:
+                gaps.append(f"- line {i}: {line.strip()}")
+                if len(gaps) >= limit:
+                    break
+    except OSError:
+        return ["- Draft could not be read for gap extraction."]
+    return gaps or ["- No `[AUTHOR: ...]` gaps visible in the candidate draft."]
+
+
+def _source_preview(path, limit=18):
+    try:
+        lines = _read(path).splitlines()
+    except OSError:
+        return "(draft could not be read)"
+    shown = lines[:limit]
+    preview = "\n".join(shown).strip()
+    if len(lines) > limit:
+        preview += f"\n\n... {len(lines) - limit} more line(s) not shown in this packet."
+    return preview or "(draft is empty)"
+
+
+def _write_author_review_packet(work, review_id, proposal, audit):
+    packet_dir = _work_path(work, ".review", "author-reviews")
+    _ensure_real_dir(packet_dir, ".review/author-reviews/")
+    packet_path = os.path.join(packet_dir, f"{review_id}.md")
+    src_refs = proposal.get("source_refs", [])
+    src_ref_lines = "\n".join(
+        f"- `{ref.get('id')}` from `{ref.get('path')}`"
+        for ref in src_refs
+    ) or "- No source refs are attached. The author should confirm whether this is source-grounded enough."
+    base = proposal.get("base_sha256")
+    base_line = (
+        f"- Existing manuscript base hash: `{base}`"
+        if base else "- This would create a new manuscript unit."
+    )
+    audit_line = (
+        f"- Passing audit: `{audit.get('id')}`"
+        + (f" with report `{audit.get('report')}`" if audit.get("report") else "")
+        if audit else "- No passing audit with answered findings yet. Acceptance will refuse until one exists."
+    )
+    gap_lines = "\n".join(_source_gap_lines(proposal["src"]))
+    preview = _source_preview(proposal["src"])
+    write(packet_path, f"""# Author review: {review_id}
+
+Work: `{work}`
+Proposal: `{proposal.get('id')}`
+Destination: `{proposal.get('dest')}`
+Created: `{now()}`
+
+This is not manuscript text. It is the author-readable review packet for deciding what, if anything, may be accepted.
+
+## What the author is approving
+
+- Candidate draft: `{proposal.get('src')}`
+- Manuscript unit: `{proposal.get('unit')}`
+- Draft hash: `{proposal.get('src_sha256')}`
+{base_line}
+
+## What would change
+
+- If accepted whole, the candidate draft becomes the proposed manuscript unit through `tyf write`.
+- If accepted by line range, only those candidate source lines enter the manuscript.
+- If accepted by patch, only the reviewed patch enters the manuscript.
+- No text is written by this review packet.
+
+## Source support
+
+{src_ref_lines}
+
+## Audit status
+
+{audit_line}
+
+## Uncertainties
+
+{gap_lines}
+
+## Candidate preview
+
+```text
+{preview}
+```
+
+## Author choices
+
+- Accept the whole proposal only if it is faithful: `tyf accept {work} {proposal.get('id')} --evidence "<author acceptance>"`
+- Accept selected source lines: `tyf accept {work} {proposal.get('id')} --lines 2,5-8 --evidence "<author acceptance>"`
+- Accept an exact reviewed patch: `tyf accept {work} {proposal.get('id')} --patch .review/patches/<file>.patch --evidence "<author acceptance>"`
+- Ask for revision or more source instead of accepting.
+""")
+    return _review_rel(packet_path)
+
+
+def _author_review_for(work, proposal_id, proposal_hash):
+    review_dir = _work_path(work, ".review", "reviews")
+    if not os.path.isdir(review_dir):
+        return None
+    for name in sorted(os.listdir(review_dir), reverse=True):
+        if not name.endswith(".json"):
+            continue
+        review = _read_json(os.path.join(review_dir, name))
+        review_id = os.path.splitext(name)[0]
+        if review.get("id") != review_id or review.get("work") != work:
+            sys.exit(f"Refused: author review record {review_id} does not belong to work {work}.")
+        if (review.get("proposal_id") == proposal_id
+                and review.get("proposal_hash") == proposal_hash):
+            _require_record_integrity(work, "review", review_id, review)
+            packet = review.get("packet")
+            if not packet or not os.path.isfile(packet):
+                sys.exit("Refused: author review packet is missing; run `tyf review` again.")
+            if _file_sha256(packet) != review.get("packet_sha256"):
+                sys.exit("Refused: author review packet changed after review; run `tyf review` again.")
+            return review
+    return None
+
+
+def cmd_review(args):
+    _require_workspace()
+    work = _safe_work_id(args.work)
+    _confine_work(work)
+    _require_work(work)
+    proposal = _load_proposal(work, args.proposal)
+    if _file_sha256(proposal["src"]) != proposal.get("src_sha256"):
+        sys.exit("Refused: proposal source changed before author review.")
+    _require_source_ref_integrity(work, proposal.get("source_refs", []))
+    proposal_hash = _canonical_hash(proposal)
+    audit = _passing_audit_for(work, args.proposal, proposal_hash)
+    review_id = _record_id("review", work, args.proposal, proposal_hash)
+    packet = _write_author_review_packet(work, review_id, proposal, audit)
+    review = {
+        "id": review_id,
+        "work": work,
+        "proposal_id": args.proposal,
+        "proposal_hash": proposal_hash,
+        "packet": packet,
+        "packet_sha256": _file_sha256(packet),
+        "created_at": now(),
+    }
+    _write_review_record(work, "reviews", "review", review_id, review)
+    log_event(".", "review", f"{work}/{review_id}", f"proposal={args.proposal}")
+    print(f"Author review: {review_id}")
+    print(f"  packet: {packet}")
+    if audit:
+        print(f"  audit: {audit.get('id')}")
+    else:
+        print("  audit: no passing audit yet")
+    print("Next: show this packet to the author; accept only the scope they approve.")
 
 
 def _write_audit_report(work, audit_id, audit, proposal):
@@ -3040,6 +3242,9 @@ def cmd_accept(args):
     proposal_hash = _canonical_hash(proposal)
     if _passing_audit_for(work, args.proposal, proposal_hash) is None:
         sys.exit("Refused: author acceptance requires a passing audit record with answered findings for this proposal.")
+    author_review = _author_review_for(work, args.proposal, proposal_hash)
+    if author_review is None:
+        sys.exit("Refused: author acceptance requires an author review packet. Run `tyf review <work> <proposal-id>` and show it to the author first.")
     if getattr(args, "lines", None) and getattr(args, "patch", None):
         sys.exit("Refused: choose either --lines or --patch for one author decision, not both.")
     accepted_patch = None
@@ -3073,6 +3278,8 @@ def cmd_accept(args):
         "accepted_scope": accepted_scope,
         "accepted_ranges": accepted_ranges,
         "accepted_patch": accepted_patch,
+        "author_review_id": author_review.get("id"),
+        "author_review_packet": author_review.get("packet"),
         "accepted_by": _one_line(args.accepted_by, "author"),
         "acceptance_evidence": evidence,
         "decided_at": now(),
@@ -3115,7 +3322,7 @@ def cmd_adopt(args):
     print(f"Adopted author edit: {dest}")
     print(f"  sha256: {digest}")
     print(f"  preserved copy: {revision}")
-    print("Next: proposals against this manuscript base can proceed through audit, acceptance, and write.")
+    print("Next: proposals against this manuscript base can proceed through audit, review, acceptance, and write.")
 
 def cmd_write(args):
     _require_workspace()
@@ -3123,9 +3330,9 @@ def cmd_write(args):
     _confine_work(work)
     _require_work(work)
     if getattr(args, "confirm", False):
-        sys.exit("Refused: naked --confirm is retired. Use `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision <id>`.")
+        sys.exit("Refused: naked --confirm is retired. Use `tyf propose`, `tyf audit --record`, `tyf review`, `tyf accept`, then `tyf write --decision <id>`.")
     if not args.decision:
-        sys.exit("Refused: manuscript writes require an author decision record. Run `tyf propose`, `tyf audit --record`, `tyf accept`, then `tyf write --decision <id>`.")
+        sys.exit("Refused: manuscript writes require an author decision record. Run `tyf propose`, `tyf audit --record`, `tyf review`, `tyf accept`, then `tyf write --decision <id>`.")
     if getattr(args, "force", False):
         sys.exit("Refused: --force is retired. Create a new proposal against the current manuscript base.")
     _require_work_status(work, "accepted", "controlled manuscript write")
@@ -3134,6 +3341,12 @@ def cmd_write(args):
     proposal_hash = _canonical_hash(proposal)
     if decision.get("proposal_hash") != proposal_hash:
         sys.exit("Refused: decision no longer matches the proposal record.")
+    author_review = _author_review_for(work, decision["proposal_id"], proposal_hash)
+    if author_review is None:
+        sys.exit("Refused: author review record is missing for this decision.")
+    if (decision.get("author_review_id") != author_review.get("id")
+            or decision.get("author_review_packet") != author_review.get("packet")):
+        sys.exit("Refused: decision no longer matches the author review record.")
     src = decision["src"]
     if args.src and os.path.normpath(args.src) != os.path.normpath(src):
         sys.exit("Refused: --from does not match the accepted proposal source.")
@@ -3201,7 +3414,7 @@ def _review_record_integrity_problems(work):
     problems = []
     _entries, seal_problems = _read_record_seals(work)
     problems.extend(seal_problems)
-    for folder, kind in (("proposals", "proposal"), ("audits", "audit"), ("decisions", "decision")):
+    for folder, kind in (("proposals", "proposal"), ("reviews", "review"), ("audits", "audit"), ("decisions", "decision")):
         d = _work_path(work, ".review", folder)
         if not os.path.isdir(d):
             continue
@@ -3223,6 +3436,7 @@ def _review_record_integrity_problems(work):
                 problems.append(problem)
             problems.extend(_source_ref_problems(work, data.get("source_refs", [])))
             problems.extend(_accepted_patch_problems(work, data))
+            problems.extend(_author_review_packet_problems(work, data))
     return problems
 
 
@@ -3581,7 +3795,7 @@ def _command_requires_event_journal(args):
     return cmd in {
         "new-work", "start", "begin", "import", "capture", "structure", "character",
         "consult-character", "open", "mark-ready",
-        "propose", "accept", "adopt", "write", "snapshot", "dismiss",
+        "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
 
 
@@ -3652,6 +3866,10 @@ def main():
     s.add_argument("--source-ref", dest="source_refs", action="append", default=[],
                    help="source fragment id(s) grounding this proposal; repeat or comma-separate")
     s.set_defaults(fn=cmd_propose)
+    s = sub.add_parser("review", help="write an author-readable review packet for a proposal")
+    s.add_argument("work")
+    s.add_argument("proposal")
+    s.set_defaults(fn=cmd_review)
     s = sub.add_parser("audit")
     s.add_argument("work")
     s.add_argument("unit")
@@ -3712,7 +3930,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "propose", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

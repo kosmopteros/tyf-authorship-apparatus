@@ -23,13 +23,14 @@ If any precondition is missing, do not draft. Go upstream: `ingesting-sources`, 
 
 ## Character consultation
 
-When the author asks "what would <character> say here?", answer through containment rather than open roleplay. A character consultation may sound like the character, but it is still candidate dramatic insight inside the amanuensis, not truth, evidence, source, manuscript, or a replacement for the author.
+When the author asks "what would <character> say here?", answer through containment rather than open roleplay. A character consultation may sound like the character, but it is still candidate dramatic insight inside the amanuensis, not truth, evidence, source, manuscript, or a replacement for the author. The author's ordinary craft question may trigger hidden sub-agent machinery when the host supports it, but only the amanuensis orchestrates that machinery.
 
 1. Check for `knowledge-base/characters/<name>.md` and `voice/characters/<name>.md`.
 2. If the author just supplied character facts or voice notes, capture them with `tyf character <name> --knowledge ... --voice ...`.
 3. Run `tyf consult-character work <name> --prompt "<the author's question>"`.
 4. Read the `.review/character-consults/` packet before answering in chat or drafting candidate text.
-5. Do not import another character's knowledge or voice. Mark missing material as `[AUTHOR: needed - what]`.
+5. If a bounded sub-agent is useful, give it only that packet. It may produce a little roleplay as candidate lines, but it may not read other characters, sources, manuscript, or workspace state.
+6. Do not import another character's knowledge or voice. Mark missing material as `[AUTHOR: needed - what]`.
 
 ## The disciplined move
 
@@ -52,6 +53,7 @@ Mark the output as a candidate. Write it to the work's drafts, never directly in
 - Drafting from a one-line prompt with no knowledge base behind it.
 - Drafting from a preserved source fragment before it has been structured or marked unclassified.
 - Letting character roleplay cross-contaminate another character's voice or knowledge.
+- Asking the author to manage sub-agents for a normal dramatic question.
 - Inventing a statistic, quote, source, or anecdote.
 - Choosing a voice the author did not select.
 - Writing straight into `manuscript/` instead of `drafts/`.

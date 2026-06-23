@@ -118,6 +118,21 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual((ws / "ASSUMPTIONS.md").read_text(encoding="utf-8"),
                          "CUSTOM CONTENT\n")
 
+    def test_init_from_installed_helper_does_not_warn_about_missing_pack_skills(self):
+        packless = self.tmp / "packless-install-root"
+        packless.mkdir()
+        env = {**os.environ, "TYF_PACK_ROOT": str(packless)}
+        p = subprocess.run(
+            [sys.executable, str(TYF), "init", "book"],
+            cwd=str(self.tmp), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", env=env,
+        )
+        out = p.stdout + p.stderr
+        self.assertEqual(p.returncode, 0, out)
+        self.assertIn("Founded workspace", out)
+        self.assertNotIn("[doc-hook]", out)
+        self.assertNotIn("no skills/ directory", out)
+
     def test_init_creates_single_work_root_layout(self):
         ws = self.ws()
         for path in ("work.yaml", "style-sheet.md", "outline", "drafts", "manuscript", ".review"):
@@ -1201,6 +1216,10 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("not evidence", packet)
         self.assertIn("not manuscript", packet)
         self.assertIn("Ground only in this character dossier", packet)
+        self.assertIn("Sub-agent containment contract", packet)
+        self.assertIn("The author is not asked to manage sub-agents", packet)
+        self.assertIn("A little roleplay is allowed only as candidate lines", packet)
+        self.assertIn("Return to the amanuensis, not to manuscript", packet)
         self.assertIn("Mark knows the archive was locked before winter.", packet)
         self.assertIn("short, dry, protective", packet)
         self.assertIn("What would Mark say in response to the opened archive?", packet)

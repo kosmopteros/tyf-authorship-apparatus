@@ -1961,6 +1961,16 @@ replacement for the author.
 - Return a candidate dramatic insight, not an assertion of truth.
 - The answer may be playful or voiced, but it stays quarantined until the author uses it.
 
+## Sub-agent containment contract
+
+- If the host supports sub-agents, the amanuensis may hand only this packet to one bounded character worker.
+- The author is not asked to manage sub-agents or name this machinery.
+- The worker may read the prompt, this character knowledge dossier, and this character voice dossier.
+- The worker may not read other character dossiers, source files, manuscript files, or workspace state.
+- A little roleplay is allowed only as candidate lines grounded in this dossier.
+- Return to the amanuensis, not to manuscript.
+- The amanuensis may then answer the author in ordinary chat or draft candidate text in `drafts/`.
+
 ## Character knowledge dossier
 
 {knowledge.strip()}
@@ -3540,6 +3550,8 @@ def _doc_hook_tail():
     structure changed. Silenced by TYF_NO_DOC_HOOK=1.
     """
     if os.environ.get("TYF_NO_DOC_HOOK") == "1":
+        return
+    if not os.path.isdir(os.path.join(_pack_root(), "skills")):
         return
     try:
         problems, _ = run_doc_check()

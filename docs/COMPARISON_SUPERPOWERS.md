@@ -13,7 +13,7 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 | Superpowers skill | TYF analogue | Shared failure mode both must survive |
 |---|---|---|
 | `using-superpowers` (dispatcher) | `using-tyf` | Agent rationalizes "no skill applies" and skips the system. Both answer with a hard "if it might apply even 1%, use it." Superpowers is blunter and more imperative; TYF is gentler, which is arguably weaker under pressure. |
-| `writing-skills` (TDD-for-skills) | `docs/WRITING_TYF_SKILLS.md` + `keeping-documentation-honest` | A skill written without watching an agent fail first teaches the wrong thing. Superpowers makes RED-GREEN mandatory and is explicit that this is the core. TYF preaches it but, by its own admission, has not actually run the RED/GREEN loop in a harness. This is TYF's single biggest credibility gap. |
+| `writing-skills` (TDD-for-skills) | `docs/WRITING_TYF_SKILLS.md` + `keeping-documentation-honest` | A skill written without watching an agent fail first teaches the wrong thing. Superpowers makes RED-GREEN mandatory and is explicit that this is the core. TYF now has direct RED proof for 106/106 command-backed SOLO Be, but the prompt-level skill pressure loop has only one weak-baseline subagent run. This remains TYF's biggest proof gap. |
 | `brainstorming` | `interviewing-the-author` | Agent supplies the idea instead of eliciting it. Both center elicitation. TYF's thesis-interrogation is arguably deeper; superpowers' is better battle-tested. |
 | `writing-plans` | `structuring-knowledge` + outline | Plan/structure is invented rather than derived; too vague to act on. Superpowers' "clear enough for a junior with no judgement" bar is a sharper acceptance test than TYF's. |
 | `executing-plans` / `subagent-driven-development` | (no direct analogue) | Execution drifts from the plan. **TYF has no execution-discipline skill.** Authorship's "execution" is composing, which TYF gates hard, but it has nothing about sustaining a long multi-session build the way superpowers' plan-execution does. |
@@ -34,7 +34,7 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 5. **Distribution architecture.** Superpowers solved skills-auto-update and community contribution via a plugin-shim-plus-skills-repo split. TYF ships as a static bundle with no update path.
 6. **Review as a first-class loop.** Two dedicated review skills (request, receive). TYF folds critique into editing and auditing without a dedicated receiving-critique discipline.
 
-## Where TYF has genuinely gone further (as design, pending proof)
+## Where TYF has genuinely gone further (as implemented design, pending usage)
 
 1. **A real state and memory layer.** Superpowers' state is largely the git repo and the plan files. TYF has an explicit workspace contract, an idempotent initializer, a hash-chained JSONL apparatus event journal, a SQLite notice index, and the content-addressed notice ledger. For a domain without git, this is more than superpowers offers, and the attentive-amanuensis loop (surface-only, never modifies, dismissed-with-resurface) has no superpowers equivalent.
 2. **The write boundary as a hard contract.** Superpowers trusts the agent to follow TDD. TYF makes the manuscript reachable only through proposal, audit, author review packet, decision, and `tyf write --decision`, with source and base hashes plus `tyf doctor` detecting out-of-band edits. For irreplaceable authored prose this is a stronger guarantee than "please follow the methodology."
@@ -44,14 +44,14 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 
 ## Where TYF is fooling itself
 
-1. **Partial proof is partial proof.** Every "stronger guarantee" above is still a young design claim. Superpowers earned its confidence through usage; TYF has borrowed the *form* of that confidence (rationalization tables, RED/GREEN scenarios) and now has only a first subagent run. GREEN passed 11/11, but the RED baseline was weak, so the proof is partial rather than settled.
+1. **Partial proof is partial proof.** The command-backed helper/SOLO contract is no longer paper-only: 106/106 Be have direct RED proof, and the stdlib helper suite has 142 tests. Superpowers earned its confidence through usage; TYF still has only a first prompt-level subagent pressure run. GREEN passed 11/11, but the RED baseline was weak, so skill-pressure proof remains partial rather than settled.
 2. **Surface-area-to-usage ratio.** TYF has 16 skills, a broad helper CLI, a SQLite layer, visible reflex hooks, and an opt-in LLM pass, for zero real users. Superpowers grew its surface from usage. TYF risks being over-engineered for problems no author has actually hit.
 3. **Gentleness as a liability.** TYF's tone is faithful and warm. Superpowers learned that under pressure, agents need blunt imperatives. TYF's softer dispatch may rationalize more easily, the exact failure its rationalization tables try to prevent.
 4. **The redactor/voice substrates are unproven at scale.** They are elegant on paper. Whether an agent actually consults them at every band, every pass, under a long real project, is unknown.
 
 ## What TYF should steal from superpowers next
 
-1. **Repeat and strengthen the RED/GREEN loop.** This is non-negotiable. The first subagent run is useful, but TYF needs stronger RED baselines, repeated harness runs, and evidence that failures appear when the skills are absent or constrained.
+1. **Repeat and strengthen the prompt-level RED/GREEN loop.** This is non-negotiable. The command-backed Be loop now has direct RED proof, but the first subagent pressure run is still thin. TYF needs stronger RED baselines, repeated harness runs, and evidence that failures appear when the skills are absent or constrained.
 2. **An execution-and-completion discipline.** Something like `executing-plans` adapted to authorship: how to drive a whole work to done across sessions, not just compose a unit.
 3. **A receiving-critique skill.** The author (or a beta reader, or an editor) gives feedback; how does the apparatus triage it faithfully without either capitulating or defending? Superpowers' `receiving-code-review` is the template.
 4. **An update/distribution path.** A way for an installed TYF to pull improvements, the plugin-shim pattern superpowers uses.
@@ -59,4 +59,4 @@ Superpowers is a methodology with ~210k GitHub stars, multi-harness installs, an
 
 ## Bottom line
 
-Superpowers is a proven methodology; TYF is a promising architecture. TYF's state, memory, and write-boundary design are genuinely ahead of superpowers for a no-git authored-prose domain, and its documentation-honesty mechanization is a real contribution. But superpowers has the only currency that ultimately counts, real usage, and three disciplines TYF lacks entirely: execution-to-completion, debugging/isolation, and receiving critique. The most honest one-line summary: TYF has out-designed superpowers on paper in its niche and badly under-tested itself relative to superpowers in practice. The next move is not more architecture. It is proof.
+Superpowers is a proven methodology; TYF is a promising architecture with stronger local evidence than before. TYF's state, memory, and write-boundary design are genuinely ahead of superpowers for a no-git authored-prose domain, and its documentation-honesty mechanization is a real contribution. But superpowers has the only currency that ultimately counts, real usage, and three disciplines TYF lacks entirely: execution-to-completion, debugging/isolation, and receiving critique. The most honest one-line summary: TYF has out-designed superpowers in its niche and now proves its helper contract, but it is still under-used and under-pressure-tested relative to superpowers in practice. The next move is not more architecture. It is repeated author and harness proof.

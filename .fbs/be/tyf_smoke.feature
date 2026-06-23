@@ -235,9 +235,9 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_controlled_write_chain_without_review_packet -v"
     Then Exit code is 0
 
-  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:docs/COMPARISON_SUPERPOWERS.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: README pressure status matches validation evidence
-    When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence -v"
+    When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence DocCheck.test_release_status_counts_match_current_evidence -v"
     Then Exit code is 0
 
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli

@@ -6,11 +6,12 @@ Release label: "Single Book Folder".
 
 - Reshaped the beta launch workspace so one folder equals one work: `tyf init` now creates root-level `work.yaml`, `style-sheet.md`, `outline/`, `drafts/`, `manuscript/`, and `.review/` instead of making first-time authors manage `works/<id>`.
 - Updated writing runway so `tyf start [path]` records supplied title/language metadata, creates or reuses `sources/interviews/work-first-session.md`, opens `.review/writing-runway.md`, and creates `drafts/candidate-draft.md` at the book-folder root, including cold-start folder/chat/zip arrivals.
+- Preserved binary, unreadable, and oversized arrivals with explicit `Extraction needed` guidance instead of minting source fragments or implying the full file was read.
 - Removed the accidental today-named public command rather than keeping a compatibility alias; `tyf start [path]` is the single public beta front door.
 - Added inspectable Markdown audit notes beside audit JSON records, active-work status output in `tyf status`, and manifest-version drift detection in `tyf check`; aligned the nested Claude plugin manifest with the active release version.
 - Updated `tyf.portable.json` to `format_version: "0.5.0"` with `single_work: true` and root-level canonical text state.
 - Aligned public onboarding, generated context files, Codex/Claude/Gemini repo contexts, and workspace skills around the single-work beta surface.
-- Expanded the helper smoke suite to 107 tests and SOLO Be coverage to 72 scenarios.
+- Expanded the helper smoke suite to 142 tests and SOLO Be coverage to 106 scenarios with 106/106 direct RED proof.
 
 ## 0.4.1
 

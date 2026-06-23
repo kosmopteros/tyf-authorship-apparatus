@@ -2128,7 +2128,24 @@ class DocCheck(unittest.TestCase):
         self.assertNotIn("have not yet been run against a subagent", readme)
         self.assertIn("GREEN passed 11/11", readme)
         self.assertIn("RED baseline", readme)
-        self.assertIn("proof is partial", readme)
+        self.assertIn("proof remains partial", readme)
+
+    def test_release_status_counts_match_current_evidence(self):
+        suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
+        test_count = suite.countTestCases()
+        be_text = (REPO / ".fbs" / "be" / "tyf_smoke.feature").read_text(encoding="utf-8")
+        be_count = sum(1 for line in be_text.splitlines() if line.lstrip().startswith("Scenario:"))
+        targets = {
+            "README.md": (REPO / "README.md").read_text(encoding="utf-8"),
+            "VALIDATION.md": (REPO / "VALIDATION.md").read_text(encoding="utf-8"),
+            "CHANGELOG.md": (REPO / "CHANGELOG.md").read_text(encoding="utf-8"),
+        }
+        for rel, text in targets.items():
+            self.assertIn(f"{test_count} tests", text, rel)
+            self.assertIn(f"{be_count}", text, rel)
+        comparison = (REPO / "docs" / "COMPARISON_SUPERPOWERS.md").read_text(encoding="utf-8")
+        self.assertIn(f"{be_count}/{be_count}", comparison)
+        self.assertNotIn("has not actually run the RED/GREEN loop", comparison)
 
     def test_install_docs_route_author_workspaces_away_from_dev_context(self):
         install = (REPO / "scripts" / "install.sh").read_text(encoding="utf-8")

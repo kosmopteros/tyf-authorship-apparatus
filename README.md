@@ -148,7 +148,7 @@ Sixteen skills, each carrying a rationalization table and a red-flag list, the d
 
 ## Status and testing
 
-This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. The semantic engine is still partial. The pressure scenarios have had a first subagent run: GREEN passed 11/11, but the RED baseline was weak, so the proof is partial. Before treating it as production-bulletproof, re-run `tests/pressure-scenarios.md` in your harness: once with skills absent or constrained (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.5.0 beta. It is ready for local-first book-start use: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. Current repo evidence: 142 tests pass in the stdlib helper/doc/install suite, 106 SOLO Be scenarios pass, 106/106 Be have direct RED proof, `fbs finish` is clean, and PR CI passes the install job plus Python 3.9 and 3.12 tests. The semantic engine and cross-harness usage evidence are still partial. The pressure scenarios have had a first subagent run: GREEN passed 11/11, but the RED baseline was weak, so that prompt-level proof remains partial. Before treating it as production-bulletproof, re-run `tests/pressure-scenarios.md` in your harness: once with skills absent or constrained (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 
@@ -164,7 +164,7 @@ This is v0.5.0 alpha. The helper now prioritizes the single book folder: preserv
 
 ## How it compares
 
-`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, but superpowers has real usage and three disciplines TYF lacks (execution-to-completion, debugging/isolation, receiving critique). The honest gap is testing depth: TYF's RED/GREEN scenarios have had a first subagent run with GREEN passed 11/11, but the RED baseline was weak, so the proof is partial.
+`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, and the helper/SOLO contract now has direct RED proof across 106/106 Be. Superpowers still has real usage and three disciplines TYF lacks (execution-to-completion, debugging/isolation, receiving critique). The honest gap is usage breadth: TYF's prompt-level pressure scenarios have had a first subagent run with GREEN passed 11/11, but the RED baseline was weak, so that proof remains partial.
 
 ## License
 

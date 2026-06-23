@@ -1397,6 +1397,41 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn(first, packet)
         self.assertNotIn(second, packet)
 
+    def test_attend_uses_transparent_local_retrieval_query(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "archive",
+             "--text", "Claim: The locked archive is the first pressure."], ws)
+        self.assertEqual(rc, 0, out)
+        first = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "river",
+             "--text", "Claim: The river is the second pressure."], ws)
+        self.assertEqual(rc, 0, out)
+        second = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+
+        rc, out = run_tyf(["structure", "work", "--source-ref", first, "--source-ref", second], ws)
+        self.assertEqual(rc, 0, out)
+        retrieval_index = ws / "knowledge-base" / "retrieval-index.jsonl"
+        self.assertTrue(retrieval_index.is_file(), "structure should maintain an inspectable local retrieval index")
+        index_text = retrieval_index.read_text(encoding="utf-8")
+        self.assertIn("The river is the second pressure.", index_text)
+        self.assertIn("sample_question", index_text)
+
+        rc, out = run_tyf(["attend", "work", "--query", "river pressure"], ws)
+        self.assertEqual(rc, 0, out)
+        packet = (ws / ".review" / "gentle-attention.md").read_text(encoding="utf-8")
+        self.assertIn("## Transparent local retrieval", packet)
+        self.assertIn("Query: river pressure", packet)
+        self.assertIn("plain-file anchors", packet)
+        self.assertIn("no hidden memory", packet)
+        self.assertIn(second, packet)
+        self.assertIn("The river is the second pressure.", packet)
+        self.assertIn("Sample question:", packet)
+        first_question = packet.split("## One question to ask first", 1)[1].split("Treat hesitation", 1)[0]
+        self.assertIn("The river is the second pressure.", first_question)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
     def test_attend_refuses_missing_or_unsafe_source_ref_without_packet(self):
         ws = self.ws()
         rc, out = run_tyf(["attend", "work", "--source-ref", "src-missing"], ws)

@@ -462,7 +462,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-amanuensis-attention-pass-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:README.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @tool-check:cli
   Scenario: amanuensis attention pass writes source-grounded questions
-    When Run "python tests/test_tyf.py CLIBehaviour.test_attend_writes_source_grounded_gentle_questions_without_manuscript -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_attend_writes_source_grounded_gentle_questions_without_manuscript CLIBehaviour.test_attend_uses_transparent_local_retrieval_query -v"
     Then Exit code is 0
 
   @covers:tyf-amanuensis-attention-pass-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli

@@ -17,7 +17,7 @@ Commands:
                                           preserve existing material without manuscript writes
   tyf capture <work-id> --kind K --text TEXT
                                           append author source/voice/claim/question notes
-  tyf attend [work-id]                    write a source-grounded gentle attention packet
+  tyf attend [work-id] [--query FOCUS]    write a source-grounded gentle attention packet
   tyf feedback [work-id]                  preserve external critique and write triage
   tyf session [work-id]                   write a review-only writing session packet
   tyf diagnose [work-id]                  write a review-only diagnostic isolation packet
@@ -1109,7 +1109,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - If the author says "start my book" or wants a first writing session, use `tyf start`; a title can stay unknown.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
-- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id>` and use `.review/gentle-attention.md` as hidden amanuensis guidance, then pass relevant ids to `tyf propose --source-ref <id>`.
+- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id> --query "<focus>"` and use `.review/gentle-attention.md` as hidden amanuensis guidance with transparent local retrieval, then pass relevant ids to `tyf propose --source-ref <id>`.
 - If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
 - If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
@@ -1733,6 +1733,52 @@ def _knowledge_escape(value):
     return _one_line(value).replace("|", "\\|")
 
 
+def _retrieval_sample_question(kind, text):
+    excerpt = _attention_excerpt(text)
+    if kind == "open-question":
+        return "Which edge of this question matters for the next passage: " + excerpt
+    if kind == "example":
+        return "What must stay alive in this image when we draft: " + excerpt
+    if kind == "claim":
+        return "Where does this claim become visible in a scene, argument, or sentence: " + excerpt
+    return "What role should this material play in the next passage: " + excerpt
+
+
+def _retrieval_record(work, kind, anchor_id, text, source_id, path):
+    return {
+        "anchor_id": anchor_id,
+        "kind": kind,
+        "path": path.replace(os.sep, "/"),
+        "sample_question": _retrieval_sample_question(kind, text),
+        "source_id": source_id,
+        "text": text,
+        "text_sha256": _source_text_hash(text),
+        "work": work,
+    }
+
+
+def _append_retrieval_record(record):
+    path = os.path.join("knowledge-base", "retrieval-index.jsonl")
+    _ensure_real_dir(os.path.dirname(path), "knowledge-base/")
+    seen = set()
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            for raw in f:
+                if not raw.strip():
+                    continue
+                try:
+                    existing = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                anchor_id = existing.get("anchor_id")
+                if anchor_id:
+                    seen.add(anchor_id)
+    if record["anchor_id"] in seen:
+        return False
+    append(path, json.dumps(record, sort_keys=True, ensure_ascii=False) + "\n")
+    return True
+
+
 def _strip_list_marker(line):
     line = line.strip()
     line = re.sub(r"^[-*+]\s+", "", line)
@@ -1949,7 +1995,128 @@ def _filter_attention_items(items, source_ids):
     return [item for item in items if item.get("source_id") in allowed]
 
 
-def _attention_context(work, source_refs):
+def _retrieval_tokens(text):
+    return set(re.findall(r"[\w']+", text.casefold(), flags=re.UNICODE))
+
+
+def _retrieval_kind_rank(kind):
+    return {
+        "open-question": 0,
+        "example": 1,
+        "claim": 2,
+        "unclassified": 3,
+    }.get(kind, 9)
+
+
+def _read_retrieval_index(work):
+    path = os.path.join("knowledge-base", "retrieval-index.jsonl")
+    if not os.path.isfile(path):
+        return []
+    records = []
+    with open(path, encoding="utf-8") as f:
+        for i, raw in enumerate(f, 1):
+            if not raw.strip():
+                continue
+            try:
+                record = json.loads(raw)
+            except json.JSONDecodeError as e:
+                sys.exit(f"Refused: retrieval index is invalid at line {i}: {e}")
+            if record.get("work") == work:
+                records.append(record)
+    return records
+
+
+def _fallback_retrieval_records(work, context):
+    records = []
+    for kind, bucket in (
+            ("claim", context["claims"]),
+            ("example", context["examples"]),
+            ("open-question", context["questions"]),
+            ("unclassified", context["unclassified"])):
+        for item in bucket:
+            text = item.get("text", "").strip()
+            if not text:
+                continue
+            source_id = item.get("source_id", "")
+            anchor_id = item.get("id") or _knowledge_id(kind[:3], source_id, text)
+            records.append(_retrieval_record(work, kind, anchor_id, text, source_id, "derived-from-plain-files"))
+    return records
+
+
+def _validate_retrieval_sources(records, work):
+    source_ids = sorted({record.get("source_id", "") for record in records if record.get("source_id", "").startswith("src-")})
+    if not source_ids:
+        return
+    index, problems = _load_source_fragment_index()
+    if problems:
+        sys.exit("Refused: source fragment provenance index is invalid: " + problems[0])
+    for source_id in source_ids:
+        ref = index.get(source_id)
+        if ref is None:
+            sys.exit(f"Refused: retrieval anchor references missing source fragment provenance: {source_id}")
+        problem = _source_fragment_integrity_problem(ref, work=work)
+        if problem:
+            sys.exit("Refused: " + problem)
+
+
+def _score_retrieval_record(record, query_terms):
+    text = " ".join([
+        record.get("text", ""),
+        record.get("sample_question", ""),
+        record.get("kind", ""),
+        record.get("source_id", ""),
+    ])
+    tokens = _retrieval_tokens(text)
+    if not query_terms:
+        return 100 - _retrieval_kind_rank(record.get("kind", "")) * 10
+    overlap = len(tokens & query_terms)
+    phrase_bonus = 0
+    query = " ".join(sorted(query_terms))
+    haystack = text.casefold()
+    if query and query in haystack:
+        phrase_bonus = 5
+    return overlap * 20 + phrase_bonus + (9 - _retrieval_kind_rank(record.get("kind", "")))
+
+
+def _retrieved_attention_records(work, context, query):
+    records = _read_retrieval_index(work)
+    if not records:
+        records = _fallback_retrieval_records(work, context)
+    source_ids = set(context["source_ids"])
+    if source_ids:
+        records = [record for record in records if record.get("source_id") in source_ids]
+    _validate_retrieval_sources(records, work)
+    query_terms = _retrieval_tokens(query or "")
+    ranked = []
+    for order, record in enumerate(records):
+        copy = dict(record)
+        copy["score"] = _score_retrieval_record(record, query_terms)
+        copy["_order"] = order
+        ranked.append(copy)
+    ranked.sort(key=lambda r: (-r["score"], _retrieval_kind_rank(r.get("kind", "")), r["_order"]))
+    for record in ranked:
+        record.pop("_order", None)
+    return ranked[:8]
+
+
+def _retrieval_lines(records):
+    if not records:
+        return "- (no local retrieval anchors yet; structure a source fragment first)"
+    lines = []
+    for record in records[:6]:
+        source = f" from `{record.get('source_id')}`" if record.get("source_id") else ""
+        anchor = record.get("anchor_id", "anchor")
+        kind = record.get("kind", "anchor")
+        score = record.get("score", 0)
+        lines.append(
+            f"- `{anchor}` {kind}{source} (score {score}): "
+            f"{_attention_excerpt(record.get('text', ''), 140)}"
+        )
+        lines.append(f"  Sample question: {record.get('sample_question', '')}")
+    return "\n".join(lines)
+
+
+def _attention_context(work, source_refs, query=""):
     refs = _resolve_source_refs(work, source_refs) if source_refs else []
     source_ids = [ref["id"] for ref in refs]
     examples = _read_knowledge_blocks(os.path.join("knowledge-base", "examples", f"{work}.md"))
@@ -1960,7 +2127,9 @@ def _attention_context(work, source_refs):
         "examples": _filter_attention_items(examples, source_ids),
         "questions": _filter_attention_items(questions, source_ids),
         "unclassified": _filter_attention_items(_read_amanuensis_unclassified(work), source_ids),
+        "query": _one_line(query or ""),
     }
+    context["retrieved"] = _retrieved_attention_records(work, context, query or "")
     return context
 
 
@@ -1994,6 +2163,11 @@ def _attention_excerpt(text, limit=180):
 
 
 def _one_attention_question(context):
+    retrieved = context.get("retrieved") or []
+    for record in retrieved:
+        sample = record.get("sample_question", "").strip()
+        if sample:
+            return sample
     question = _first_text(context["questions"])
     if question:
         return "Which edge of this question matters for the next passage: " + _attention_excerpt(question)
@@ -2014,6 +2188,7 @@ def _write_gentle_attention(work, context):
     path = _work_path(work, ".review", "gentle-attention.md")
     title = get(read_state(_work_path(work, "work.yaml")), "title", default="") or "this work"
     focus = ", ".join(f"`{sid}`" for sid in context["source_ids"]) or "all structured source currently visible"
+    query = context.get("query") or "none; ranked from current structured anchors"
     claim = _first_text(context["claims"]) or "the strongest supplied claim"
     example = _first_text(context["examples"]) or "the most vivid supplied example"
     question = _first_text(context["questions"]) or "the question the author is already circling"
@@ -2029,6 +2204,13 @@ This is a review-only amanuensis packet. It gathers what the author has already
 supplied and turns it toward the next sitting. These questions are not doubt in the author's judgment,
 not adversarial audit, and not manuscript text. They are small invitations to
 notice what wants care next.
+
+## Transparent local retrieval
+
+Query: {query}
+Method: local keyword/focus ranking over plain-file anchors in `sources/` and `knowledge-base/`; no hidden memory or manuscript inference.
+
+{_retrieval_lines(context.get('retrieved', []))}
 
 ## Source-grounded anchors
 
@@ -2079,9 +2261,10 @@ def cmd_attend(args):
     work_id = _safe_work_id(args.work or get(read_state("WORKSPACE_STATE.yaml"), "active_work", default=ROOT_WORK_ID))
     _confine_work(work_id)
     _require_work(work_id)
-    context = _attention_context(work_id, args.source_ref)
+    context = _attention_context(work_id, args.source_ref, getattr(args, "query", "") or "")
     path = _write_gentle_attention(work_id, context)
-    log_event(".", "attend", work_id, f"packet={path} refs={','.join(context['source_ids']) or 'all'}")
+    log_event(".", "attend", work_id,
+              f"packet={path} refs={','.join(context['source_ids']) or 'all'} query={_one_line(context.get('query') or 'none')}")
     print("Gentle attention packet written.")
     print(f"  Work: {work_id}")
     print(f"  Packet: {path.replace(os.sep, '/')}")
@@ -2105,21 +2288,32 @@ def cmd_structure(args):
         for claim in parsed["claims"]:
             claim_id = _knowledge_id("clm", ref["id"], claim)
             _append_claim_row(claim_id, claim, ref["id"])
+            _append_retrieval_record(_retrieval_record(
+                work_id, "claim", claim_id, claim, ref["id"],
+                os.path.join("knowledge-base", "claims.md")))
             extracted["claims"].append({"id": claim_id, "text": claim, "source_id": ref["id"]})
         for example in parsed["examples"]:
             example_id = _knowledge_id("exm", ref["id"], example)
             path = os.path.join("knowledge-base", "examples", f"{work_id}.md")
             block = f"## {example_id}\n\nSource: `{ref['id']}`\n\n{example}\n"
             _append_unique_block(path, example_id, block, f"# Examples: {work_id}")
+            _append_retrieval_record(_retrieval_record(
+                work_id, "example", example_id, example, ref["id"], path))
             extracted["examples"].append({"id": example_id, "text": example, "source_id": ref["id"]})
         for question in parsed["questions"]:
             question_id = _knowledge_id("qst", ref["id"], question)
             path = os.path.join("knowledge-base", "open-questions", f"{work_id}.md")
             block = f"## {question_id}\n\nSource: `{ref['id']}`\n\n{question}\n"
             _append_unique_block(path, question_id, block, f"# Open questions: {work_id}")
+            _append_retrieval_record(_retrieval_record(
+                work_id, "open-question", question_id, question, ref["id"], path))
             extracted["questions"].append({"id": question_id, "text": question, "source_id": ref["id"]})
         for line in parsed["unclassified"]:
-            extracted["unclassified"].append({"text": line, "source_id": ref["id"]})
+            line_id = _knowledge_id("unc", ref["id"], line)
+            _append_retrieval_record(_retrieval_record(
+                work_id, "unclassified", line_id, line, ref["id"],
+                _work_path(work_id, ".review", "amanuensis-brief.md")))
+            extracted["unclassified"].append({"id": line_id, "text": line, "source_id": ref["id"]})
     brief = _write_amanuensis_brief(work_id, refs, extracted)
     log_event(".", "structure", work_id, f"refs={','.join(ref['id'] for ref in refs)} brief={brief}")
     print(f"Structured source for {work_id}.")
@@ -4542,6 +4736,8 @@ def main():
     s.add_argument("work", nargs="?", default=ROOT_WORK_ID)
     s.add_argument("--source-ref", action="append", default=[],
                    help="optional source fragment id(s) to focus; repeat or comma-separate")
+    s.add_argument("--query", default="",
+                   help="optional focus text for transparent local retrieval ranking")
     s.set_defaults(fn=cmd_attend)
     s = sub.add_parser("feedback", help="preserve external critique and write a review-only triage packet")
     s.add_argument("work", nargs="?", default=ROOT_WORK_ID)

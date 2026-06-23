@@ -17,7 +17,7 @@ Its output is always a candidate. The controlled write is what makes anything fi
 2. **Register.** A specific register is selected from the voice registers.
 3. **Structure.** The outline node or move being drafted is approved.
 
-Before drafting from a newly minted source fragment, read `.review/amanuensis-brief.md`. Treat its questions as gentle attentional nudges for the author, not as doubt in their judgment. If the brief is absent and the fragment contains explicit claims, examples, or questions, go upstream and run `tyf structure work --source-ref <id>` through `structuring-knowledge` first. If the author needs one careful nudge before a passage can begin, run `tyf attend work --source-ref <id>` and read `.review/gentle-attention.md`; ask its one first question before the longer list, then stop if the next candidate passage can begin.
+Before drafting from a newly minted source fragment, read `.review/amanuensis-brief.md`. Treat its questions as gentle attentional nudges for the author, not as doubt in their judgment. If the brief is absent and the fragment contains explicit claims, examples, or questions, go upstream and run `tyf structure work --source-ref <id>` through `structuring-knowledge` first. If the author needs one careful nudge before a passage can begin, run `tyf attend work --source-ref <id> --query "<focus>"` when a focus exists, then read `.review/gentle-attention.md`; use its transparent local retrieval anchors as grounding, ask its one first question before the longer list, then stop if the next candidate passage can begin.
 
 If any precondition is missing, do not draft. Go upstream: `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, or `managing-voice`.
 

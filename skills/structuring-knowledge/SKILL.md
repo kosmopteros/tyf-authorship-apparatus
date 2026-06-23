@@ -27,15 +27,15 @@ Structure is not summary. The job is to expose the architecture of what the auth
 tyf structure work --source-ref <id>
 ```
 
-This pass extracts only explicit author-supplied `Claim:`, `Example:`, and `Question:` lines, appends source-linked knowledge records, writes `.review/amanuensis-brief.md`, and leaves unclassified source material visible for the author. Its questions are gentle nudges of attention, not doubts in the author's judgment. It is not a summarizer, not an interrogation, and not a drafting pass.
+This pass extracts only explicit author-supplied `Claim:`, `Example:`, and `Question:` lines, appends source-linked knowledge records, writes `.review/amanuensis-brief.md`, updates the derived `knowledge-base/retrieval-index.jsonl` with plain-file anchors and sample questions, and leaves unclassified source material visible for the author. Its questions are gentle nudges of attention, not doubts in the author's judgment. It is not a summarizer, not an interrogation, and not a drafting pass.
 
 When the next sitting needs a small source-grounded question set, run:
 
 ```bash
-tyf attend work --source-ref <id>
+tyf attend work --source-ref <id> --query "<focus>"
 ```
 
-That writes `.review/gentle-attention.md`. Treat it as review-only amanuensis attention: useful nudges, not audit findings, defects, or a demand that every question be answered before drafting.
+That writes `.review/gentle-attention.md`. Treat it as review-only amanuensis attention: useful nudges, not audit findings, defects, or a demand that every question be answered before drafting. The retrieval section is transparent local grounding over `sources/` and `knowledge-base/`; it helps choose the next question but does not replace the author's judgment or become manuscript text.
 
 **Gap-marking, not confabulation.** When the structure needs a fact, figure, anecdote, or citation the author has not supplied, insert `[AUTHOR: needed — what]` and stop. The system is structurally unable to pretend to know what only the author knows.
 

@@ -570,6 +570,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_author_facing_surfaces_do_not_require_private_development_context -v"
     Then Exit code is 0
 
+  @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @covers:tyf-codex-skill-book-repo @covers:tyf-helper-current-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:scripts/tyf.py @bind-file:docs/ @bind-file:skills/ @bind-file:author-context/ @bind-file:cowork/ @bind-file:.codex-plugin/ @bind-file:.claude-plugin/ @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: hidden development harness never appears in TYF-visible surfaces
+    When Run "python tests/test_solo_oracles.py hidden-harness-boundary"
+    Then Exit code is 0
+
   @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: public onboarding does not make the author operate the CLI first
     When Run "python tests/test_solo_oracles.py onboarding"

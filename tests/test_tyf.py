@@ -2429,6 +2429,9 @@ class DocCheck(unittest.TestCase):
 
     def test_author_facing_surfaces_do_not_require_private_development_context(self):
         public_author_surfaces = [
+            "AGENTS.md",
+            "CLAUDE.md",
+            "GEMINI.md",
             "docs/START_HERE.md",
             "docs/WORKSPACE_CONTRACT.md",
             "docs/PORTABILITY.md",

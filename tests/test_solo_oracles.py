@@ -274,6 +274,38 @@ def check_codex_skill() -> None:
     assert not any("after getting a title" in text for text in contexts)
 
 
+def check_hidden_harness_boundary() -> None:
+    public_surfaces = [
+        ROOT / "AGENTS.md",
+        ROOT / "CLAUDE.md",
+        ROOT / "GEMINI.md",
+        ROOT / "README.md",
+        ROOT / "VALIDATION.md",
+        ROOT / "CHANGELOG.md",
+        ROOT / "TYF-manifesto-and-architecture.md",
+        ROOT / "scripts" / "tyf.py",
+        ROOT / "docs",
+        ROOT / "skills",
+        ROOT / "author-context",
+        ROOT / "cowork",
+        ROOT / ".codex-plugin",
+        ROOT / ".claude-plugin",
+    ]
+    forbidden = ("SOLO", "FBS", ".fbs", "using-solo", "Alexander", "Pegasus", "PAI")
+    inspected = 0
+    for surface in public_surfaces:
+        paths = [surface] if surface.is_file() else [
+            p for p in surface.rglob("*")
+            if p.is_file() and p.suffix.lower() in {".md", ".py", ".json", ".yaml", ".yml", ".sh", ".ps1"}
+        ]
+        for path in paths:
+            text = path.read_text(encoding="utf-8")
+            inspected += 1
+            for token in forbidden:
+                assert token not in text, f"{path.relative_to(ROOT)} leaks private development context token {token!r}"
+    assert inspected > 20, "hidden harness boundary oracle inspected too few TYF-visible files"
+
+
 def check_onboarding() -> None:
     start_here = (ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -456,7 +488,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "hidden-harness-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -465,6 +497,8 @@ def main(argv: list[str] | None = None) -> int:
         check_plugin()
     elif args.oracle == "codex-skill":
         check_codex_skill()
+    elif args.oracle == "hidden-harness-boundary":
+        check_hidden_harness_boundary()
     elif args.oracle == "provenance":
         check_provenance()
     elif args.oracle == "amanuensis-entry":

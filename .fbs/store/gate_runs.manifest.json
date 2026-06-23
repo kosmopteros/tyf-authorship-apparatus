@@ -1,6 +1,6 @@
 {
-  "head_record_digest": "sha256:abfe7b3a8df7f04256aaf912c42c2b460f4aa683512e3e7c2166d50948245b52",
-  "ledger_digest": "sha256:286e38bd6708546db6e4c5b26745bb6b69f7eeca5d1a7b5342d8d847a1fc870a",
-  "rows": 130,
+  "head_record_digest": "sha256:4762f6857aa3af26e66c65dadc43c7ca81c2900824d2d643c118802f3398d15f",
+  "ledger_digest": "sha256:5cb7540886cee7818cb42901286e92f763f2455ce2ff4f070147fb3d0c909b2a",
+  "rows": 139,
   "schema_version": 1
 }

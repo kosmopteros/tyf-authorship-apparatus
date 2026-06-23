@@ -17,6 +17,7 @@ Commands:
                                           preserve existing material without manuscript writes
   tyf capture <work-id> --kind K --text TEXT
                                           append author source/voice/claim/question notes
+  tyf attend [work-id]                    write a source-grounded gentle attention packet
   tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
@@ -48,7 +49,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, import, capture,
-  propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
+  structure, attend, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -354,15 +355,17 @@ def _pack_root():
 def _iter_files(root, exts):
     skip_dirs = {
         "__pycache__",
-        ".git",
-        ".fbs",
-        ".claude",
-        ".pytest_cache",
         "build",
         "dist",
     }
+    public_hidden_dirs = {".codex-plugin", ".claude-plugin"}
     for r, dirs, fs in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in skip_dirs and not d.endswith(".egg-info")]
+        dirs[:] = [
+            d for d in dirs
+            if d not in skip_dirs
+            and not d.endswith(".egg-info")
+            and (not d.startswith(".") or d in public_hidden_dirs)
+        ]
         for f in fs:
             if f.endswith(exts):
                 yield os.path.join(r, f)
@@ -1103,7 +1106,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - If the author says "start my book" or wants a first writing session, use `tyf start`; a title can stay unknown.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
-- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions, then pass relevant ids to `tyf propose --source-ref <id>`.
+- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id>` and use `.review/gentle-attention.md` as hidden amanuensis guidance, then pass relevant ids to `tyf propose --source-ref <id>`.
 - If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
@@ -1851,6 +1854,201 @@ Questions here are gentle attention for the author. These are nudges of attentio
 {unclassified_lines}
 """)
     return path
+
+
+def _strip_inline_source(text):
+    return re.sub(r"\s+\(source\s+`[^`]+`\)\s*$", "", text.strip())
+
+
+def _read_knowledge_blocks(path):
+    if not os.path.isfile(path):
+        return []
+    blocks = []
+    current = None
+    body = _read(path)
+    for raw in body.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("# ") or line.startswith("<!--"):
+            continue
+        if line.startswith("## "):
+            if current and current.get("text"):
+                blocks.append(current)
+            current = {"id": line[3:].strip(), "source_id": "", "text": ""}
+            continue
+        if current is None:
+            continue
+        if line.startswith("Source:"):
+            m = re.search(r"`([^`]+)`", line)
+            if m:
+                current["source_id"] = m.group(1)
+            continue
+        if not current.get("text"):
+            current["text"] = line
+    if current and current.get("text"):
+        blocks.append(current)
+    return blocks
+
+
+def _read_claim_rows():
+    path = os.path.join("knowledge-base", "claims.md")
+    if not os.path.isfile(path):
+        return []
+    rows = []
+    for raw in _read(path).splitlines():
+        line = raw.strip()
+        if not line.startswith("|") or " Claim id " in line or re.fullmatch(r"\|[-:| ]+\|", line):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        claim_id, statement, _support, source = cells[:4]
+        m = re.search(r"`([^`]+)`", source)
+        rows.append({
+            "id": claim_id,
+            "text": statement.replace("\\|", "|"),
+            "source_id": m.group(1) if m else "",
+        })
+    return rows
+
+
+def _read_amanuensis_unclassified(work):
+    path = _work_path(work, ".review", "amanuensis-brief.md")
+    if not os.path.isfile(path):
+        return []
+    in_section = False
+    rows = []
+    for raw in _read(path).splitlines():
+        line = raw.strip()
+        if line == "## Unclassified source material":
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if not in_section or not line.startswith("- ") or line == "- (none)":
+            continue
+        text = line[2:].strip()
+        m = re.search(r"\(source\s+`([^`]+)`\)\s*$", text)
+        rows.append({
+            "id": "",
+            "text": _strip_inline_source(text),
+            "source_id": m.group(1) if m else "",
+        })
+    return rows
+
+
+def _filter_attention_items(items, source_ids):
+    if not source_ids:
+        return items
+    allowed = set(source_ids)
+    return [item for item in items if item.get("source_id") in allowed]
+
+
+def _attention_context(work, source_refs):
+    refs = _resolve_source_refs(work, source_refs) if source_refs else []
+    source_ids = [ref["id"] for ref in refs]
+    examples = _read_knowledge_blocks(os.path.join("knowledge-base", "examples", f"{work}.md"))
+    questions = _read_knowledge_blocks(os.path.join("knowledge-base", "open-questions", f"{work}.md"))
+    context = {
+        "source_ids": source_ids,
+        "claims": _filter_attention_items(_read_claim_rows(), source_ids),
+        "examples": _filter_attention_items(examples, source_ids),
+        "questions": _filter_attention_items(questions, source_ids),
+        "unclassified": _filter_attention_items(_read_amanuensis_unclassified(work), source_ids),
+    }
+    return context
+
+
+def _attention_lines(items, empty="- (none)", limit=8):
+    if not items:
+        return empty
+    lines = []
+    for item in items[:limit]:
+        source = f" (source `{item.get('source_id')}`)" if item.get("source_id") else ""
+        marker = f"`{item.get('id')}` " if item.get("id") else ""
+        lines.append(f"- {marker}{item.get('text', '').strip()}{source}")
+    extra = len(items) - limit
+    if extra > 0:
+        lines.append(f"- ... {extra} more")
+    return "\n".join(lines)
+
+
+def _first_text(items):
+    for item in items:
+        text = item.get("text", "").strip()
+        if text:
+            return text
+    return ""
+
+
+def _write_gentle_attention(work, context):
+    _ensure_real_dir(_work_path(work, ".review"), ".review/")
+    path = _work_path(work, ".review", "gentle-attention.md")
+    title = get(read_state(_work_path(work, "work.yaml")), "title", default="") or "this work"
+    focus = ", ".join(f"`{sid}`" for sid in context["source_ids"]) or "all structured source currently visible"
+    claim = _first_text(context["claims"]) or "the strongest supplied claim"
+    example = _first_text(context["examples"]) or "the most vivid supplied example"
+    question = _first_text(context["questions"]) or "the question the author is already circling"
+    unclassified = _first_text(context["unclassified"]) or "the unclassified material still asking for a role"
+    atomic_write(path, f"""# Gentle attention
+
+Work: `{work}`
+Title: {title}
+Generated: {now()}
+Focus: {focus}
+
+This is a review-only amanuensis packet. It gathers what the author has already
+supplied and turns it toward the next sitting. These questions are not doubt in the author's judgment,
+not adversarial audit, and not manuscript text. They are small invitations to
+notice what wants care next.
+
+## Source-grounded anchors
+
+### Claims
+
+{_attention_lines(context['claims'])}
+
+### Examples and images
+
+{_attention_lines(context['examples'])}
+
+### Existing open questions
+
+{_attention_lines(context['questions'])}
+
+### Unclassified source material
+
+{_attention_lines(context['unclassified'])}
+
+## Questions to carry into the next sitting
+
+- What needs care next around: {claim}
+- What must not be flattened about: {example}
+- Which part of this question matters for the next candidate passage: {question}
+- Is this source, voice, scene, pressure, or something else: {unclassified}
+- What is one sentence the author already knows, even if the apparatus does not?
+
+## Boundaries
+
+- Do not treat unanswered questions as defects.
+- Do not invent answers.
+- Candidate prose may be drafted in `drafts/`; nothing here enters `manuscript/`.
+- Adversarial pressure belongs to `tyf audit`, not this amanuensis pass.
+""")
+    return path
+
+
+def cmd_attend(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work or get(read_state("WORKSPACE_STATE.yaml"), "active_work", default=ROOT_WORK_ID))
+    _confine_work(work_id)
+    _require_work(work_id)
+    context = _attention_context(work_id, args.source_ref)
+    path = _write_gentle_attention(work_id, context)
+    log_event(".", "attend", work_id, f"packet={path} refs={','.join(context['source_ids']) or 'all'}")
+    print("Gentle attention packet written.")
+    print(f"  Work: {work_id}")
+    print(f"  Packet: {path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
 
 
 def cmd_structure(args):
@@ -3870,7 +4068,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "structure", "character",
+        "new-work", "start", "begin", "import", "capture", "structure", "attend", "character",
         "consult-character", "open", "mark-ready",
         "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
@@ -3924,6 +4122,11 @@ def main():
     s.add_argument("--source-ref", action="append", required=True,
                    help="source fragment id(s) to structure; repeat or comma-separate")
     s.set_defaults(fn=cmd_structure)
+    s = sub.add_parser("attend", help="write a source-grounded gentle attention packet")
+    s.add_argument("work", nargs="?", default=ROOT_WORK_ID)
+    s.add_argument("--source-ref", action="append", default=[],
+                   help="optional source fragment id(s) to focus; repeat or comma-separate")
+    s.set_defaults(fn=cmd_attend)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")
     s.add_argument("--knowledge", default=None)
@@ -4008,7 +4211,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

@@ -450,6 +450,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_import_text_orientation_points_to_structure_pass -v"
     Then Exit code is 0
 
+  @covers:tyf-amanuensis-attention-pass-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:README.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @tool-check:cli
+  Scenario: amanuensis attention pass writes source-grounded questions
+    When Run "python tests/test_tyf.py CLIBehaviour.test_attend_writes_source_grounded_gentle_questions_without_manuscript -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-attention-pass-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: amanuensis attention pass can focus on one source ref
+    When Run "python tests/test_tyf.py CLIBehaviour.test_attend_can_focus_on_one_source_ref -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-attention-pass-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: amanuensis attention pass refuses missing or unsafe source refs
+    When Run "python tests/test_tyf.py CLIBehaviour.test_attend_refuses_missing_or_unsafe_source_ref_without_packet -v"
+    Then Exit code is 0
+
+  @covers:tyf-amanuensis-attention-pass-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: amanuensis attention pass refuses tampered source fragments
+    When Run "python tests/test_tyf.py CLIBehaviour.test_attend_refuses_tampered_source_fragment_without_packet -v"
+    Then Exit code is 0
+
   @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
   Scenario: character consultation stays contained as hidden amanuensis machinery
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained CLIBehaviour.test_character_consultation_refuses_missing_dossier CLIBehaviour.test_character_dossier_supports_non_latin_names -v"
@@ -478,6 +498,11 @@ Feature: TYF helper smoke suite
   @covers:tyf-public-onboarding-contract @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: public onboarding entrypoint is visible from the README
     When Run "python tests/test_solo_oracles.py onboarding-entry"
+    Then Exit code is 0
+
+  @covers:tyf-public-onboarding-contract @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:docs/START_HERE.md @bind-file:docs/WORKSPACE_CONTRACT.md @bind-file:docs/PORTABILITY.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:skills/working-the-workspace/SKILL.md @bind-file:skills/interviewing-the-author/SKILL.md @bind-file:skills/structuring-knowledge/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @bind-file:cowork/SETUP.md @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: author-facing surfaces do not require private development context
+    When Run "python tests/test_tyf.py DocCheck.test_author_facing_surfaces_do_not_require_private_development_context -v"
     Then Exit code is 0
 
   @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:docs/START_HERE.md @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/initializing-a-workspace/SKILL.md @bind-file:cowork/SETUP.md @bind-file:tests/test_solo_oracles.py @tool-check:cli

@@ -232,7 +232,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
-        rc, out = run_tyf(["accept", "demo", proposal, "--evidence", "Alexander: accept this file"], ws)
+        rc, out = run_tyf(["accept", "demo", proposal, "--evidence", "Author: accept this file"], ws)
         self.assertEqual(rc, 0, out)
 
     def test_accept_requires_author_review_packet(self):
@@ -250,7 +250,7 @@ class CLIBehaviour(unittest.TestCase):
              "--verdict", "pass", "--findings-answered"], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: yes, accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: yes, accept this"], ws)
         self.assertNotEqual(rc, 0, "acceptance must not proceed before author review")
         self.assertRegex(out.lower(), r"review|author")
 
@@ -270,7 +270,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(list((ws / "works/demo/manuscript").iterdir()), [])
 
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: yes, accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: yes, accept this"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         decision_data = json.loads(
@@ -294,7 +294,7 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: accept this"], ws)
         self.assertEqual(rc, 0, out)
         self.assertEqual(self.work_status(ws), "accepted")
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
@@ -330,7 +330,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         proposal = re.search(r"Proposal:\s+(\S+)", out).group(1)
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "author acceptance must not bypass the audit transition")
         self.assertRegex(out.lower(), r"audit|audited|state|status")
         self.assertEqual(self.work_status(ws), "drafting")
@@ -348,7 +348,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertEqual(self.work_status(ws), "needs-revision")
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "author acceptance must not bypass a failed audit")
         self.assertRegex(out.lower(), r"audited|needs-revision|state|status")
 
@@ -376,7 +376,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", second_proposal,
-             "--evidence", "Alexander: accept this second proposal"], ws)
+             "--evidence", "Author: accept this second proposal"], ws)
         self.assertNotEqual(rc, 0, "acceptance must be bound to the proposal's own passing audit")
         self.assertRegex(out.lower(), r"audit|proposal|findings")
 
@@ -423,7 +423,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1,3-4",
-             "--evidence", "Alexander: accept lines 1, 3, and 4"], ws)
+             "--evidence", "Author: accept lines 1, 3, and 4"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         rc, out = run_tyf(["write", "demo", "--decision", decision], ws)
@@ -448,19 +448,19 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "2-1",
-             "--evidence", "Alexander: accept this"], ws)
+             "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "line ranges must be ascending")
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1,9",
-             "--evidence", "Alexander: accept this"], ws)
+             "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "line ranges must fit the proposal source")
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1,1-2",
-             "--evidence", "Alexander: accept this"], ws)
+             "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "line ranges must not overlap or duplicate text")
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "3,2",
-             "--evidence", "Alexander: accept this"], ws)
+             "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "line ranges must preserve source order")
 
     def test_accept_patch_applies_exact_unified_diff_to_manuscript_base(self):
@@ -497,7 +497,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
-             "--evidence", "Alexander: accept this exact patch"], ws)
+             "--evidence", "Author: accept this exact patch"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         decision_data = json.loads(
@@ -534,7 +534,7 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1",
              "--patch", "works/demo/.review/patches/chapter.patch",
-             "--evidence", "Alexander: accept this"], ws)
+             "--evidence", "Author: accept this"], ws)
         self.assertNotEqual(rc, 0, "patch acceptance and line-range acceptance must be mutually exclusive")
         self.assertRegex(out.lower(), r"patch|lines|exclusive|choose")
 
@@ -559,7 +559,7 @@ class CLIBehaviour(unittest.TestCase):
         )
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
-             "--evidence", "Alexander: accept this exact patch"], ws)
+             "--evidence", "Author: accept this exact patch"], ws)
         self.assertNotEqual(rc, 0, "patch acceptance must reject malformed hunk counts")
         self.assertRegex(out.lower(), r"hunk|count|patch")
 
@@ -588,7 +588,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
-             "--evidence", "Alexander: accept this patch"], ws)
+             "--evidence", "Author: accept this patch"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         patch_path.write_text(
@@ -626,7 +626,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--patch", "works/demo/.review/patches/chapter.patch",
-             "--evidence", "Alexander: accept this patch"], ws)
+             "--evidence", "Author: accept this patch"], ws)
         self.assertEqual(rc, 0, out)
         patch_path.unlink()
         rc, out = run_tyf(["doctor"], ws)
@@ -651,7 +651,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "demo", proposal, "--lines", "1",
-             "--evidence", "Alexander: accept only line 1"], ws)
+             "--evidence", "Author: accept only line 1"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         decision_path = ws / "works/demo/.review/decisions" / f"{decision}.json"
@@ -678,7 +678,7 @@ class CLIBehaviour(unittest.TestCase):
         rc, out = run_tyf(["review", "demo", proposal], ws)
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: accept this"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         audit_path = ws / "works/demo/.review/audits" / f"{audit}.json"
@@ -705,7 +705,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         review = re.search(r"Author review:\s+(\S+)", out).group(1)
         rc, out = run_tyf(
-            ["accept", "demo", proposal, "--evidence", "Alexander: accept this"], ws)
+            ["accept", "demo", proposal, "--evidence", "Author: accept this"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         packet_path = ws / "works/demo/.review/author-reviews" / f"{review}.md"
@@ -984,7 +984,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertRegex(out.lower(), r"out-of-band|adopt|reconcile|changed")
 
         rc, out = run_tyf(
-            ["adopt", "demo", "ch.md", "--evidence", "Alexander edited the manuscript directly"], ws)
+            ["adopt", "demo", "ch.md", "--evidence", "Author edited the manuscript directly"], ws)
         self.assertEqual(rc, 0, out)
         self.assertIn("Adopted author edit", out)
         revisions = list((ws / "works" / "demo" / ".review" / "author-revisions").glob("*ch.md"))
@@ -1119,7 +1119,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "new-book", proposal,
-             "--evidence", "Alexander: accept this source-grounded proposal"], ws)
+             "--evidence", "Author: accept this source-grounded proposal"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
         decision_path = ws / "works/new-book/.review/decisions" / f"{decision}.json"
@@ -1223,7 +1223,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         rc, out = run_tyf(
             ["accept", "new-book", proposal,
-             "--evidence", "Alexander: accept this source-grounded proposal"], ws)
+             "--evidence", "Author: accept this source-grounded proposal"], ws)
         self.assertEqual(rc, 0, out)
         decision = re.search(r"Decision:\s+(\S+)", out).group(1)
 
@@ -1280,6 +1280,99 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Gentle questions for the author", brief)
         self.assertIn("These are nudges of attention, not doubts in the author's judgment.", brief)
         self.assertIn("Loose image of rain on the kitchen window.", brief)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_attend_writes_source_grounded_gentle_questions_without_manuscript(self):
+        ws = self.ws()
+        text = "\n".join([
+            "Claim: Kinship is a weather system.",
+            "Example: The aunt keeps a list of storms by name.",
+            "Question: Which family member first taught the weather ritual?",
+            "Loose image of rain on the kitchen window.",
+        ])
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "storm notes", "--text", text],
+            ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+
+        rc, out = run_tyf(["attend", "work"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Gentle attention", out)
+        packet_path = ws / ".review" / "gentle-attention.md"
+        self.assertTrue(packet_path.is_file())
+        packet = packet_path.read_text(encoding="utf-8")
+        self.assertIn("review-only amanuensis packet", packet)
+        self.assertIn("not doubt in the author's judgment", packet)
+        self.assertIn("not adversarial audit", packet)
+        self.assertIn("not manuscript text", packet)
+        self.assertIn("Kinship is a weather system.", packet)
+        self.assertIn("The aunt keeps a list of storms by name.", packet)
+        self.assertIn("Which family member first taught the weather ritual?", packet)
+        self.assertIn("Loose image of rain on the kitchen window.", packet)
+        self.assertIn("What needs care next", packet)
+        self.assertIn("What must not be flattened", packet)
+        self.assertIn(fragment, packet)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_attend_can_focus_on_one_source_ref(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "one",
+             "--text", "Claim: The locked archive is the first pressure."], ws)
+        self.assertEqual(rc, 0, out)
+        first = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "two",
+             "--text", "Claim: The river is the second pressure."], ws)
+        self.assertEqual(rc, 0, out)
+        second = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["structure", "work", "--source-ref", first, "--source-ref", second], ws)
+        self.assertEqual(rc, 0, out)
+
+        rc, out = run_tyf(["attend", "work", "--source-ref", first], ws)
+        self.assertEqual(rc, 0, out)
+        packet = (ws / ".review" / "gentle-attention.md").read_text(encoding="utf-8")
+        self.assertIn("The locked archive is the first pressure.", packet)
+        self.assertNotIn("The river is the second pressure.", packet)
+        self.assertIn(first, packet)
+        self.assertNotIn(second, packet)
+
+    def test_attend_refuses_missing_or_unsafe_source_ref_without_packet(self):
+        ws = self.ws()
+        rc, out = run_tyf(["attend", "work", "--source-ref", "src-missing"], ws)
+        self.assertNotEqual(rc, 0, "attention packet must refuse unknown source refs")
+        self.assertRegex(out.lower(), r"source fragment|provenance|missing")
+        self.assertFalse((ws / ".review" / "gentle-attention.md").exists())
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+        rc, out = run_tyf(["attend", "work", "--source-ref", "../src-escape"], ws)
+        self.assertNotEqual(rc, 0, "attention packet must refuse unsafe source ref ids")
+        self.assertRegex(out.lower(), r"unsafe|source fragment")
+        self.assertFalse((ws / ".review" / "gentle-attention.md").exists())
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
+    def test_attend_refuses_tampered_source_fragment_without_packet(self):
+        ws = self.ws()
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "seed",
+             "--text", "Claim: Original source text."], ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        fragment_path = ws / "sources" / "fragments" / f"{fragment}.md"
+        fragment_path.write_text(
+            fragment_path.read_text(encoding="utf-8").replace(
+                "Original source text.", "Changed source text."),
+            encoding="utf-8")
+
+        rc, out = run_tyf(["attend", "work", "--source-ref", fragment], ws)
+        self.assertNotEqual(rc, 0, "attention packet must refuse tampered source fragments")
+        self.assertRegex(out.lower(), r"source fragment|provenance|hash|tamper")
+        self.assertFalse((ws / ".review" / "gentle-attention.md").exists())
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_structure_source_fragment_is_idempotent(self):
@@ -1481,7 +1574,7 @@ class CLIBehaviour(unittest.TestCase):
     def test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment(self):
         ws = self.ws()
         chat = self.tmp / "arrival-chat.txt"
-        chat.write_text("Alexander: The book starts from an inherited silence.\n", encoding="utf-8")
+        chat.write_text("Author: The book starts from an inherited silence.\n", encoding="utf-8")
 
         rc, out = run_tyf(["import", str(chat), "--kind", "chat"], ws)
         self.assertEqual(rc, 0, out)
@@ -1730,8 +1823,13 @@ class CLIBehaviour(unittest.TestCase):
             self.assertIn("tyf start", text)
             self.assertNotIn("tyf today", text)
             self.assertIn("single work", text.lower())
+            self.assertIn("tyf structure work --source-ref", text)
+            self.assertIn("tyf attend work --source-ref", text)
             self.assertIn("drafts/", text)
             self.assertNotIn("works/*/drafts", text)
+            self.assertNotIn("SOLO", text)
+            self.assertNotIn("FBS", text)
+            self.assertNotIn("using-solo", text)
 
     def test_new_work_adds_event_log_entry(self):
         ws = self.ws()
@@ -1971,13 +2069,13 @@ class DocCheck(unittest.TestCase):
         problems, _ = tyf.run_doc_check(str(self.min_pack()))
         self.assertEqual(problems, [], problems)
 
-    def test_check_ignores_solo_generated_control_dirs(self):
+    def test_check_ignores_hidden_generated_control_dirs(self):
         root = self.min_pack()
         (root / ".fbs" / "recovered").mkdir(parents=True)
         (root / ".claude" / "commands").mkdir(parents=True)
         dead_command = "tyf " + "gate"
         (root / ".fbs" / "recovered" / "note.md").write_text(
-            f"Generated SOLO evidence with an em dash — and {dead_command}.\n",
+            f"Generated hidden evidence with an em dash — and {dead_command}.\n",
             encoding="utf-8")
         (root / ".claude" / "commands" / "fbs-formulate.md").write_text(
             "Generated command docs with an em dash — not TYF pack law.\n",
@@ -2113,11 +2211,35 @@ class DocCheck(unittest.TestCase):
             self.assertIn("tyf start", text)
             self.assertIn("single work", text.lower())
             self.assertIn("tyf structure work --source-ref", text)
+            self.assertIn("tyf attend work --source-ref", text)
             self.assertIn("tyf consult-character", text)
             self.assertIn("amanuensis", text.lower())
             self.assertNotIn("SOLO Reflex", text)
             self.assertNotIn("using-solo", text)
             self.assertNotIn("fbs", text.lower())
+
+    def test_author_facing_surfaces_do_not_require_private_development_context(self):
+        public_author_surfaces = [
+            "docs/START_HERE.md",
+            "docs/WORKSPACE_CONTRACT.md",
+            "docs/PORTABILITY.md",
+            "skills/using-tyf/SKILL.md",
+            "skills/initializing-a-workspace/SKILL.md",
+            "skills/working-the-workspace/SKILL.md",
+            "skills/interviewing-the-author/SKILL.md",
+            "skills/structuring-knowledge/SKILL.md",
+            "skills/composing-as-amanuensis/SKILL.md",
+            "cowork/PROJECT_INSTRUCTIONS.md",
+            "cowork/SETUP.md",
+            "author-context/AGENTS.md",
+            "author-context/CLAUDE.md",
+            "author-context/GEMINI.md",
+        ]
+        forbidden = ("Alexander", "Pegasus", "PAI", "SOLO", "FBS", "using-solo", "fbs ")
+        for rel in public_author_surfaces:
+            text = (REPO / rel).read_text(encoding="utf-8")
+            for token in forbidden:
+                self.assertNotIn(token, text, f"{rel} must not require {token}")
 
     def test_release_archive_excludes_workshop_debris(self):
         attrs = (REPO / ".gitattributes").read_text(encoding="utf-8")

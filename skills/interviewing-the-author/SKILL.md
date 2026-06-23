@@ -17,6 +17,8 @@ The temptation is to propose a thesis, an outline, or a voice on the author's be
 
 **First sitting.** When `tyf start` has created `sources/interviews/work-first-session.md`, use its gentle attention deck before inventing a new interview plan. The author does not have to answer every prompt. One strong source, image, pressure, voice cue, or first-passage target is enough to begin candidate prose; unanswered prompts stay visible as invitations.
 
+**Later sitting.** After `tyf structure` has created source-linked claims, examples, questions, and an amanuensis brief, `tyf attend work` can write `.review/gentle-attention.md`. Use it when you need the next right question. Its questions are invitations to notice what wants care, not doubt in the author's judgment and not audit pressure.
+
 **Thesis interrogation.** Do not proceed past the argument band until the author has stated, in one paragraph, the thesis and the tension it resolves. Push on it. Ask what breaks if the thesis is wrong, who disagrees, and what it costs to believe. You sharpen the author's thesis; you do not author one.
 
 **Eliciting voice.** Ask for annotated example passages of the author's own prose, or stated preferences, or both. Capture register names the author uses for themselves. Hand these to `managing-voice`.

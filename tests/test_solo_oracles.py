@@ -21,14 +21,14 @@ def check_helper() -> None:
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
         "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
-        "consult-character",
+        "attend", "consult-character",
     }
     missing = sorted(
         command for command in required
         if f'add_parser("{command}"' not in source
     )
     assert not missing, f"missing TYF commands: {missing}"
-    for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_character",
+    for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_attend", "cmd_character",
                     "cmd_consult_character", "cmd_resume",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
                     "cmd_adopt"):
@@ -132,7 +132,7 @@ def check_amanuensis_entry() -> None:
     ingesting = (ROOT / "skills" / "ingesting-sources" / "SKILL.md").read_text(encoding="utf-8")
 
     for token in ("title_status", "_untitled_work_id", "sources/imports",
-                  "sources/interviews", "cmd_import", "cmd_resume", "cmd_adopt",
+                  "sources/interviews", "cmd_import", "cmd_attend", "gentle-attention.md", "cmd_resume", "cmd_adopt",
                   "Analysis Pass For The Agent", "Containment", "_looks_tyf_shaped"):
         assert token in source, f"amanuensis entry runtime missing {token}"
     for test_name in (
@@ -144,6 +144,10 @@ def check_amanuensis_entry() -> None:
         "test_source_fragments_are_workspace_owned_and_reusable_across_works",
         "test_adopt_author_manuscript_edit_updates_base_for_next_decision",
         "test_resume_reports_active_work_state_and_next_useful_move",
+        "test_attend_writes_source_grounded_gentle_questions_without_manuscript",
+        "test_attend_can_focus_on_one_source_ref",
+        "test_attend_refuses_missing_or_unsafe_source_ref_without_packet",
+        "test_attend_refuses_tampered_source_fragment_without_packet",
     ):
         assert test_name in tests, f"missing test {test_name}"
     assert "title optional" in readme.lower() or "without a title" in readme.lower()
@@ -152,6 +156,7 @@ def check_amanuensis_entry() -> None:
     assert "sources/imports" in workspace
     assert "orientation packet" in ingesting.lower()
     assert "organization principle" in ingesting.lower()
+    assert "tyf attend" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
 
 
 def check_writing_runway() -> None:

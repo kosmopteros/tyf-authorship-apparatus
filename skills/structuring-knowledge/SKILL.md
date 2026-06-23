@@ -29,6 +29,14 @@ tyf structure work --source-ref <id>
 
 This pass extracts only explicit author-supplied `Claim:`, `Example:`, and `Question:` lines, appends source-linked knowledge records, writes `.review/amanuensis-brief.md`, and leaves unclassified source material visible for the author. Its questions are gentle nudges of attention, not doubts in the author's judgment. It is not a summarizer, not an interrogation, and not a drafting pass.
 
+When the next sitting needs a small source-grounded question set, run:
+
+```bash
+tyf attend work --source-ref <id>
+```
+
+That writes `.review/gentle-attention.md`. Treat it as review-only amanuensis attention: useful nudges, not audit findings, defects, or a demand that every question be answered before drafting.
+
 **Gap-marking, not confabulation.** When the structure needs a fact, figure, anecdote, or citation the author has not supplied, insert `[AUTHOR: needed — what]` and stop. The system is structurally unable to pretend to know what only the author knows.
 
 ## Rationalization table
@@ -70,4 +78,4 @@ This pass extracts only explicit author-supplied `Claim:`, `Example:`, and `Ques
 
 ## Next
 
-Voice material goes to `managing-voice`. A structured knowledge base plus a selected register unlocks `composing-as-amanuensis`. Source verification of the claims index happens in `auditing-adversarially`.
+Voice material goes to `managing-voice`. A structured knowledge base plus a selected register unlocks `composing-as-amanuensis`; `.review/gentle-attention.md` can help choose the next author question when the path is still tacit. Source verification of the claims index happens in `auditing-adversarially`.

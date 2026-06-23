@@ -11,7 +11,7 @@ Release label: "Single Book Folder".
 - Added inspectable Markdown audit notes beside audit JSON records, active-work status output in `tyf status`, and manifest-version drift detection in `tyf check`; aligned the nested Claude plugin manifest with the active release version.
 - Updated `tyf.portable.json` to `format_version: "0.5.0"` with `single_work: true` and root-level canonical text state.
 - Aligned public onboarding, generated context files, Codex/Claude/Gemini repo contexts, and workspace skills around the single-work beta surface.
-- Expanded the helper smoke suite to 145 tests, including exported release-tree check/install smoke coverage and a fresh exported Codex install opening a separate book workspace from an arrival scaffold; SOLO Be coverage is now 107 scenarios with 107/107 direct RED proof.
+- Expanded the helper smoke suite to 150 tests, including exported release-tree check/install smoke coverage, source-grounded `tyf attend` attention packets, private-context-free author surfaces, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold; hidden development acceptance coverage is now 112 scenarios with 112/112 direct RED proof.
 
 ## 0.4.1
 
@@ -22,7 +22,7 @@ Release label: "writing runway".
 - `tyf start <path>` preserves a cold-start scaffold, chat, folder, old workspace, or zip through the existing import/orientation lane before opening the writing runway.
 - Re-centered public docs and Cowork prompts around truthful drafting today: title, final structure, and audit readiness are non-blocking for candidate prose.
 - Added a proper Codex book-repo skill surface: Codex installs target `$CODEX_HOME/skills` or `~/.codex/skills`, `using-tyf` has Codex UI metadata, and root/generated `AGENTS.md` contexts route new-book work through `tyf start`.
-- Expanded the helper smoke suite to 100 tests and SOLO Be coverage to 62 scenarios.
+- Expanded the helper smoke suite to 100 tests and hidden development acceptance coverage to 62 scenarios.
 
 ## 0.4.0
 
@@ -55,7 +55,7 @@ Release label: "Gate hardening".
 - Hardened notice identity and recurrence: identical gaps in different locations remain distinct, resolved notices reopen when they return, and `tyf notice --peek` does not create a ledger database.
 - Added non-Latin title support through stable generated work ids.
 - Generated workspace context contracts for Codex, Claude, and Gemini.
-- Expanded the helper smoke suite to 86 tests and SOLO Be coverage to 37 scenarios.
+- Expanded the helper smoke suite to 86 tests and hidden development acceptance coverage to 37 scenarios.
 
 ## 0.2.1
 

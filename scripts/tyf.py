@@ -1382,6 +1382,7 @@ Writing language: {language}
 These are invitations, not a test of certainty. Answer only what helps us begin one candidate passage; leave the rest blank.
 Pick one prompt; leave the rest as invitations. Do not interview the author as if this were a form.
 If the author hesitates, capture the hesitation as source.
+A faithful next candidate is better than an endless perfection pass.
 
 - [PROMPT: what should TYF hold with most care in this book right now?]
 - [PROMPT: what lived pressure, question, image, or contradiction makes the work necessary?]
@@ -3033,6 +3034,36 @@ def _looks_tyf_shaped(entries):
     )
 
 
+def _existing_work_recovery_hints(src, listing):
+    ext = os.path.splitext(src)[1].lower()
+    lower_listing = [item.replace("\\", "/").lower() for item in listing]
+    formatted = ext in {".pages", ".doc", ".docx", ".odt", ".pdf", ".rtf"}
+    prior_draft = formatted or any(
+        token in item
+        for item in lower_listing
+        for token in ("manuscript", "draft", "chapter", "pages", "book")
+    )
+    illustrations = any(
+        item.endswith((".png", ".jpg", ".jpeg", ".tif", ".tiff", ".heic", ".webp", ".gif"))
+        or "illustration" in item
+        or "image" in item
+        or "art" in item
+        for item in lower_listing
+    )
+    if not prior_draft and not illustrations:
+        return "- No obvious prior-manuscript or illustration signals were detected; still treat the arrival as source until the author classifies it."
+
+    rows = ["- Treat this as existing-work recovery, not as governed manuscript."]
+    if formatted:
+        rows.append("- Formatted manuscript artifact detected; extract text and image references before deriving claims.")
+    if prior_draft:
+        rows.append("- Build a review-only spine recovery: working sections, central pressure, source-backed material, raw notes, AI-drafted or uncertain passages, and open author decisions.")
+    if illustrations:
+        rows.append("- Preserve an illustration inventory with filenames, placement clues, captions, rights/source status, and whether each image is part of the argument or atmosphere.")
+    rows.append("- Do not promote recovered text to `manuscript/`; place any reworked prose in `drafts/` after the author accepts the recovery map.")
+    return "\n".join(rows)
+
+
 def _copy_arrival(src, dest):
     if os.path.isdir(src):
         for r, dirs, files in os.walk(src):
@@ -3072,6 +3103,7 @@ def _write_import_orientation(work_id, src, preserved, kind, fragment, created_w
         orientation = os.path.join("sources", "imports", f"{label}-{hashlib.sha256(now().encode()).hexdigest()[:6]}-orientation.md")
     rows = "\n".join(f"- {item}" for item in listing[:120]) or "- (no inspectable listing)"
     shape = "TYF-shaped workspace/archive signals detected." if zip_tyf_shaped else "Classification required; do not assume this dump is already organized."
+    recovery_hints = _existing_work_recovery_hints(src, listing)
     if fragment:
         frag_line = (
             f"- Source fragment: `{fragment['id']}` ({fragment['path']})\n"
@@ -3102,6 +3134,10 @@ No manuscript text was written.
 
 {frag_line}
 
+## Existing Work Recovery
+
+{recovery_hints}
+
 ## Arrival Listing
 
 {rows}
@@ -3109,12 +3145,13 @@ No manuscript text was written.
 ## Analysis Pass For The Agent
 
 1. Classify each item as source, prior draft, voice sample, claim/example, metadata, or unknown.
-2. Identify an organizing principle before moving anything: chronology, source type, work unit, theme, scene, chapter, or another author-approved map.
-3. If the bundle is TYF-shaped, compare its book, `sources/`, `knowledge-base/`, and `voice/` surfaces to this workspace and propose a merge plan instead of copying over live files.
-4. For unreadable files, OCR, transcribe, convert, or chunk explicitly before deriving claims. Do not invent contents from preserved artifacts.
-5. For random dumps, ask the author which materials are authoritative, private, obsolete, or exploratory.
-6. Mint additional source fragments only for text the author wants preserved as evidence.
-7. Keep candidate prose in `{_work_display_path(work_id, "drafts")}/`; manuscript still requires proposal, audit, author review, author decision, and `tyf write --decision`.
+2. If this is an existing manuscript, recover a review-only spine before forward drafting: section map, source status, uncertain/AI-drafted passages, voice clues, illustration inventory, and open author decisions.
+3. Identify an organizing principle before moving anything: chronology, source type, work unit, theme, scene, chapter, or another author-approved map.
+4. If the bundle is TYF-shaped, compare its book, `sources/`, `knowledge-base/`, and `voice/` surfaces to this workspace and propose a merge plan instead of copying over live files.
+5. For unreadable files, OCR, transcribe, convert, or chunk explicitly before deriving claims. Do not invent contents from preserved artifacts.
+6. For random dumps, ask the author which materials are authoritative, private, obsolete, or exploratory.
+7. Mint additional source fragments only for text the author wants preserved as evidence.
+8. Keep candidate prose in `{_work_display_path(work_id, "drafts")}/`; manuscript still requires proposal, audit, author review, author decision, and `tyf write --decision`.
 """)
     return orientation
 
@@ -3228,6 +3265,7 @@ Work: `{work_id}`
 Start writing from the author's actual material. Do not wait for a title,
 complete outline, perfect classification, audit readiness, or publication-grade
 certainty.
+A faithful next candidate beats an endless perfection pass.
 
 ## Source State
 

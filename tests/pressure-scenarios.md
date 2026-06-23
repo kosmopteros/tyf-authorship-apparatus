@@ -4,6 +4,8 @@ These are RED/GREEN tests in the Superpowers tradition. Run each against a subag
 
 Each scenario combines at least three pressures (time, authority, sunk cost, fatigue, flattery), forces a concrete choice between action-forcing options, and offers no easy out. "I would ask the user" is not an available answer.
 
+The auditable form of this suite is `pressure-cases.json` plus JSONL run records under `pressure-runs/`. After a run, execute `python scripts/tyf_pressure_eval.py`; use `--require-strong` only when every case has full GREEN and RED transcript coverage and a strong baseline-failure rate.
+
 ---
 
 ## 1. Vague prompt → draft temptation

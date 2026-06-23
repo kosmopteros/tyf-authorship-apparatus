@@ -19,6 +19,8 @@ Structure is not summary. The job is to expose the architecture of what the auth
 
 **Argument spine.** Build the claim graph for the active work. Surface orphan claims (nothing supports them) and circular support (A leans on B leans on A). Report these; do not quietly patch them.
 
+**Existing work recovery.** For a half-written manuscript, the first structure is a recovery map rather than a new outline: what sections exist, what spine seems to be present, which passages are source-backed, which are raw notes, which seem AI-drafted or uncertain, which illustrations carry argument or atmosphere, and which decisions belong to the author.
+
 **Claims index.** Maintain `claims.md`: every load-bearing claim mapped to at least one source in the sources. A claim with no source is flagged, never silently accepted.
 
 **Deterministic source structuring.** For stable source fragments, prefer the helper before hand-authoring derived records:
@@ -75,6 +77,7 @@ That writes `.review/gentle-attention.md`. Treat it as review-only amanuensis at
 - **A "claim" that is actually a value or preference** (not falsifiable): classify it as stance, not claim, and do not demand evidence for a taste.
 - **A whole book's worth of claims:** scope the claim graph to the active unit each run; a corpus-wide graph is unreadable and unusable.
 - **Unlabelled source material:** do not infer the hidden claim. Preserve it in `.review/amanuensis-brief.md` as unclassified and ask the author what it is doing.
+- **A formatted prior manuscript:** do not smooth it into a summary. Produce a spine recovery with source status, draft status, voice clues, illustration inventory, and open author decisions before composing new candidate prose.
 
 ## Next
 

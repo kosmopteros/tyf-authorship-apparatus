@@ -255,6 +255,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence DocCheck.test_release_status_counts_match_current_evidence -v"
     Then Exit code is 0
 
+  @covers:tyf-prompt-pressure-eval-contract @bind-file:scripts/tyf_pressure_eval.py @bind-file:tests/pressure-cases.json @bind-file:tests/pressure-runs/2026-06-03-first-subagent.jsonl @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: prompt pressure evidence has an honest partial-evidence happy path
+    When Run "python tests/test_tyf.py DocCheck.test_pressure_eval_results_are_machine_checked -v"
+    Then Exit code is 0
+
+  @covers:tyf-prompt-pressure-eval-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf_pressure_eval.py @bind-file:tests/pressure-cases.json @bind-file:tests/pressure-runs/2026-06-03-first-subagent.jsonl @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: prompt pressure evidence refuses strong proof overclaiming
+    When Run "python tests/test_tyf.py DocCheck.test_pressure_eval_require_strong_fails_current_weak_baseline -v"
+    Then Exit code is 0
+
+  @covers:tyf-prompt-pressure-eval-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf_pressure_eval.py @bind-file:tests/pressure-cases.json @bind-file:tests/pressure-runs/2026-06-03-first-subagent.jsonl @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_independent_oracles.py @tool-check:cli
+  Scenario: prompt pressure evidence structural oracle remains wired
+    When Run "python tests/test_independent_oracles.py pressure-eval"
+    Then Exit code is 0
+
+  @covers:tyf-prompt-pressure-eval-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:CHANGELOG.md @bind-file:docs/COMPARISON_SUPERPOWERS.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: prompt pressure evidence docs stay honest about partial proof
+    When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence DocCheck.test_release_status_counts_match_current_evidence -v"
+    Then Exit code is 0
+
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: author context templates stay clean and install docs avoid dev context
     When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_private_development_reflex DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"

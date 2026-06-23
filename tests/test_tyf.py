@@ -1993,14 +1993,14 @@ class CLIBehaviour(unittest.TestCase):
 
     def test_import_unreadable_binary_marks_extraction_needed_without_fragment(self):
         ws = self.ws()
-        scan = self.tmp / "scanned-notes.pdf"
-        scan.write_bytes(b"%PDF-1.4\n% image-only scan placeholder\n")
+        scan = self.tmp / "half-written-book.pages"
+        scan.write_bytes(b"Pages placeholder with formatted manuscript and images\n")
 
         rc, out = run_tyf(["import", str(scan), "--kind", "source"], ws)
         self.assertEqual(rc, 0, out)
         self.assertIn("Extraction needed", out)
         self.assertNotIn("Source fragment:", out)
-        imports = list((ws / "sources" / "imports").glob("*scanned-notes.pdf"))
+        imports = list((ws / "sources" / "imports").glob("*half-written-book.pages"))
         self.assertEqual(len(imports), 1)
         orientation = list((ws / "sources" / "imports").glob("*orientation.md"))
         orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
@@ -2008,6 +2008,10 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("OCR or transcription", orientation_text)
         self.assertIn("Do not invent contents from this file", orientation_text)
         self.assertIn("No source fragment was minted", orientation_text)
+        self.assertIn("Existing Work Recovery", orientation_text)
+        self.assertIn("review-only spine recovery", orientation_text)
+        self.assertIn("AI-drafted or uncertain passages", orientation_text)
+        self.assertIn("Do not promote recovered text to `manuscript/`", orientation_text)
         self.assertFalse((ws / "sources" / "fragments.jsonl").exists())
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
@@ -2032,9 +2036,11 @@ class CLIBehaviour(unittest.TestCase):
         dump = self.tmp / "random-dump"
         (dump / "notes").mkdir(parents=True)
         (dump / "works" / "old" / "manuscript").mkdir(parents=True)
+        (dump / "illustrations").mkdir(parents=True)
         (dump / "notes" / "opening.md").write_text("A loose source note.\n", encoding="utf-8")
         (dump / "works" / "old" / "manuscript" / "chapter.md").write_text(
             "Old prose that should not be live yet.\n", encoding="utf-8")
+        (dump / "illustrations" / "plate-01.png").write_bytes(b"not actually an image")
 
         rc, out = run_tyf(["import", str(dump), "--kind", "dump"], ws)
         self.assertEqual(rc, 0, out)
@@ -2046,7 +2052,10 @@ class CLIBehaviour(unittest.TestCase):
         orientation_text = "\n".join(p.read_text(encoding="utf-8") for p in orientation)
         self.assertIn("notes/opening.md", orientation_text)
         self.assertIn("works/old/manuscript/chapter.md", orientation_text)
+        self.assertIn("illustrations/plate-01.png", orientation_text)
         self.assertIn("organization plan", orientation_text)
+        self.assertIn("illustration inventory", orientation_text)
+        self.assertIn("source status", orientation_text)
         self.assertFalse((ws / "works" / "old").exists())
         self.assertEqual(work_id, "work")
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
@@ -2081,6 +2090,8 @@ class CLIBehaviour(unittest.TestCase):
         self.assertTrue(draft.is_file())
         self.assertIn("Writing runway", runway.read_text(encoding="utf-8"))
         self.assertIn("Do not wait for a title", runway.read_text(encoding="utf-8"))
+        self.assertIn("faithful next candidate", runway.read_text(encoding="utf-8").lower())
+        self.assertIn("endless perfection pass", runway.read_text(encoding="utf-8"))
         self.assertIn("sources/interviews/work-first-session.md", runway.read_text(encoding="utf-8"))
         self.assertIn("Start drafting here", draft.read_text(encoding="utf-8"))
         self.assertIn('title_status: "unknown"', (ws / "work.yaml").read_text(encoding="utf-8"))
@@ -2123,10 +2134,12 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Pick one prompt; leave the rest as invitations.", starter)
         self.assertIn("Do not interview the author as if this were a form.", starter)
         self.assertIn("If the author hesitates, capture the hesitation as source.", starter)
+        self.assertIn("A faithful next candidate is better than an endless perfection pass.", starter)
         self.assertIn("Use the gentle attention deck", runway)
         self.assertIn("Do not ask the author to answer every prompt before drafting", runway)
         self.assertIn("Ask one question at a time.", runway)
         self.assertIn("Stop asking once candidate prose can begin.", runway)
+        self.assertIn("A faithful next candidate beats an endless perfection pass.", runway)
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
     def test_start_updates_root_title_language_and_evidence_packet(self):
@@ -2714,8 +2727,12 @@ class DocCheck(unittest.TestCase):
         self.assertIn("one preserved source or author statement", composing)
         self.assertIn("one provisional voice cue", composing)
         self.assertIn("approved structural move", composing)
+        self.assertIn("next faithful candidate", composing)
+        self.assertIn("perfection pass", composing)
         self.assertIn("exploratory passage", initializing.lower())
         self.assertIn("exploratory passage", using.lower())
+        self.assertIn("faithful next candidate", initializing.lower())
+        self.assertIn("faithful next candidate", using.lower())
 
     def test_author_facing_surfaces_do_not_require_private_development_context(self):
         public_author_surfaces = [
@@ -2842,8 +2859,36 @@ class DocCheck(unittest.TestCase):
         readme = (REPO / "README.md").read_text(encoding="utf-8")
         self.assertNotIn("have not yet been run against a subagent", readme)
         self.assertIn("GREEN passed 11/11", readme)
-        self.assertIn("RED baseline", readme)
+        self.assertIn("RED failures", readme)
+        self.assertIn("choice-table excerpts", readme)
+        self.assertIn("tyf_pressure_eval.py --require-strong", readme)
         self.assertIn("proof remains partial", readme)
+
+    def test_pressure_eval_results_are_machine_checked(self):
+        p = subprocess.run(
+            [sys.executable, str(REPO / "scripts" / "tyf_pressure_eval.py")],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", env=ENV,
+        )
+        out = p.stdout + p.stderr
+        self.assertEqual(p.returncode, 0, out)
+        self.assertIn("green: 11/11", out)
+        self.assertIn("red failures: 1/5", out)
+        self.assertIn("proof: partial", out)
+        self.assertIn("weak red baseline", out)
+        self.assertIn("partial transcripts", out)
+
+    def test_pressure_eval_require_strong_fails_current_weak_baseline(self):
+        p = subprocess.run(
+            [sys.executable, str(REPO / "scripts" / "tyf_pressure_eval.py"),
+             "--require-strong"],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", env=ENV,
+        )
+        out = p.stdout + p.stderr
+        self.assertNotEqual(p.returncode, 0, out)
+        self.assertIn("proof: partial", out)
+        self.assertIn("strong prompt-level proof is not established", out)
 
     def test_release_status_counts_match_current_evidence(self):
         suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
@@ -2889,6 +2934,9 @@ class DocCheck(unittest.TestCase):
             self.assertIn("OCR or transcription", text, rel)
             self.assertIn("Do not invent contents", text, rel)
             self.assertIn("chunk explicitly", text, rel)
+            self.assertIn("existing work", text.lower(), rel)
+            self.assertIn("spine", text.lower(), rel)
+            self.assertIn("illustration", text.lower(), rel)
 
     def test_opencode_install_routes_to_helper_and_author_context(self):
         install = (REPO / ".opencode" / "INSTALL.md").read_text(encoding="utf-8")

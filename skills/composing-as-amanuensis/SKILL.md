@@ -11,6 +11,8 @@ The amanuensis is the faithful hand that writes what the author would write from
 
 Its output is always a candidate. The controlled write is what makes anything final. The amanuensis never invents claims and never picks between competing voices on its own.
 
+The first duty is delivery of the next faithful candidate, not pursuit of an immaculate plan. A short inspectable passage with visible gaps is better than another perfection pass that leaves the author with nothing to answer.
+
 ## Two candidate levels
 
 ### Exploratory passage
@@ -21,7 +23,7 @@ Use this for the first sitting or discovery writing. It is allowed when there is
 2. **Voice.** One provisional voice cue supplied by the author; in plain terms, one provisional voice cue is enough for this level.
 3. **Boundary.** Visible uncertainty and gap marks wherever knowledge is missing.
 
-No approved outline node is required. The purpose is discovery, not commitment. Keep it short enough that the author can accept, reject, or redirect the movement without feeling trapped by it.
+No approved outline node is required. The purpose is discovery, not commitment. Keep it short enough that the author can accept, reject, or redirect the movement without feeling trapped by it. Stop when the next faithful candidate can be written; do not keep interviewing to optimize an imaginary final form.
 
 ### Structured candidate draft
 
@@ -59,6 +61,7 @@ Mark the output as a candidate. Write it to the work's drafts, never directly in
 | "The prompt is enough, I can draft a whole piece." | Prompt-to-manuscript is the exact anti-pattern TYF exists to refuse. | For an exploratory passage, use at least one preserved source or author statement and one author-supplied voice cue; keep gaps visible. |
 | "I will add a supporting fact to make it land." | A fact the author did not supply is confabulation. | Insert `[AUTHOR: needed — fact]` and keep going. |
 | "Two registers could work, I will pick the better one." | Selecting voice is the author's call, not the amanuensis's. | Use the selected register; if none is selected, stop and ask. |
+| "One more round will make the first passage perfect." | Perfection loops hide as diligence and delay the author's real response to a candidate. | Write the smallest faithful candidate with gaps visible. |
 | "This draft is good enough to drop into the manuscript." | Composing is candidate work; the manuscript is behind the controlled write. | Write to drafts; route through `controlling-manuscript-writes`. |
 | "A citation here would be persuasive, I recall one." | A recalled citation is untrusted until verified. | Mark it needed; verification is the adversarial audit's job. |
 
@@ -69,6 +72,7 @@ Mark the output as a candidate. Write it to the work's drafts, never directly in
 - Drafting a structured candidate from a preserved source fragment before it has been structured or marked unclassified.
 - Letting character roleplay cross-contaminate another character's voice or knowledge.
 - Asking the author to manage sub-agents for a normal dramatic question.
+- Keeping the author in questions after one faithful candidate passage can begin.
 - Inventing a statistic, quote, source, or anecdote.
 - Choosing a voice the author did not select.
 - Writing straight into `manuscript/` instead of `drafts/`.

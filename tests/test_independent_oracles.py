@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import subprocess
 import sys
 
 
@@ -146,6 +147,7 @@ def check_amanuensis_entry() -> None:
     for token in ("title_status", "_untitled_work_id", "sources/imports",
                   "sources/interviews", "cmd_import", "cmd_attend", "gentle-attention.md", "cmd_resume", "cmd_adopt",
                   "Analysis Pass For The Agent", "Containment", "_looks_tyf_shaped",
+                  "_existing_work_recovery_hints", "Existing Work Recovery", "illustration inventory",
                   "_load_structure_record", "--record", "language-neutral JSON",
                   "_one_attention_question", "Ask this first, then stop if candidate prose can begin",
                   "Do not interview the author as if this were a form",
@@ -176,6 +178,9 @@ def check_amanuensis_entry() -> None:
     assert "sources/imports" in workspace
     assert "orientation packet" in ingesting.lower()
     assert "organization principle" in ingesting.lower()
+    assert "existing work recovery" in ingesting.lower()
+    assert "illustration inventory" in ingesting.lower()
+    assert "existing work recovery" in (ROOT / "skills" / "structuring-knowledge" / "SKILL.md").read_text(encoding="utf-8").lower()
     assert "tyf attend" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
     assert "transparent local retrieval" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
     assert "ask one question at a time" in (ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8").lower()
@@ -191,6 +196,7 @@ def check_writing_runway() -> None:
                   "candidate-draft.md", "No manuscript text was written",
                   "let the Gate come later", "sources/interviews",
                   "Ask one question at a time", "Stop asking once candidate prose can begin",
+                  "faithful next candidate", "endless perfection pass",
                   "Source fragment: {arrival['fragment']['id']}"):
         assert token in source, f"writing runway runtime missing {token}"
     assert (ROOT / "examples" / "first-sitting-arrival" / "scaffold.txt").is_file()
@@ -207,6 +213,8 @@ def check_writing_runway() -> None:
     assert "tyf today" not in using
     assert "tyf today" not in readme
     assert "write today" in readme.lower() or "writing today" in readme.lower()
+    assert "faithful next candidate" in readme.lower()
+    assert "perfection pass" in using.lower()
 
 
 def check_portability() -> None:
@@ -531,11 +539,38 @@ def check_diagnostic_isolation() -> None:
     assert "systematic isolation" in comparison
 
 
+def check_pressure_eval() -> None:
+    script = (ROOT / "scripts" / "tyf_pressure_eval.py").read_text(encoding="utf-8")
+    cases = json.loads((ROOT / "tests" / "pressure-cases.json").read_text(encoding="utf-8"))
+    runs = ROOT / "tests" / "pressure-runs" / "2026-06-03-first-subagent.jsonl"
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    validation = (ROOT / "VALIDATION.md").read_text(encoding="utf-8")
+
+    assert "weak red baseline" in script
+    assert "--require-strong" in script
+    assert cases.get("schema") == "tyf-pressure-cases-v1"
+    assert len(cases.get("cases", [])) == 11
+    assert runs.is_file()
+    assert "test_pressure_eval_results_are_machine_checked" in tests
+    assert "test_pressure_eval_require_strong_fails_current_weak_baseline" in tests
+    assert "tyf_pressure_eval.py" in validation
+
+    p = subprocess.run([sys.executable, str(ROOT / "scripts" / "tyf_pressure_eval.py")],
+                       cwd=str(ROOT), capture_output=True, text=True)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "proof: partial" in p.stdout
+    p2 = subprocess.run([sys.executable, str(ROOT / "scripts" / "tyf_pressure_eval.py"),
+                         "--require-strong"],
+                        cwd=str(ROOT), capture_output=True, text=True)
+    assert p2.returncode != 0, p2.stdout + p2.stderr
+    assert "strong prompt-level proof is not established" in p2.stderr
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "private-context-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "private-context-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "pressure-eval", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -568,6 +603,8 @@ def main(argv: list[str] | None = None) -> int:
         check_continuing_work()
     elif args.oracle == "diagnostic-isolation":
         check_diagnostic_isolation()
+    elif args.oracle == "pressure-eval":
+        check_pressure_eval()
     else:
         check_gate()
     return 0

@@ -145,7 +145,9 @@ def check_amanuensis_entry() -> None:
 
     for token in ("title_status", "_untitled_work_id", "sources/imports",
                   "sources/interviews", "cmd_import", "cmd_attend", "gentle-attention.md", "cmd_resume", "cmd_adopt",
-                  "Analysis Pass For The Agent", "Containment", "_looks_tyf_shaped"):
+                  "Analysis Pass For The Agent", "Containment", "_looks_tyf_shaped",
+                  "_one_attention_question", "Ask this first, then stop if candidate prose can begin",
+                  "Do not interview the author as if this were a form"):
         assert token in source, f"amanuensis entry runtime missing {token}"
     for test_name in (
         "test_start_allows_no_title_and_keeps_intake_non_blocking",
@@ -169,6 +171,7 @@ def check_amanuensis_entry() -> None:
     assert "orientation packet" in ingesting.lower()
     assert "organization principle" in ingesting.lower()
     assert "tyf attend" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    assert "ask one question at a time" in (ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8").lower()
 
 
 def check_writing_runway() -> None:
@@ -179,7 +182,8 @@ def check_writing_runway() -> None:
 
     for token in ("cmd_start", "_write_start_runway", "Writing runway",
                   "candidate-draft.md", "No manuscript text was written",
-                  "let the Gate come later", "sources/interviews"):
+                  "let the Gate come later", "sources/interviews",
+                  "Ask one question at a time", "Stop asking once candidate prose can begin"):
         assert token in source, f"writing runway runtime missing {token}"
     assert "cmd_today" not in source, "today command must not survive as an alias"
     assert '"today"' not in source.replace('"tyf today"', ""), "today must not be event-journal protected"

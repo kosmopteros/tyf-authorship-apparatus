@@ -1368,6 +1368,8 @@ Writing language: {language}
 ## Gentle attention deck
 
 These are invitations, not a test of certainty. Answer only what helps us begin one candidate passage; leave the rest blank.
+Pick one prompt; leave the rest as invitations. Do not interview the author as if this were a form.
+If the author hesitates, capture the hesitation as source.
 
 - [PROMPT: what should TYF hold with most care in this book right now?]
 - [PROMPT: what lived pressure, question, image, or contradiction makes the work necessary?]
@@ -1984,6 +1986,29 @@ def _first_text(items):
     return ""
 
 
+def _attention_excerpt(text, limit=180):
+    text = re.sub(r"\s+", " ", text.strip())
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "..."
+
+
+def _one_attention_question(context):
+    question = _first_text(context["questions"])
+    if question:
+        return "Which edge of this question matters for the next passage: " + _attention_excerpt(question)
+    example = _first_text(context["examples"])
+    if example:
+        return "What must stay alive in this image when we draft: " + _attention_excerpt(example)
+    claim = _first_text(context["claims"])
+    if claim:
+        return "Where does this claim become visible in a scene, argument, or sentence: " + _attention_excerpt(claim)
+    unclassified = _first_text(context["unclassified"])
+    if unclassified:
+        return "What role should this material play in the next passage: " + _attention_excerpt(unclassified)
+    return "What is one sentence, image, pressure, or question the author already knows?"
+
+
 def _write_gentle_attention(work, context):
     _ensure_real_dir(_work_path(work, ".review"), ".review/")
     path = _work_path(work, ".review", "gentle-attention.md")
@@ -2022,6 +2047,14 @@ notice what wants care next.
 ### Unclassified source material
 
 {_attention_lines(context['unclassified'])}
+
+## One question to ask first
+
+Ask this first, then stop if candidate prose can begin.
+
+- {_one_attention_question(context)}
+
+Treat hesitation, refusal, or uncertainty as source, not failure.
 
 ## Questions to carry into the next sitting
 
@@ -2920,11 +2953,12 @@ certainty.
    organization principle: chronology, voice, scene, question, chapter, or
    source type.
 2. Use the gentle attention deck in the first-session packet. Do not ask the author to answer every prompt before drafting; one strong source, image, question, or voice cue is enough to begin.
-3. Ask only the questions needed to begin one passage, and store the answers in
+3. Ask one question at a time. Stop asking once candidate prose can begin.
+4. Ask only the questions needed to begin one passage, and store the answers in
    `{starter.replace(os.sep, '/')}`.
-4. Write candidate prose in `{draft.replace(os.sep, "/")}`.
-5. Keep uncertainty visible in brackets rather than solving it silently.
-6. Leave `manuscript/` empty until the author later chooses to pass material
+5. Write candidate prose in `{draft.replace(os.sep, "/")}`.
+6. Keep uncertainty visible in brackets rather than solving it silently.
+7. Leave `manuscript/` empty until the author later chooses to pass material
    through proposal, review, acceptance, and controlled write.
 
 ## Non-Blocking Rules

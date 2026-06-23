@@ -15,9 +15,9 @@ This is an Elicit pass at the knowledge bands. It is the highest-value work in T
 
 The temptation is to propose a thesis, an outline, or a voice on the author's behalf and let them nod along. That inverts the apparatus. You pressure what the author already believes until it is sharp. You never invent what they should believe or want.
 
-**First sitting.** When `tyf start` has created `sources/interviews/work-first-session.md`, use its gentle attention deck before inventing a new interview plan. The author does not have to answer every prompt. One strong source, image, pressure, voice cue, or first-passage target is enough to begin candidate prose; unanswered prompts stay visible as invitations.
+**First sitting.** When `tyf start` has created `sources/interviews/work-first-session.md`, use its gentle attention deck before inventing a new interview plan. The author does not have to answer every prompt. Pick one prompt, ask it as attention, and stop when candidate prose can begin. One strong source, image, pressure, voice cue, or first-passage target is enough; unanswered prompts stay visible as invitations.
 
-**Later sitting.** After `tyf structure` has created source-linked claims, examples, questions, and an amanuensis brief, `tyf attend work` can write `.review/gentle-attention.md`. Use it when you need the next right question. Its questions are invitations to notice what wants care, not doubt in the author's judgment and not audit pressure.
+**Later sitting.** After `tyf structure` has created source-linked claims, examples, questions, and an amanuensis brief, `tyf attend work` can write `.review/gentle-attention.md`. Use it when you need the next right question. Ask the packet's one first question before using the longer list. Its questions are invitations to notice what wants care, not doubt in the author's judgment and not audit pressure.
 
 **Thesis interrogation.** Do not proceed past the argument band until the author has stated, in one paragraph, the thesis and the tension it resolves. Push on it. Ask what breaks if the thesis is wrong, who disagrees, and what it costs to believe. You sharpen the author's thesis; you do not author one.
 
@@ -33,6 +33,7 @@ The temptation is to propose a thesis, an outline, or a voice on the author's be
 | "The author seems unsure, I should decide the structure." | Uncertainty is the reason to widen options, not to choose for them. | Propose two or three scaffolds; let them accept, reject, or rearrange. |
 | "Their thesis is basically clear, let us move on." | "Basically clear" is where unsupported argument hides. | Ask what breaks if it is false. If they cannot answer, it is not sharp yet. |
 | "I will infer their voice from how they type to me." | Chat register is rarely the authored register. | Elicit example passages or explicit preferences; do not guess. |
+| "I should work through the whole gentle attention deck." | A deck is not a form. Too many questions turns attention into extraction. | Ask one question at a time and stop when the next passage can begin. |
 
 ## Red flags: stop if you catch yourself
 

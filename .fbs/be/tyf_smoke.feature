@@ -410,6 +410,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_mutating_command_refuses_missing_canonical_event_journal -v"
     Then Exit code is 0
 
+  @covers:tyf-helper-current-contract @covers:tyf-canonical-event-journal-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: doctor repair heals missing structure without recreating lost history
+    When Run "python tests/test_tyf.py CLIBehaviour.test_doctor_repair_restores_missing_structure_without_clobbering_author_files CLIBehaviour.test_doctor_repair_refuses_missing_canonical_event_journal -v"
+    Then Exit code is 0
+
   @covers:tyf-source-provenance-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:skills/ingesting-sources/SKILL.md @bind-file:skills/controlling-manuscript-writes/SKILL.md @tool-check:cli
   Scenario: source fragments carry through proposal decision and write records
     When Run "python tests/test_tyf.py CLIBehaviour.test_source_capture_fragment_survives_proposal_decision_and_write -v"

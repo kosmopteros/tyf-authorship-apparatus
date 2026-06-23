@@ -2136,6 +2136,38 @@ class CLIBehaviour(unittest.TestCase):
         self.assertNotEqual(rc, 0, "doctor must flag a missing canonical event journal")
         self.assertRegex(out.lower(), r"event journal|missing")
 
+    def test_doctor_repair_restores_missing_structure_without_clobbering_author_files(self):
+        ws = self.ws()
+        draft = ws / "drafts" / "candidate-draft.md"
+        draft.write_text("Author draft stays here.\n", encoding="utf-8")
+        shutil.rmtree(ws / "knowledge-base" / "examples")
+        (ws / "manifest.yaml").unlink()
+
+        rc, out = run_tyf(["doctor"], ws)
+        self.assertNotEqual(rc, 0, "doctor should report missing structure before repair")
+        self.assertIn("missing structure", out)
+        self.assertIn("knowledge-base/examples/", out)
+        self.assertIn("manifest.yaml", out)
+
+        before_events = tyf.ledger_summary(str(ws))[1]
+        rc, out = run_tyf(["doctor", "--repair"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("no problems found", out)
+        self.assertIn("repaired", out)
+        self.assertTrue((ws / "knowledge-base" / "examples").is_dir())
+        self.assertTrue((ws / "manifest.yaml").is_file())
+        self.assertEqual(draft.read_text(encoding="utf-8"), "Author draft stays here.\n")
+        self.assertGreater(tyf.ledger_summary(str(ws))[1], before_events)
+
+    def test_doctor_repair_refuses_missing_canonical_event_journal(self):
+        ws = self.ws()
+        journal = ws / ".tyf" / "events.jsonl"
+        journal.unlink()
+        rc, out = run_tyf(["doctor", "--repair"], ws)
+        self.assertNotEqual(rc, 0, "repair must not recreate lost canonical history")
+        self.assertRegex(out.lower(), r"event journal|missing")
+        self.assertFalse(journal.exists())
+
     def test_doctor_flags_malformed_canonical_event_journal(self):
         ws = self.ws()
         journal = ws / ".tyf" / "events.jsonl"

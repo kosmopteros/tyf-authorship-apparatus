@@ -220,6 +220,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_check_flags_stale_single_work_path_drift DocCheck.test_check_flags_stale_multi_work_globs DocCheck.test_check_flags_today_inside_command_lists -v"
     Then Exit code is 0
 
+  @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf.py @bind-file:cowork/SETUP.md @bind-file:TYF-manifesto-and-architecture.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: documentation check flags stale Gate chains without review packets
+    When Run "python tests/test_tyf.py DocCheck.test_check_flags_controlled_write_chain_without_review_packet -v"
+    Then Exit code is 0
+
   @covers:tyf-doc-drift-command-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:README.md @bind-file:VALIDATION.md @bind-file:tests/PRESSURE_RESULTS.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: README pressure status matches validation evidence
     When Run "python tests/test_tyf.py DocCheck.test_readme_pressure_status_matches_validation_evidence -v"

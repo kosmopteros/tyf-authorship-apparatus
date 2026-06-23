@@ -1987,6 +1987,19 @@ class DocCheck(unittest.TestCase):
                             for p in problems),
                         f"expected a stale today command-list problem, got {problems}")
 
+    def test_check_flags_controlled_write_chain_without_review_packet(self):
+        root = self.min_pack()
+        path = root / "cowork" / "SETUP.md"
+        path.parent.mkdir(parents=True)
+        path.write_text(
+            "Manuscript writes require a proposal record, passing audit record, "
+            "author decision record, and `tyf write --decision <id>`.\n",
+            encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertTrue(any("review" in p.lower() and "controlled-write" in p.lower()
+                            for p in problems),
+                        f"expected a stale controlled-write chain problem, got {problems}")
+
     def test_check_flags_plugin_manifest_version_divergence(self):
         root = self.min_pack()
         for rel, version in (

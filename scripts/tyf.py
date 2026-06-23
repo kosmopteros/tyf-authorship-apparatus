@@ -572,6 +572,25 @@ def run_doc_check(root=None):
                     )
                     break
 
+    # 11. The Gate chain now includes an author-readable review packet between
+    #     audit and author decision. Runtime docs that say proposal + audit +
+    #     decision + write without review are stale and unsafe routing law.
+    for p in _iter_files(root, (".md", ".json", ".sh", ".yaml", ".yml")):
+        rel = os.path.relpath(p, root)
+        if rel in _dead_ref_exempt:
+            continue
+        for i, line in _iter_pack_lines(p):
+            low = line.lower()
+            if ("tyf write --decision" in low
+                    and "proposal" in low
+                    and "audit" in low
+                    and "decision" in low
+                    and "review" not in low):
+                problems.append(
+                    f"{rel}:{i}: stale controlled-write chain without review packet "
+                    "(use proposal, audit, author review, decision, and `tyf write --decision`)"
+                )
+
     return problems, notes
 
 def _print_check(problems, notes, quiet=False):

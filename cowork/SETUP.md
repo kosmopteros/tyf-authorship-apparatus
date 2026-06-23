@@ -26,7 +26,7 @@ Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace 
 
 ## Make the controlled write hold in Cowork
 
-- The helper is the only writer into `manuscript/`. Read-only passes and Compose never write there. Manuscript writes require a proposal record, passing audit record, author decision record with `--evidence` and optional `--lines` for selected source-line acceptance, and `tyf write --decision <id>`. A bare `--confirm` is refused.
+- The helper is the only writer into `manuscript/`. Read-only passes and Compose never write there. Manuscript writes require a proposal record, passing audit record, author review packet, author decision record with `--evidence` and optional `--lines` for selected source-line acceptance, and `tyf write --decision <id>`. A bare `--confirm` is refused.
 - The project instructions repeat the write-zone table so every fresh task and every scheduled session reloads it.
 - Run `tyf doctor` on a daily schedule to catch any manuscript file that appeared without a write-log entry.
 

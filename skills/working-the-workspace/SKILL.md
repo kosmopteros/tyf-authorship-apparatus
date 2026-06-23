@@ -74,7 +74,7 @@ tyf status            # active work, band, open gates, write-zone reminder
 tyf start [path]      # preserve an optional arrival and open the draft runway
 tyf start --title "<title>" --language "<writing language>"
 tyf import <path>    # preserve an arrival and create an orientation packet
-tyf resume [work]    # active work, state, prompts, and next useful move
+tyf resume [work]    # active work, return context, prompts, and next useful move
 tyf begin <work> --language "<writing language>"
                      # advanced first-session packet with explicit id
 tyf capture <work>     # append author source, voice, claim, or question material

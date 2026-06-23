@@ -1007,6 +1007,45 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Next useful move", out)
         self.assertIn("sources/interviews", out)
 
+    def test_resume_surfaces_current_review_packets_for_returning_author(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["capture", "work", "--kind", "source", "--title", "opening pressure",
+             "--text", "Claim: The aunt's absence is the pressure. Example: The chair stays empty."],
+            ws)
+        self.assertEqual(rc, 0, out)
+        fragment = re.search(r"Source fragment:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["structure", "work", "--source-ref", fragment], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(["attend", "work"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["feedback", "work", "--from", "Beta reader",
+             "--text", "The empty chair caught me, but I wanted the aunt's absence sooner."],
+            ws)
+        self.assertEqual(rc, 0, out)
+        feedback_id = re.search(r"Feedback:\s+(\S+)", out).group(1)
+        rc, out = run_tyf(["session", "work", "--focus", "return through the empty chair"], ws)
+        self.assertEqual(rc, 0, out)
+        rc, out = run_tyf(
+            ["diagnose", "work", "--band", "section",
+             "--symptom", "the aunt's absence arrives too late"],
+            ws)
+        self.assertEqual(rc, 0, out)
+
+        rc, out = run_tyf(["resume"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Return context", out)
+        self.assertIn(".review/current-session.md", out)
+        self.assertIn(".review/current-diagnosis.md", out)
+        self.assertIn(".review/gentle-attention.md", out)
+        self.assertIn(".review/feedback", out)
+        self.assertIn(feedback_id, out)
+        self.assertIn("Next useful move", out)
+        self.assertEqual(list((ws / "manuscript").iterdir()), [])
+
     # ---- third review: commands must require the work to exist ----
 
     def test_mark_ready_requires_existing_work(self):

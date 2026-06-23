@@ -1115,7 +1115,7 @@ This is an author-owned TYF workspace. This book folder is the single work.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
 - If the author edits `manuscript/` directly, use `tyf adopt work <unit> --evidence "<what happened>"` before the next controlled write.
-- Use `tyf resume` to recover the active work, pending proposals, open prompts, and next move.
+- Use `tyf resume` to recover the active work, live review packets, pending proposals, open prompts, and next move.
 - Use `tyf notice --peek` for read-only inspection and `tyf snapshot --message "..."` only when the author wants an explicit git recovery point.
 """
     files = {
@@ -2364,9 +2364,21 @@ def _session_context_lines(work_id):
     first_session = _work_path(work_id, "sources", "interviews", f"{work_id}-first-session.md")
     if os.path.isfile(first_session):
         lines.append(f"- first-session evidence: {first_session.replace(os.sep, '/')}")
+    runway = _work_path(work_id, ".review", "writing-runway.md")
+    if os.path.isfile(runway):
+        lines.append(f"- writing runway: {runway.replace(os.sep, '/')}")
     draft = _work_path(work_id, "drafts", "candidate-draft.md")
     if os.path.isfile(draft):
         lines.append(f"- draft runway: {draft.replace(os.sep, '/')}")
+    current_session = _work_path(work_id, ".review", "current-session.md")
+    if os.path.isfile(current_session):
+        lines.append(f"- current session: {current_session.replace(os.sep, '/')}")
+    current_diagnosis = _work_path(work_id, ".review", "current-diagnosis.md")
+    if os.path.isfile(current_diagnosis):
+        lines.append(f"- current diagnosis: {current_diagnosis.replace(os.sep, '/')}")
+    brief = _work_path(work_id, ".review", "amanuensis-brief.md")
+    if os.path.isfile(brief):
+        lines.append(f"- amanuensis brief: {brief.replace(os.sep, '/')}")
     attention = _work_path(work_id, ".review", "gentle-attention.md")
     if os.path.isfile(attention):
         lines.append(f"- gentle attention: {attention.replace(os.sep, '/')}")
@@ -3078,6 +3090,11 @@ def cmd_resume(args):
     proposals = sorted(os.listdir(os.path.join(review, "proposals"))) if os.path.isdir(os.path.join(review, "proposals")) else []
     decisions = sorted(os.listdir(os.path.join(review, "decisions"))) if os.path.isdir(os.path.join(review, "decisions")) else []
     interview = os.path.join("sources", "interviews", f"{work}-first-session.md")
+    return_context = _session_context_lines(work)
+    has_live_review_packet = any(os.path.isfile(_work_path(work, ".review", name))
+                                 for name in ("current-session.md", "current-diagnosis.md",
+                                              "gentle-attention.md", "amanuensis-brief.md"))
+    has_live_review_packet = has_live_review_packet or bool(_latest_review_paths(work, os.path.join(".review", "feedback"), limit=1))
     prompts = []
     if os.path.isfile(interview):
         for line in _read(interview).splitlines():
@@ -3090,6 +3107,10 @@ def cmd_resume(args):
     print(f"  first-session evidence: {interview.replace(os.sep, '/') if os.path.isfile(interview) else '(none yet)'}")
     print(f"  pending proposals: {len(proposals)}")
     print(f"  decisions: {len(decisions)}")
+    if return_context:
+        print("  Return context:")
+        for line in return_context[:12]:
+            print(f"    {line}")
     if prompts:
         print("  open prompts:")
         for prompt in prompts[:5]:
@@ -3099,6 +3120,8 @@ def cmd_resume(args):
         print(f"  Run `tyf write {work} --decision {os.path.splitext(decisions[-1])[0]}` if the author is ready.")
     elif proposals:
         print("  Review the latest proposal, record/pass an audit, then accept only what the author approves.")
+    elif has_live_review_packet:
+        print("  Open `drafts/candidate-draft.md` and make one small candidate move from the return context above.")
     elif os.path.isfile(interview):
         print(f"  Continue filling {interview.replace(os.sep, '/')} or import/capture source before drafting.")
     else:

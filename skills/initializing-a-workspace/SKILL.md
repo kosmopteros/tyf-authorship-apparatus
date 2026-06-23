@@ -48,7 +48,7 @@ tyf init <workspace-name>       # or scaffold a named book folder nearby
 tyf start [path]                # preserve an optional arrival and open the writing runway
 tyf start --title "<title>" --language "<writing language>"
 tyf import <path>               # preserve existing material and create an orientation packet
-tyf resume                      # recover active work, state, prompts, and next move
+tyf resume                      # recover active work, return context, prompts, and next move
 tyf status                      # confirm what exists
 tyf reflexes                    # show hooks and git recovery behavior
 tyf snapshot -m "first session" # explicit git recovery point

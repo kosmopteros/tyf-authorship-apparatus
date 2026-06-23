@@ -11,7 +11,7 @@ Release label: "Single Book Folder".
 - Added inspectable Markdown audit notes beside audit JSON records, active-work status output in `tyf status`, and manifest-version drift detection in `tyf check`; aligned the nested Claude plugin manifest with the active release version.
 - Updated `tyf.portable.json` to `format_version: "0.5.0"` with `single_work: true` and root-level canonical text state.
 - Aligned public onboarding, generated context files, Codex/Claude/Gemini repo contexts, and workspace skills around the single-work beta surface.
-- Expanded the helper smoke suite to 160 tests, including exported release-tree check/install smoke coverage, source-grounded `tyf attend` attention packets, external-feedback triage, continuing-work session packets, diagnostic-isolation packets, private-context-free author/root/runtime surfaces, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold; development acceptance coverage is now 126 scenarios with 126/126 direct RED proof.
+- Expanded the helper smoke suite to 161 tests, including exported release-tree check/install smoke coverage, source-grounded `tyf attend` attention packets, external-feedback triage, continuing-work session packets, resume return-context recovery, diagnostic-isolation packets, private-context-free author/root/runtime surfaces, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold; development acceptance coverage is now 127 scenarios with 127/127 direct RED proof.
 
 ## 0.4.1
 
@@ -33,7 +33,7 @@ Release label: "Amanuensis entry".
 - Added `tyf import <path>` for existing material, preserving raw arrivals under `sources/imports/` and writing orientation packets without manuscript writes.
 - Added containment-first zip/folder import guidance: bundles are listed and analyzed before anything is unpacked or merged into live TYF workspace surfaces.
 - Added text/chat import source fragments and made source fragments workspace-owned, with origin work recorded but cross-work reuse allowed through `--source-ref`.
-- Added `tyf resume [work]` to show active work, title/language/status, first-session evidence, pending proposals, decisions, open prompts, and next useful move.
+- Added `tyf resume [work]` to show active work, title/language/status, first-session evidence, live return context, pending proposals, decisions, open prompts, and next useful move.
 - Added `tyf adopt <work> <unit> --evidence` to preserve direct author manuscript edits under `.review/author-revisions/` and record the edited unit as the new base.
 - Expanded the helper smoke suite to 96 tests.
 

@@ -19,18 +19,22 @@ thread or pretending the book is a task list.
 
 ## Protocol
 
-1. Run `tyf session` or `tyf session work --focus "<focus>"` as hidden
-   amanuensis machinery. Do not hand the author a command list.
-2. Read `.review/current-session.md`.
-3. Offer the author the packet's one small next move in plain language.
-4. Work in `drafts/` only. If the author accepts material for `manuscript/`,
+1. Run `tyf resume` as hidden amanuensis machinery. Do not hand the author a
+   command list.
+2. Read the return context it surfaces: current session, diagnosis, attention,
+   feedback, proposal, and runway packets when they exist.
+3. If the return context is thin or the author needs a fresh sitting, run
+   `tyf session` or `tyf session work --focus "<focus>"`, then read
+   `.review/current-session.md`.
+4. Offer the author one small next move in plain language.
+5. Work in `drafts/` only. If the author accepts material for `manuscript/`,
    route it through proposal, audit, author review, acceptance, and `tyf write`.
 
-The session packet is review-only. It must name:
+The resume context and session packet are review-only. Together they must name:
 
 - current work context;
+- live packets worth consulting;
 - one small next move;
-- relevant packets to consult;
 - a Stop condition;
 - that No manuscript text was written.
 
@@ -50,14 +54,14 @@ Avoid turning continuity into judgement:
 | Rationalization | Correction |
 |---|---|
 | "The author asked to continue, so I should write the chapter." | Continue in `drafts/`; manuscript still needs the Gate. |
-| "A session plan is overhead." | Re-entry is where drift happens. The packet is the smallest continuity record. |
+| "A session plan is overhead." | Re-entry is where drift happens. The resume context and session packet are the smallest continuity records. |
 | "More options are more helpful." | Offer one small next move. Too many choices breaks the sitting. |
 | "The stop condition can wait." | Without a stop condition, the agent turns help into pressure. |
 | "The latest feedback should drive the session." | Feedback is context, not authority. The author remains source. |
 
 ## Red Flags
 
-- No `tyf session` packet before deciding the next session move.
+- No `tyf resume` pass before deciding the next session move.
 - More than one primary next move.
 - Completion pressure, productivity language, or shame.
 - Manuscript writes during continuation.

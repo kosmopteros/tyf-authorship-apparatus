@@ -430,12 +430,15 @@ def check_continuing_work() -> None:
         "Stop condition",
         "No manuscript text was written",
         "manuscript/ remains Gate-only",
+        "Return context",
+        "current-diagnosis.md",
     ):
         assert token in source, f"continuing-work runtime missing {token}"
     for name in (
         "test_session_writes_review_only_packet_with_one_next_move",
         "test_session_defaults_to_active_work_and_surfaces_review_context",
         "test_session_refuses_invalid_minutes_without_side_effects",
+        "test_resume_surfaces_current_review_packets_for_returning_author",
     ):
         assert name in tests, f"missing {name}"
     assert "tyf session" in continuing
@@ -445,6 +448,7 @@ def check_continuing_work() -> None:
     assert "continuing-the-work" in using
     assert "tyf session" in using
     assert "continuing-the-work" in readme
+    assert "tyf resume" in readme
 
 
 def check_diagnostic_isolation() -> None:

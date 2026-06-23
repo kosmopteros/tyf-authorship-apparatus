@@ -110,6 +110,11 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_resume_reports_active_work_state_and_next_useful_move -v"
     Then Exit code is 0
 
+  @covers:tyf-amanuensis-entry-contract @covers:tyf-continuing-work-contract @criterion:bad-outcome @criterion:edge @criterion:integration @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
+  Scenario: resume surfaces the live return context stack
+    When Run "python tests/test_tyf.py CLIBehaviour.test_resume_surfaces_current_review_packets_for_returning_author -v"
+    Then Exit code is 0
+
   @covers:tyf-writing-runway-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_solo_oracles.py @tool-check:cli
   Scenario: writing runway structural oracle remains wired
     When Run "python tests/test_solo_oracles.py writing-runway"

@@ -1757,6 +1757,17 @@ class DocCheck(unittest.TestCase):
         problems, _ = tyf.run_doc_check(str(root))
         self.assertEqual(problems, [], problems)
 
+    def test_check_ignores_python_build_artifacts(self):
+        root = self.min_pack()
+        generated = root / "build" / "lib"
+        generated.mkdir(parents=True)
+        (generated / "tyf.py").write_text(
+            "Generated wheel build copy with old `tyf today` and "
+            "offering-sources references.\n",
+            encoding="utf-8")
+        problems, _ = tyf.run_doc_check(str(root))
+        self.assertEqual(problems, [], problems)
+
     def test_repo_pack_is_clean(self):
         problems, _ = tyf.run_doc_check(str(REPO))
         self.assertEqual(problems, [], problems)
@@ -1871,6 +1882,9 @@ class DocCheck(unittest.TestCase):
                 ".pytest_cache/** export-ignore",
                 "**/__pycache__/** export-ignore",
                 "*.pyc export-ignore",
+                "build/** export-ignore",
+                "dist/** export-ignore",
+                "*.egg-info/** export-ignore",
                 "fbs.yaml export-ignore",
                 ".claude/commands/fbs-* export-ignore",
                 ".claude/settings.json export-ignore",

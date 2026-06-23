@@ -17,3 +17,6 @@ GEMINI.md export-ignore
 .pytest_cache/** export-ignore
 **/__pycache__/** export-ignore
 *.pyc export-ignore
+build/** export-ignore
+dist/** export-ignore
+*.egg-info/** export-ignore

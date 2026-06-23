@@ -351,9 +351,17 @@ def _pack_root():
     return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 def _iter_files(root, exts):
-    skip_dirs = {"__pycache__", ".git", ".fbs", ".claude", ".pytest_cache"}
+    skip_dirs = {
+        "__pycache__",
+        ".git",
+        ".fbs",
+        ".claude",
+        ".pytest_cache",
+        "build",
+        "dist",
+    }
     for r, dirs, fs in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in skip_dirs]
+        dirs[:] = [d for d in dirs if d not in skip_dirs and not d.endswith(".egg-info")]
         for f in fs:
             if f.endswith(exts):
                 yield os.path.join(r, f)

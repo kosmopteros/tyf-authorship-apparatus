@@ -24,7 +24,7 @@ The body, for any discipline skill:
 
 ## Respect the substrates
 
-If your skill touches prose, it reads the voice registers and the redactor canon. Voice governs how the work sounds; the redactor governs whether it holds together, at micro, macro, and meta. Do not duplicate those checks; reference `managing-voice` and `keeping-the-redactor-canon`.
+If your skill touches prose, it reads the voice registers and the redactor canon. Voice governs how the work sounds; the redactor governs whether it holds together across body scales. Do not duplicate those checks; reference `managing-voice` and `keeping-the-redactor-canon`.
 
 ## Respect the controlled write
 

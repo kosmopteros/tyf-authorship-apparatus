@@ -37,8 +37,8 @@ imagined.
 
 ## Evidence-Green
 
-- `185` stdlib helper, documentation, installer, and packaging tests pass.
-- `147/147` internal acceptance scenarios have current direct RED proof.
+- `188` stdlib helper, documentation, installer, and packaging tests pass.
+- `151/151` internal acceptance scenarios have current direct RED proof.
 - `scripts/validate_codex_plugin.py` validates the Codex plugin and hook identity without relying on private host tooling.
 - CI passes on the pull request for install, Python 3.9, and Python 3.12.
 - Public TYF-visible surfaces do not require private development context.

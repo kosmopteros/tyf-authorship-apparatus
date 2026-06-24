@@ -19,6 +19,8 @@ The temptation is to propose a thesis, an outline, or a voice on the author's be
 
 **Later sitting.** After `tyf structure` has created source-linked claims, examples, questions, and an amanuensis brief, `tyf attend work` can write `.review/gentle-attention.md`. Use it when you need the next right question. Ask the packet's one first question before using the longer list. Its questions are invitations to notice what wants care, not doubt in the author's judgment and not audit pressure.
 
+**Question quality.** A good TYF question must be passage-opening. It should ask for a concrete scene, source line, object, contradiction, embodied encounter, or first sentence. Once the author has named the pressure, do not ask a broad binary such as outer machine versus inner wound. Ask where the pressure actually happened, which existing line still has heat, or what single image can carry it onto the page.
+
 **Thesis interrogation.** Do not proceed past the argument band until the author has stated, in one paragraph, the thesis and the tension it resolves. Push on it. Ask what breaks if the thesis is wrong, who disagrees, and what it costs to believe. You sharpen the author's thesis; you do not author one.
 
 **Eliciting voice.** Ask for annotated example passages of the author's own prose, or stated preferences, or both. Capture register names the author uses for themselves. Hand these to `managing-voice`.
@@ -34,6 +36,7 @@ The temptation is to propose a thesis, an outline, or a voice on the author's be
 | "Their thesis is basically clear, let us move on." | "Basically clear" is where unsupported argument hides. | Ask what breaks if it is false. If they cannot answer, it is not sharp yet. |
 | "I will infer their voice from how they type to me." | Chat register is rarely the authored register. | Elicit example passages or explicit preferences; do not guess. |
 | "I should work through the whole gentle attention deck." | A deck is not a form. Too many questions turns attention into extraction. | Ask one question at a time and stop when the next passage can begin. |
+| "The author named the theme, so I should ask which conceptual doorway to use." | Abstract doorways feel like coaching, not amanuensis work. | Ask for one concrete scene, object, source line, or first sentence that would let the passage start. |
 
 ## Red flags: stop if you catch yourself
 

@@ -23,6 +23,7 @@ Commands:
   tyf feedback [work-id]                  preserve external critique and write triage
   tyf session [work-id]                   write a review-only writing session packet
   tyf diagnose [work-id]                  write a review-only diagnostic isolation packet
+  tyf treat [work-id]                     write a review-only typographer-redactor packet
   tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
@@ -56,7 +57,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, import, capture,
-  structure, attend, feedback, session, diagnose, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
+  structure, attend, feedback, session, diagnose, treat, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -1114,12 +1115,17 @@ This is an author-owned TYF workspace. This book folder is the single work.
 
 Do not ask the author to invoke skills or remember helper commands. Treat every authorship, source, draft, feedback, character, continuation, or manuscript request as a TYF request and silently choose the earliest applicable TYF skill yourself. Name the apparatus only when it helps the author see what was preserved, what changed, or what needs a decision.
 
+## Author sitting mode
+
+Suppress any broader assistant persona, voice sign-off, status dashboard, or report wrapper while working inside this TYF workspace. Do not answer author sittings with `SUMMARY`, `ANALYSIS`, `ACTIONS`, `RESULTS`, or `NEXT` blocks. Speak in ordinary prose as the amanuensis: brief acknowledgement when useful, then one substantive question, one candidate move, or one concrete file note.
+
 - On session entry, after compaction, or when the author says "continue", run `tyf resume` as hidden amanuensis machinery before choosing the next move.
 - If there is no workspace yet, run `tyf init`, then `tyf start`; a title can stay unknown.
 - If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
 - Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id> --query "<focus>"` and use `.review/gentle-attention.md` as hidden amanuensis guidance with transparent local retrieval, then pass relevant ids to `tyf propose --source-ref <id>`.
 - If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
+- If an existing or substantial manuscript body needs language treatment, run `tyf treat` or `tyf treat --unit manuscript/<file>` before proposing edits. The packet is review-only and typographer-redactor work never writes manuscript text directly.
 - If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
@@ -1397,11 +1403,11 @@ If the author hesitates, capture the hesitation as source.
 A faithful next candidate is better than an endless perfection pass.
 
 - [PROMPT: what should TYF hold with most care in this book right now?]
-- [PROMPT: what lived pressure, question, image, or contradiction makes the work necessary?]
+- [PROMPT: what concrete lived scene, source line, question, image, or contradiction makes the work necessary?]
 - [PROMPT: what must not be flattened, explained away, or made too neat?]
 - [PROMPT: whose words, memory, scene, or source should stay close to the page?]
 - [PROMPT: which register should the first passage try: plain, lyrical, argumentative, intimate, comic, severe, or another?]
-- [PROMPT: one first passage could begin from which scene, claim, question, or phrase?]
+- [PROMPT: one first passage could begin from which concrete scene, claim, question, source line, or phrase?]
 
 ## What is already true
 
@@ -1765,12 +1771,12 @@ def _knowledge_escape(value):
 def _retrieval_sample_question(kind, text):
     excerpt = _attention_excerpt(text)
     if kind == "open-question":
-        return "Which edge of this question matters for the next passage: " + excerpt
+        return "What concrete scene, source line, or first sentence would let this question become a passage: " + excerpt
     if kind == "example":
-        return "What must stay alive in this image when we draft: " + excerpt
+        return "Which detail from this image must appear on the page first, and what pressure does it carry: " + excerpt
     if kind == "claim":
-        return "Where does this claim become visible in a scene, argument, or sentence: " + excerpt
-    return "What role should this material play in the next passage: " + excerpt
+        return "Where has the author actually seen this claim happen: in a scene, tool, relationship, body, or sentence: " + excerpt
+    return "What is this material doing for the next passage: scene, claim, voice, pressure, or first sentence: " + excerpt
 
 
 def _retrieval_record(work, kind, anchor_id, text, source_id, path):
@@ -2209,7 +2215,8 @@ def _retrieval_lines(records):
             f"- `{anchor}` {kind}{source} (score {score}): "
             f"{_attention_excerpt(record.get('text', ''), 140)}"
         )
-        lines.append(f"  Sample question: {record.get('sample_question', '')}")
+        sample = _retrieval_sample_question(kind, record.get("text", ""))
+        lines.append(f"  Sample question: {sample}")
     return "\n".join(lines)
 
 
@@ -2261,22 +2268,29 @@ def _attention_excerpt(text, limit=180):
 
 def _one_attention_question(context):
     retrieved = context.get("retrieved") or []
+    query = (context.get("query") or "").strip()
     for record in retrieved:
-        sample = record.get("sample_question", "").strip()
-        if sample:
-            return sample
+        text = record.get("text", "").strip()
+        if text:
+            excerpt = _attention_excerpt(text)
+            if query:
+                return (
+                    f"The current focus is `{query}`. What concrete scene, source line, "
+                    f"or first sentence from this anchor should open the next passage: {excerpt}"
+                )
+            return _retrieval_sample_question(record.get("kind", ""), text)
     question = _first_text(context["questions"])
     if question:
-        return "Which edge of this question matters for the next passage: " + _attention_excerpt(question)
+        return "What concrete scene, source line, or first sentence would let this question become a passage: " + _attention_excerpt(question)
     example = _first_text(context["examples"])
     if example:
-        return "What must stay alive in this image when we draft: " + _attention_excerpt(example)
+        return "Which detail from this image must appear on the page first, and what pressure does it carry: " + _attention_excerpt(example)
     claim = _first_text(context["claims"])
     if claim:
-        return "Where does this claim become visible in a scene, argument, or sentence: " + _attention_excerpt(claim)
+        return "Where has the author actually seen this claim happen: in a scene, tool, relationship, body, or sentence: " + _attention_excerpt(claim)
     unclassified = _first_text(context["unclassified"])
     if unclassified:
-        return "What role should this material play in the next passage: " + _attention_excerpt(unclassified)
+        return "What is this material doing for the next passage: scene, claim, voice, pressure, or first sentence: " + _attention_excerpt(unclassified)
     return "What is one sentence, image, pressure, or question the author already knows?"
 
 
@@ -2708,6 +2722,9 @@ def _session_context_lines(work_id):
     current_diagnosis = _work_path(work_id, ".review", "current-diagnosis.md")
     if os.path.isfile(current_diagnosis):
         lines.append(f"- current diagnosis: {current_diagnosis.replace(os.sep, '/')}")
+    current_treatment = _work_path(work_id, ".review", "typographic-treatment.md")
+    if os.path.isfile(current_treatment):
+        lines.append(f"- current typographic treatment: {current_treatment.replace(os.sep, '/')}")
     brief = _work_path(work_id, ".review", "amanuensis-brief.md")
     if os.path.isfile(brief):
         lines.append(f"- amanuensis brief: {brief.replace(os.sep, '/')}")
@@ -2911,6 +2928,198 @@ Make one candidate experiment in `drafts/`, or ask one gentle question if the sm
     log_event(".", "diagnose", f"{work_id}/{diag_id}", current_path)
     print(f"Diagnostic packet: {packet_path.replace(os.sep, '/')}")
     print(f"Current diagnosis: {current_path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+
+
+_TREATMENT_TEXT_EXTS = (".md", ".markdown", ".txt")
+
+
+def _body_unit_candidates(work_id, top_rel):
+    base = _work_path(work_id, top_rel)
+    if not os.path.isdir(base):
+        return []
+    _reject_symlink_components(base, f"{top_rel}/")
+    work_root = os.path.realpath(_work_base(work_id))
+    found = []
+    for dirpath, dirnames, filenames in os.walk(base):
+        dirnames[:] = [d for d in sorted(dirnames) if not d.startswith(".")]
+        for name in sorted(filenames):
+            if name.startswith(".") or os.path.splitext(name)[1].lower() not in _TREATMENT_TEXT_EXTS:
+                continue
+            path = os.path.join(dirpath, name)
+            _reject_symlink_components(path, "treatment unit")
+            if not os.path.isfile(path) or not _within(work_root, path):
+                continue
+            rel = os.path.relpath(path, _work_base(work_id)).replace(os.sep, "/")
+            found.append((rel, path))
+    return found
+
+
+def _treatment_unit_path(work_id, unit):
+    rel = _one_line(unit, "")
+    norm = rel.replace("\\", "/")
+    if os.path.isabs(rel) or norm.startswith("../") or "/../" in norm or norm in ("", ".", ".."):
+        sys.exit(f"Refused: treatment unit must be a relative workspace path: {rel}")
+    allowed = ("drafts/", "manuscript/")
+    if not any(norm == prefix[:-1] or norm.startswith(prefix) for prefix in allowed):
+        sys.exit("Refused: treatment unit must live under drafts/ or manuscript/ for review-only treatment.")
+    path = _work_path(work_id, *norm.split("/"))
+    _reject_symlink_components(path, "treatment unit")
+    root = os.path.realpath(_work_base(work_id))
+    if not _within(root, path):
+        sys.exit("Refused: treatment unit resolves outside the work.")
+    if not os.path.isfile(path):
+        sys.exit(f"Refused: missing treatment unit: {norm}")
+    if os.path.splitext(path)[1].lower() not in _TREATMENT_TEXT_EXTS:
+        sys.exit("Refused: treatment unit must be UTF-8 Markdown or text.")
+    return norm, path
+
+
+def _default_treatment_unit(work_id):
+    manuscript = _body_unit_candidates(work_id, "manuscript")
+    if manuscript:
+        return "work-body", manuscript[0], manuscript
+    drafts = _body_unit_candidates(work_id, "drafts")
+    if drafts:
+        preferred = next((item for item in drafts if item[0] == "drafts/candidate-draft.md"), drafts[0])
+        return "draft-sample", preferred, drafts
+    sys.exit("Refused: no manuscript or draft text found for typographic treatment.")
+
+
+def _style_sheet_brief(work_id):
+    path = _work_path(work_id, "style-sheet.md")
+    if not os.path.isfile(path):
+        return "- style-sheet.md is missing; record treatment decisions before applying them"
+    lines = [line.strip() for line in _read(path).splitlines() if line.strip()]
+    if not lines:
+        return "- style-sheet.md is empty; record treatment decisions before applying them"
+    return "\n".join(f"- {line}" for line in lines[:8])
+
+
+def _treatment_inventory_lines(candidates):
+    if not candidates:
+        return "- no body inventory found"
+    lines = []
+    for rel, path in candidates[:20]:
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            size = 0
+        lines.append(f"- {rel} ({size} bytes)")
+    extra = len(candidates) - 20
+    if extra > 0:
+        lines.append(f"- ... and {extra} more text unit(s)")
+    return "\n".join(lines)
+
+
+def _treatment_cue_lines(text):
+    low = text.lower()
+    cues = []
+    ai_patterns = (
+        "in today's", "complex landscape", "not merely", "not just",
+        "more than just", "navigating the", "it is important to note",
+        "unlock", "delve", "tapestry",
+    )
+    seen = [p for p in ai_patterns if p in low]
+    if seen:
+        cues.append("- AI cadence: stock or over-balanced phrasing appears in the excerpt: " + ", ".join(seen[:5]))
+    else:
+        cues.append("- AI cadence: no obvious stock phrase in the excerpt; still test rhythm variance and paragraph openers")
+    if "--" in text or "..." in text or '"' in text or "'" in text:
+        cues.append("- Typographic finish: check ASCII fallbacks, straight quotes, ellipses, and dash intent against the writing language")
+    else:
+        cues.append("- Typographic finish: run language-specific punctuation, spacing, quote, numeral, and heading checks")
+    if len([s for s in re.split(r"[.!?]+", text) if s.strip()]) >= 4:
+        cues.append("- Rhythm: compare sentence lengths before treating; do not smooth living variance into one middle cadence")
+    if re.search(r"^#+\s+", text, re.M):
+        cues.append("- Rubrication: headings are present; test whether the skeleton names the work's actual structure")
+    return "\n".join(cues)
+
+
+def cmd_treat(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work or _active_work_id() or ROOT_WORK_ID)
+    _confine_work(work_id)
+    _require_work(work_id)
+    if getattr(args, "unit", None):
+        scope = "unit"
+        unit_rel, unit_path = _treatment_unit_path(work_id, args.unit)
+        inventory = _body_unit_candidates(work_id, "manuscript") or _body_unit_candidates(work_id, "drafts")
+    else:
+        scope, (unit_rel, unit_path), inventory = _default_treatment_unit(work_id)
+    try:
+        text = _read(unit_path)
+    except UnicodeDecodeError:
+        sys.exit("Refused: treatment unit is not UTF-8 text.")
+    if not text.strip():
+        sys.exit("Refused: treatment unit is empty; there is not enough text to treat.")
+
+    wy = read_state(_work_path(work_id, "work.yaml"))
+    language = get(wy, "language") or "undetermined"
+    status = get(wy, "status") or "unknown"
+    title = get(wy, "title") or "unknown"
+    focus = _one_line(getattr(args, "focus", None), "typographic and redactor treatment")
+    unit_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    treatment_id = _record_id("treat", work_id, unit_rel, scope, focus, unit_hash)
+    treatment_dir = _work_path(work_id, ".review", "typographic-treatments")
+    _ensure_real_dir(treatment_dir, ".review/typographic-treatments/")
+    packet_path = os.path.join(treatment_dir, f"{treatment_id}.md")
+    current_path = _work_path(work_id, ".review", "typographic-treatment.md")
+
+    packet = f"""# TYF typographic treatment: {treatment_id}
+
+This is a review-only typographer-redactor packet. It treats an existing draft or manuscript body as a reader instrument, not as raw source to rediscover.
+
+No manuscript text was written. manuscript/ remains Gate-only. Applied changes still require editorial proposal, author acceptance, and the controlled write.
+
+## Work
+
+- work: {work_id}
+- title: {title}
+- language: {language}
+- status: {status}
+- Scope: {scope}
+- unit: {unit_rel}
+- focus: {focus}
+
+## Body inventory
+
+{_treatment_inventory_lines(inventory)}
+
+## Style-sheet context
+
+{_style_sheet_brief(work_id)}
+
+## Milchin passes
+
+- Facts/source status: mark claims, figures, names, citations, and source gaps before improving sentences.
+- Logic: test whether each connective earns its inference and whether the argument follows.
+- Composition: ask whether the order of sections and paragraphs is the path the reader needs.
+- Rubrication: test whether headings and breaks form a load-bearing skeleton rather than decorative labels.
+- Language and style: treat precision, rhythm, register, and voice after the earlier passes are named.
+- Typographic finish: apply language-specific punctuation, quotes, spacing, numerals, and apparatus rules.
+
+## Treatment targets
+
+{_treatment_cue_lines(text)}
+
+## Treatment brief
+
+Use the strongest author-authored passages as the style key. Propose a small language treatment first, preferably 500 to 800 words if the unit is long. Preserve the argument, reduce machine cadence, fix typographic finish, and leave any uncertain source or voice choice visible for the author.
+
+## Next move
+
+Write a candidate treatment in `drafts/`, or write editorial proposals in `.review/`. Do not edit `manuscript/` from this packet.
+
+## Passage excerpt
+
+{_diagnostic_excerpt(text, limit=18)}
+"""
+    atomic_write(packet_path, packet)
+    atomic_write(current_path, packet)
+    log_event(".", "treat", f"{work_id}/{treatment_id}", current_path)
+    print(f"Typographic treatment packet: {packet_path.replace(os.sep, '/')}")
+    print(f"Current treatment: {current_path.replace(os.sep, '/')}")
     print("No manuscript text was written.")
 
 
@@ -3545,6 +3754,7 @@ def _session_start_context(root="."):
         for rel in (
             ".review/current-session.md",
             ".review/current-diagnosis.md",
+            ".review/typographic-treatment.md",
             ".review/gentle-attention.md",
             ".review/amanuensis-brief.md",
             ".review/writing-runway.md",
@@ -3558,10 +3768,12 @@ def _session_start_context(root="."):
     lines.extend([
         "",
         "Automatic reflexes:",
+        "- Suppress external assistant personas, voice sign-offs, status dashboards, and SUMMARY/ANALYSIS/ACTIONS/RESULTS/NEXT report wrappers during author sittings.",
         "- For continue, what next, or return-after-time: run `tyf resume` before deciding.",
         "- For new material, scaffold, chat, folder, zip, PDF, Pages file, audio, scan, or prior draft: run `tyf start <path>` before drafting.",
         "- For a fresh book with no arrival: run `tyf start`; unknown title or language is acceptable.",
         "- For unclear source-grounded questions: run `tyf attend work --source-ref <id> --query \"<focus>\"` and use the packet gently.",
+        "- For an existing or 80-percent manuscript body needing language treatment, run `tyf treat` or `tyf treat --unit manuscript/<file>` before proposing edits.",
         "- Keep candidate prose in `drafts/`; write `manuscript/` only through proposal, audit, author decision, and `tyf write --decision <id>`.",
         "- Use `tyf notice --peek` for read-only attention. Use `tyf snapshot --message \"...\"` only when the author wants a git recovery point.",
     ])
@@ -3851,7 +4063,8 @@ def cmd_resume(args):
     return_context = _session_context_lines(work)
     has_live_review_packet = any(os.path.isfile(_work_path(work, ".review", name))
                                  for name in ("current-session.md", "current-diagnosis.md",
-                                              "gentle-attention.md", "amanuensis-brief.md"))
+                                              "typographic-treatment.md", "gentle-attention.md",
+                                              "amanuensis-brief.md"))
     has_live_review_packet = has_live_review_packet or bool(_latest_review_paths(work, os.path.join(".review", "feedback"), limit=1))
     prompts = _open_first_session_prompts(interview)
     print(f"Active work: {work}")
@@ -5204,7 +5417,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "character",
+        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "character",
         "consult-character", "open", "mark-ready",
         "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
@@ -5286,6 +5499,11 @@ def main():
     s.add_argument("--symptom", default=None, help="observed reader symptom, such as the turn does not land")
     s.add_argument("--focus", default=None, help="optional craft focus for the isolation pass")
     s.set_defaults(fn=cmd_diagnose)
+    s = sub.add_parser("treat", help="write a review-only typographer-redactor treatment packet")
+    s.add_argument("work", nargs="?", default=None)
+    s.add_argument("--unit", default=None, help="drafts/ or manuscript/ text unit to treat; defaults to the manuscript body before candidate draft")
+    s.add_argument("--focus", default=None, help="optional language-treatment focus")
+    s.set_defaults(fn=cmd_treat)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")
     s.add_argument("--knowledge", default=None)
@@ -5373,7 +5591,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

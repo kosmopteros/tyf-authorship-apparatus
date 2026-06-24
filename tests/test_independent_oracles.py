@@ -192,7 +192,7 @@ def check_amanuensis_entry() -> None:
     assert "existing work recovery" in (ROOT / "skills" / "structuring-knowledge" / "SKILL.md").read_text(encoding="utf-8").lower()
     assert "tyf attend" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
     assert "transparent local retrieval" in (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
-    assert "ask one question at a time" in (ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8").lower()
+    assert "ask one passage-opening question at a time" in (ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8").lower()
 
 
 def check_writing_runway() -> None:
@@ -563,6 +563,49 @@ def check_diagnostic_isolation() -> None:
     assert "systematic isolation" in comparison
 
 
+def check_typographer_redactor() -> None:
+    source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
+    tests = (ROOT / "tests" / "test_tyf.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    contract = (ROOT / "docs" / "WORKSPACE_CONTRACT.md").read_text(encoding="utf-8")
+    using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
+    editing = (ROOT / "skills" / "editing-faithfully" / "SKILL.md").read_text(encoding="utf-8")
+    redactor = (ROOT / "skills" / "keeping-the-redactor-canon" / "SKILL.md").read_text(encoding="utf-8")
+    typographer = (ROOT / "skills" / "typographer-redactor" / "SKILL.md").read_text(encoding="utf-8")
+
+    for token in (
+        "def cmd_treat(",
+        ".review/typographic-treatments",
+        "typographic-treatment.md",
+        "review-only typographer-redactor packet",
+        "Milchin passes",
+        "Facts/source status",
+        "Language and style",
+        "Typographic finish",
+        "AI cadence",
+        "No manuscript text was written",
+        "manuscript/ remains Gate-only",
+    ):
+        assert token in source, f"typographer-redactor runtime missing {token}"
+    for name in (
+        "test_treat_writes_review_only_typographer_packet_for_existing_body",
+        "test_treat_defaults_to_manuscript_body_before_draft_sample",
+        "test_treat_refuses_missing_or_unsafe_unit_without_side_effects",
+    ):
+        assert name in tests, f"missing {name}"
+    assert "tyf treat" in typographer
+    assert "Milchin passes" in typographer
+    assert "Facts/source status" in typographer
+    assert "AI cadence" in typographer
+    assert "full-work body" in typographer
+    assert "typographer-redactor" in using
+    assert "tyf treat" in using
+    assert "typographer-redactor" in editing
+    assert "typographer-redactor" in redactor
+    assert "typographic treatment" in readme.lower()
+    assert ".review/typographic-treatment.md" in contract
+
+
 def check_pressure_eval() -> None:
     script = (ROOT / "scripts" / "tyf_pressure_eval.py").read_text(encoding="utf-8")
     cases = json.loads((ROOT / "tests" / "pressure-cases.json").read_text(encoding="utf-8"))
@@ -594,7 +637,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "oracle",
-        choices=("helper", "plugin", "codex-skill", "private-context-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "pressure-eval", "amanuensis-entry", "writing-runway", "portability", "single-work"),
+        choices=("helper", "plugin", "codex-skill", "private-context-boundary", "onboarding", "onboarding-entry", "gate", "provenance", "character-consultation", "feedback-triage", "continuing-work", "diagnostic-isolation", "typographer-redactor", "pressure-eval", "amanuensis-entry", "writing-runway", "portability", "single-work"),
     )
     args = parser.parse_args(argv)
     if args.oracle == "helper":
@@ -627,6 +670,8 @@ def main(argv: list[str] | None = None) -> int:
         check_continuing_work()
     elif args.oracle == "diagnostic-isolation":
         check_diagnostic_isolation()
+    elif args.oracle == "typographer-redactor":
+        check_typographer_redactor()
     elif args.oracle == "pressure-eval":
         check_pressure_eval()
     else:

@@ -259,17 +259,18 @@ A workspace that runs for six months should know the author better at month six 
 
 The typographer skill operates in the Russian / Soviet **редактор** tradition (Milchin and his lineage): structural, terminological, and logical rigor; consistency of argument and reference; editorial responsibility for a text's internal integrity. *Not* the Anglophone narrow sense of typesetting, though typographic hygiene is part of the lower bands. In TYF this role is the **redactor**, and it is a cross-cutting substrate parallel to voice, not a single band. Skill: `keeping-the-redactor-canon`.
 
-Where voice governs how the work sounds, the redactor canon governs whether it holds together. It is read and updated by every Diagnose, Propose, Revise, and Audit pass, at three magnifications:
+Where voice governs how the work sounds, the redactor canon governs whether it holds together. It is read and updated by every Diagnose, Propose, Revise, Treatment, and Audit pass, across body magnifications:
 
-- **micro** (glyph, sentence): punctuation, em-dash discipline, cadence, typographic finish.
-- **macro** (section, architecture, argument): terminology consistency, kept promises, compositional balance, logical coherence, resolved cross-references.
-- **meta** (the whole work, across sessions): the canon itself plus the running style sheet, the persistent record every pass consults before touching prose and writes to after.
+- **micro** (glyph, mark, sentence): punctuation, dash discipline, cadence, quote style, numerals, binding, and typographic finish for the writing language.
+- **meso** (sentence, paragraph, section): facts/source status, logic, composition, rubrication, language, and style.
+- **macro** (chapter, module, body section): terminology consistency, kept promises, compositional balance, logical coherence, resolved cross-references, and honest headings.
+- **mega** (the single work body): front/body/back matter, chapter sequence, apparatus, proportional treatment, and full-work reader service.
 
 The redactor has three jobs: it occupies the lower zoom bands directly; it is the pattern template for the upper bands (the Diagnose-then-Propose-then-controlled-Revise rhythm it runs at the line is the rhythm the Argument, Architecture, and Section work run at their scales); and its canon is the lower component of the voice registers, so a line-level pass never proposes something the glyph-level rules forbid. Where voice and canon seem to conflict, the register fence wins on voice and the canon wins on integrity; the tension is surfaced, not silently resolved.
 
 ## 13. Scope, resolved questions, and what remains
 
-**The current pack ships 18 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `continuing-the-work`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `editing-faithfully`, `receiving-critique`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
+**The current pack ships 19 skills** in three groups: lifecycle (`initializing-a-workspace`, `working-the-workspace`, `continuing-the-work`, `scheduling-ongoing-work`, `keeping-documentation-honest`); editorial apparatus (`using-tyf`, `ingesting-sources`, `interviewing-the-author`, `structuring-knowledge`, `composing-as-amanuensis`, `reading-sympathetically`, `diagnosing-text`, `typographer-redactor`, `editing-faithfully`, `receiving-critique`, `auditing-adversarially`, `controlling-manuscript-writes`); and two cross-cutting substrates (`managing-voice`, `keeping-the-redactor-canon`). Plus the `tyf` helper, the JSONL event journal, the SQLite notice index, and the Cowork packaging.
 
 **Resolved decisions** (were open questions in the original design):
 

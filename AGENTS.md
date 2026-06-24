@@ -8,7 +8,7 @@ TYF (*The Yours Faithfully*) is a faithful apparatus for authorship. Its job is 
 
 Before any task that touches source material, authorship, drafting, editing, voice, claims, citations, or a manuscript, check the TYF skills and load the earliest applicable one. Start from `using-tyf`, which routes to the rest. This is a workflow, not a suggestion.
 
-If the author says "start my book", "new book", "set up TYF", or similar, do not hand them a command list. Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace, then run `tyf start` with no title required. The book folder is the single work; writing runway opens `.review/writing-runway.md` and `drafts/candidate-draft.md` at the root. If the author brings a scaffold, chat, folder, or zip, run `tyf start <path>` so TYF preserves it and opens the writing runway before drafting.
+If the author says "start my book", "new book", "set up TYF", or similar, do not hand them a command list. Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace, then run `tyf start` with no title required. The book folder is the single work; writing runway opens `.review/writing-runway.md` and `drafts/candidate-draft.md` at the root. If the author brings a scaffold, chat, folder, or zip, run `tyf start <path>` so TYF preserves it and opens the writing runway before drafting. If an existing body mainly needs language treatment, typographic craft, AI-cadence cleanup, rubrication, or Milchin-editor work, load `typographer-redactor` and run `tyf treat` before proposing edits.
 
 When captured source material grounds a draft, preserve the source fragment id from `tyf capture --kind source` and pass it to `tyf propose --source-ref <id>` so the Gate carries provenance.
 
@@ -37,8 +37,8 @@ Skill names and file paths are plain and functional. The sign-off badge is **Aut
 
 ## Skills
 
-Lifecycle: `initializing-a-workspace` · `working-the-workspace` · `scheduling-ongoing-work` · `keeping-documentation-honest`
+Lifecycle: `initializing-a-workspace` · `working-the-workspace` · `continuing-the-work` · `scheduling-ongoing-work` · `keeping-documentation-honest`
 
-Editorial apparatus: `using-tyf` · `ingesting-sources` · `interviewing-the-author` · `structuring-knowledge` · `composing-as-amanuensis` · `reading-sympathetically` · `diagnosing-text` · `editing-faithfully` · `auditing-adversarially` · `controlling-manuscript-writes`
+Editorial apparatus: `using-tyf` · `ingesting-sources` · `interviewing-the-author` · `structuring-knowledge` · `composing-as-amanuensis` · `reading-sympathetically` · `receiving-critique` · `diagnosing-text` · `typographer-redactor` · `editing-faithfully` · `auditing-adversarially` · `controlling-manuscript-writes`
 
-Cross-cutting substrates (read by every Diagnose, Propose, Revise, Audit pass at every band): `managing-voice` (how the work sounds) · `keeping-the-redactor-canon` (whether it holds together; the Milchin tradition across micro, macro, and meta)
+Cross-cutting substrates (read by every Diagnose, Propose, Revise, Treatment, and Audit pass across body scales): `managing-voice` (how the work sounds) · `keeping-the-redactor-canon` (whether it holds together; the Milchin tradition across the work body)

@@ -1049,7 +1049,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertIn("open prompts:", out)
         self.assertNotIn("what should TYF hold with most care", out)
-        self.assertIn("what lived pressure", out)
+        self.assertIn("what concrete lived scene", out)
 
     def test_resume_surfaces_current_review_packets_for_returning_author(self):
         ws = self.ws()
@@ -1454,7 +1454,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("Loose image of rain on the kitchen window.", packet)
         self.assertIn("## One question to ask first", packet)
         self.assertIn("Ask this first, then stop if candidate prose can begin.", packet)
-        self.assertIn("Which edge of this question matters for the next passage", packet)
+        self.assertIn("What concrete scene, source line, or first sentence would let this question become a passage", packet)
         self.assertIn("Treat hesitation, refusal, or uncertainty as source, not failure.", packet)
         self.assertIn("What needs care next", packet)
         self.assertIn("What must not be flattened", packet)
@@ -1516,6 +1516,8 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("The river is the second pressure.", packet)
         self.assertIn("Sample question:", packet)
         first_question = packet.split("## One question to ask first", 1)[1].split("Treat hesitation", 1)[0]
+        self.assertIn("The current focus is `river pressure`", first_question)
+        self.assertIn("What concrete scene, source line, or first sentence", first_question)
         self.assertIn("The river is the second pressure.", first_question)
         self.assertEqual(list((ws / "manuscript").iterdir()), [])
 
@@ -1878,6 +1880,80 @@ class CLIBehaviour(unittest.TestCase):
         self.assertFalse((ws / ".review" / "diagnostics").exists())
         self.assertFalse((ws / ".review" / "current-diagnosis.md").exists())
 
+    def test_treat_writes_review_only_typographer_packet_for_existing_body(self):
+        ws = self.ws()
+        rc, out = run_tyf(["start", "--language", "English"], ws)
+        self.assertEqual(rc, 0, out)
+        unit = ws / "manuscript" / "chapter-four.md"
+        unit.write_text(
+            "The dashboard promised a life without friction.\n"
+            "It was not merely a tool, but a confession of the century.\n"
+            "In today's complex landscape, the body becomes another KPI.\n",
+            encoding="utf-8",
+        )
+
+        rc, out = run_tyf(
+            ["treat", "work", "--unit", "manuscript/chapter-four.md",
+             "--focus", "remove AI cadence without losing the argument"],
+            ws,
+        )
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Typographic treatment packet", out)
+        self.assertIn("No manuscript text was written", out)
+
+        treatments = list((ws / ".review" / "typographic-treatments").glob("*.md"))
+        self.assertEqual(len(treatments), 1)
+        current = ws / ".review" / "typographic-treatment.md"
+        self.assertTrue(current.is_file())
+        packet = treatments[0].read_text(encoding="utf-8")
+        self.assertEqual(current.read_text(encoding="utf-8"), packet)
+        self.assertIn("review-only typographer-redactor packet", packet)
+        self.assertIn("Milchin passes", packet)
+        self.assertIn("Facts/source status", packet)
+        self.assertIn("Logic", packet)
+        self.assertIn("Composition", packet)
+        self.assertIn("Rubrication", packet)
+        self.assertIn("Language and style", packet)
+        self.assertIn("Typographic finish", packet)
+        self.assertIn("AI cadence", packet)
+        self.assertIn("language: English", packet)
+        self.assertIn("unit: manuscript/chapter-four.md", packet)
+        self.assertIn("remove AI cadence", packet)
+        self.assertIn("The dashboard promised", packet)
+        self.assertIn("manuscript/ remains Gate-only", packet)
+        self.assertEqual(unit.read_text(encoding="utf-8").splitlines()[0],
+                         "The dashboard promised a life without friction.")
+
+    def test_treat_defaults_to_manuscript_body_before_draft_sample(self):
+        ws = self.ws()
+        (ws / "drafts" / "candidate-draft.md").write_text("Draft sample.\n", encoding="utf-8")
+        (ws / "manuscript" / "chapter-one.md").write_text("First body chapter.\n", encoding="utf-8")
+        (ws / "manuscript" / "chapter-two.md").write_text("Second body chapter.\n", encoding="utf-8")
+
+        rc, out = run_tyf(["treat"], ws)
+        self.assertEqual(rc, 0, out)
+        packet = (ws / ".review" / "typographic-treatment.md").read_text(encoding="utf-8")
+        self.assertIn("Scope: work-body", packet)
+        self.assertIn("manuscript/chapter-one.md", packet)
+        self.assertIn("manuscript/chapter-two.md", packet)
+        self.assertIn("First body chapter", packet)
+        self.assertNotIn("Draft sample", packet.split("## Passage excerpt", 1)[1])
+        self.assertEqual((ws / "drafts" / "candidate-draft.md").read_text(encoding="utf-8"),
+                         "Draft sample.\n")
+
+    def test_treat_refuses_missing_or_unsafe_unit_without_side_effects(self):
+        ws = self.ws()
+        rc, out = run_tyf(["treat", "work", "--unit", "sources/notes/raw.md"], ws)
+        self.assertNotEqual(rc, 0, "treat should stay on draft/manuscript body units")
+        self.assertRegex(out.lower(), r"unit|drafts|manuscript")
+        self.assertFalse((ws / ".review" / "typographic-treatment.md").exists())
+        self.assertFalse((ws / ".review" / "typographic-treatments").exists())
+
+        rc, out = run_tyf(["treat", "work", "--unit", "../outside.md"], ws)
+        self.assertNotEqual(rc, 0, "treat should refuse traversal")
+        self.assertRegex(out.lower(), r"relative|unit|outside|refused")
+        self.assertFalse((ws / ".review" / "typographic-treatment.md").exists())
+
     def test_capture_requires_existing_work(self):
         ws = self.ws()
         rc, out = run_tyf(
@@ -2153,8 +2229,9 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("## Gentle attention deck", starter)
         self.assertIn("Answer only what helps us begin one candidate passage", starter)
         self.assertIn("what should TYF hold with most care", starter)
+        self.assertIn("what concrete lived scene, source line, question, image, or contradiction", starter)
         self.assertIn("what must not be flattened", starter)
-        self.assertIn("one first passage could begin from", starter)
+        self.assertIn("one first passage could begin from which concrete scene", starter)
         self.assertIn("These are invitations, not a test of certainty", starter)
         self.assertIn("Pick one prompt; leave the rest as invitations.", starter)
         self.assertIn("Do not interview the author as if this were a form.", starter)
@@ -2318,7 +2395,10 @@ class CLIBehaviour(unittest.TestCase):
             text = (ws / name).read_text(encoding="utf-8")
             self.assertIn("TYF workspace", text)
             self.assertIn("Automatic TYF reflex", text)
+            self.assertIn("Author sitting mode", text)
             self.assertIn("Do not ask the author to invoke skills", text)
+            self.assertIn("Suppress any broader assistant persona", text)
+            self.assertIn("SUMMARY", text)
             self.assertIn("tyf start", text)
             self.assertIn("tyf resume", text)
             self.assertNotIn("tyf today", text)
@@ -2459,6 +2539,8 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("TYF author workspace", ctx)
         self.assertIn("automatic", ctx.lower())
         self.assertIn("Do not ask the author to invoke skills", ctx)
+        self.assertIn("Suppress external assistant personas", ctx)
+        self.assertIn("SUMMARY/ANALYSIS/ACTIONS/RESULTS/NEXT", ctx)
         self.assertIn("tyf resume", ctx)
         self.assertIn("Active work: work", ctx)
         after = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
@@ -2843,7 +2925,10 @@ class DocCheck(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             self.assertIn("TYF workspace", text)
             self.assertIn("Automatic TYF reflex", text)
+            self.assertIn("Author sitting mode", text)
             self.assertIn("Do not ask the author to invoke skills", text)
+            self.assertIn("Suppress any broader assistant persona", text)
+            self.assertIn("SUMMARY", text)
             self.assertIn("tyf start", text)
             self.assertIn("tyf resume", text)
             self.assertIn("single work", text.lower())
@@ -3014,6 +3099,7 @@ class DocCheck(unittest.TestCase):
             "skills/structuring-knowledge/SKILL.md",
             "skills/composing-as-amanuensis/SKILL.md",
             "skills/receiving-critique/SKILL.md",
+            "skills/typographer-redactor/SKILL.md",
             "cowork/PROJECT_INSTRUCTIONS.md",
             "cowork/SETUP.md",
             "author-context/AGENTS.md",

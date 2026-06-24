@@ -2,7 +2,7 @@
 
 > **Tested target vs portability targets.** The canonical, tested target for v1 is Cowork (and the same skills via manual drop-in on Claude Code). The other harness manifests in this repo are portability *targets*: the skills themselves are plain `SKILL.md` and run without change, but each harness's plugin or extension manifest schema must be validated against that harness's current plugin documentation before you publish there. Treat anything beyond Cowork plus manual skills as unverified until you run it.
 
-TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same eighteen skills plus a context file under the filename that harness expects. The author release ships clean templates in `author-context/`; an actual book workspace gets root `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `tyf init`. Pack-root contributor context may exist in a development clone, but it is not part of the author release archive.
+TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same nineteen skills plus a context file under the filename that harness expects. The author release ships clean templates in `author-context/`; an actual book workspace gets root `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `tyf init`. Pack-root contributor context may exist in a development clone, but it is not part of the author release archive.
 
 Where a host supports session-start hooks, TYF can also run `tyf hook session-start` to inject read-only workspace context automatically. Where a host supports prompt-submit hooks, TYF can run `tyf hook message-sent` to inject read-only routing context for continuation, arrivals, character questions, and Gate-adjacent prompts. These hooks report or add context only; they do not write to the workspace, and `message-sent` stays silent for unrelated prompts. In harnesses without hook support, the generated context files carry the same routing contract.
 
@@ -100,4 +100,4 @@ Plugin and extension manifest schemas evolve per harness. The install commands a
 
 ## Verify the install
 
-Ask the agent to list its TYF skills. It should return all eighteen and route any authorship request through `using-tyf` first. If it drafts finished prose from a vague prompt without checking the skills, the context file did not load; re-place it and restart the session.
+Ask the agent to list its TYF skills. It should return all nineteen and route any authorship request through `using-tyf` first. If it drafts finished prose from a vague prompt without checking the skills, the context file did not load; re-place it and restart the session.

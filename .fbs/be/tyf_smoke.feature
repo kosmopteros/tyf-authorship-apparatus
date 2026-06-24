@@ -640,6 +640,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_independent_oracles.py diagnostic-isolation"
     Then Exit code is 0
 
+  @covers:tyf-typographer-redactor-contract @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: typographer redactor writes a review-only treatment packet
+    When Run "python tests/test_tyf.py CLIBehaviour.test_treat_writes_review_only_typographer_packet_for_existing_body -v"
+    Then Exit code is 0
+
+  @covers:tyf-typographer-redactor-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: typographer redactor defaults to the manuscript body
+    When Run "python tests/test_tyf.py CLIBehaviour.test_treat_defaults_to_manuscript_body_before_draft_sample -v"
+    Then Exit code is 0
+
+  @covers:tyf-typographer-redactor-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: typographer redactor refuses unsafe or non-body units
+    When Run "python tests/test_tyf.py CLIBehaviour.test_treat_refuses_missing_or_unsafe_unit_without_side_effects -v"
+    Then Exit code is 0
+
+  @covers:tyf-typographer-redactor-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:skills/typographer-redactor/SKILL.md @bind-file:skills/editing-faithfully/SKILL.md @bind-file:skills/keeping-the-redactor-canon/SKILL.md @bind-file:skills/using-tyf/SKILL.md @bind-file:README.md @bind-file:docs/WORKSPACE_CONTRACT.md @tool-check:cli
+  Scenario: typographer redactor structural oracle remains wired
+    When Run "python tests/test_independent_oracles.py typographer-redactor"
+    Then Exit code is 0
+
   @covers:tyf-character-consultation-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @bind-file:tests/test_independent_oracles.py @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/composing-as-amanuensis/SKILL.md @bind-file:skills/managing-voice/SKILL.md @bind-file:cowork/PROJECT_INSTRUCTIONS.md @tool-check:cli
   Scenario: character consultation stays contained as hidden amanuensis machinery
     When Run "python tests/test_tyf.py CLIBehaviour.test_character_dossier_and_consultation_stay_contained CLIBehaviour.test_character_consultation_refuses_missing_dossier CLIBehaviour.test_character_dossier_supports_non_latin_names -v"

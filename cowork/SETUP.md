@@ -8,7 +8,7 @@ One thing to design around: Cowork can make real changes to the files you share,
 
 You have two paths.
 
-**A. As a plugin (recommended for sharing).** Package this repository as a Claude plugin and install it from the plugin marketplace, the same way other Cowork plugins are installed. The plugin bundles all eighteen skills.
+**A. As a plugin (recommended for sharing).** Package this repository as a Claude plugin and install it from the plugin marketplace, the same way other Cowork plugins are installed. The plugin bundles all nineteen skills.
 
 **B. Manual drop-in.** Copy `skills/*` into the skills location Cowork reads. For the helper, put this repo's `bin/` on your PATH or symlink `bin/tyf` into a PATH directory (`scripts/install.sh` does this for you). Do not copy `scripts/tyf.py` to a bare location on PATH: it locates the pack from its own path, so a loose copy breaks `tyf check`. If you must copy it, set `TYF_PACK_ROOT` to this repo. The skill files load directly.
 
@@ -36,4 +36,4 @@ Use scheduled tasks for the ongoing-work hooks. See `cowork/SCHEDULED_TASKS.md` 
 
 ## Verify
 
-In a new task, ask Claude to list its TYF skills and to state the write zones. It should return all eighteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write --decision`.
+In a new task, ask Claude to list its TYF skills and to state the write zones. It should return all nineteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write --decision`.

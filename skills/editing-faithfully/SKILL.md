@@ -18,6 +18,11 @@ If the input is someone else's feedback rather than the author's own edit reques
 load `receiving-critique` first. Critique is reader experience to triage before it
 becomes an editorial proposal.
 
+If the author asks for typographic craft, language treatment, AI-cadence cleanup,
+Milchin-editor work, rubrication, or a pass over an existing manuscript body, load
+`typographer-redactor` before proposing ordinary edits. Treatment is still a
+proposal path; it does not apply changes to `manuscript/`.
+
 ## The disciplined move
 
 **Read the register first.** Edits preserve the author's voice and register. Identify the register from the voice registers before proposing anything. Preserve productive strangeness; do not standardize toward generic polish.
@@ -31,8 +36,10 @@ becomes an editorial proposal.
 Every proposal must conform to the redactor canon at its band, and every accepted decision is recorded in the work's running style sheet so it survives to later chapters. See `keeping-the-redactor-canon`.
 
 - micro: honor punctuation and typographic finish.
-- macro: keep terminology canonical, cross-references resolving, transitions sound.
-- meta: read the style sheet before proposing; append new decisions after.
+- meso: treat sentence, paragraph, logic, and language-style defects without flattening voice.
+- macro: keep terminology canonical, rubrication honest, cross-references resolving, and transitions sound.
+- mega: keep chapter and full-work body treatment proportional to the book.
+- persistent: read the style sheet before proposing; append new decisions after.
 
 Where voice and canon seem to conflict, the register fence wins on voice and the canon wins on integrity. Surface the tension; do not resolve it silently.
 

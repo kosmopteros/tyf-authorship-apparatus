@@ -36,6 +36,7 @@ Commands:
                                           any missing required structure
   tyf reflexes                            show transparent hooks and reflexes
   tyf hook session-start                   emit read-only host context for TYF
+  tyf hook message-sent                    emit read-only prompt routing context
   tyf snapshot --message M                explicit git recovery commit for a workspace
   tyf check [--strict] [--quiet]          documentation-honesty check on the pack
   tyf notice [--save] [--all] [--peek]    surface forgotten/unfinished/stale items;
@@ -491,7 +492,8 @@ def run_doc_check(root=None):
     parsed_json = {}
     for j in (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
               ".claude-plugin/hooks/hooks.json",
-              ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json",
+              ".codex-plugin/plugin.json", ".codex-plugin/hooks/hooks.json",
+              ".cursor-plugin/plugin.json",
               "gemini-extension.json", "package.json"):
         p = os.path.join(root, j)
         if os.path.isfile(p):
@@ -3493,6 +3495,18 @@ def _host_session_start_payload(context):
     )
 
 
+def _host_message_sent_payload(context):
+    return json.dumps(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "UserPromptSubmit",
+                "additionalContext": context,
+            }
+        },
+        ensure_ascii=False,
+    )
+
+
 def _session_start_context(root="."):
     """Return read-only host context for a TYF author workspace."""
     root = os.path.abspath(root)
@@ -3554,9 +3568,111 @@ def _session_start_context(root="."):
     return "\n".join(lines)
 
 
+def _read_hook_payload():
+    raw = sys.stdin.read()
+    if not raw.strip():
+        return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        # degradation: ok: malformed host hook payload means no routing context.
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _hook_prompt_text(payload):
+    for key in ("prompt", "user_prompt", "message", "text"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _message_sent_context(prompt, root="."):
+    """Return optional read-only routing context for a submitted author prompt."""
+    low = prompt.lower()
+    in_workspace = os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml"))
+    book_terms = (
+        "book", "novel", "manuscript", "chapter", "draft", "writing",
+        "write", "author", "source", "scaffold", "arrival", "chat",
+        "dump", "folder", "zip", "pages", "pdf", "audio", "scan",
+        "illustration", "title",
+    )
+    start_terms = (
+        "start", "begin", "new book", "first session", "cold start",
+        "drop", "import", "bring in", "from this folder",
+    )
+    arrival_terms = (
+        "source", "scaffold", "arrival", "chat", "dump", "folder", "zip",
+        "pages", "pdf", "audio", "scan", "prior draft", "old draft",
+        "illustration",
+    )
+    continue_terms = (
+        "continue", "what next", "keep going", "resume", "return",
+        "pick up", "where were we", "back to the book",
+    )
+    gate_terms = (
+        "manuscript", "publish", "final", "accept", "approved",
+        "move this into", "put this into", "write this into",
+    )
+    character_verbs = (
+        " say", " do", " notice", " think", " feel", " answer", " respond",
+        " reply",
+    )
+    is_book_prompt = any(term in low for term in book_terms)
+    is_start_prompt = any(term in low for term in start_terms) and (
+        is_book_prompt or any(term in low for term in arrival_terms)
+    )
+    is_arrival_prompt = any(term in low for term in arrival_terms) and is_book_prompt
+    is_continue_prompt = any(term in low for term in continue_terms)
+    is_gate_prompt = any(term in low for term in gate_terms)
+    is_character_prompt = "what would " in low and any(verb in low for verb in character_verbs)
+
+    if not in_workspace:
+        if is_start_prompt or is_arrival_prompt:
+            return (
+                "The author appears to be starting or bringing material for a book, "
+                "but this folder is not yet a TYF workspace. Run `tyf init`, then "
+                "`tyf start` for a fresh book or `tyf start <path>` for existing "
+                "material. Do not hand the author a command list; set up the "
+                "workspace and report the writing runway in plain language. Do "
+                "not write manuscript text before the runway exists."
+            )
+        return ""
+
+    lines = []
+    if is_continue_prompt:
+        lines.extend([
+            "The author is asking to continue the work. As hidden amanuensis machinery, run `tyf resume` before deciding the next move.",
+            "Use the return context to offer one useful next action, not a command list.",
+        ])
+    if is_start_prompt or is_arrival_prompt:
+        lines.extend([
+            "The author is starting or bringing material. As hidden amanuensis machinery, use `tyf start` for a fresh book or `tyf start <path>` for the arrival before drafting.",
+            "Unknown title, language, and final structure are acceptable; preserve first, then open the writing runway.",
+        ])
+    if is_character_prompt:
+        lines.extend([
+            "The author is asking for a character-contained response. As hidden amanuensis machinery, consult the relevant character dossier with `tyf consult-character` before answering.",
+            "Keep the result review-only: candidate dramatic insight, not evidence and not manuscript text.",
+        ])
+    if is_gate_prompt:
+        lines.extend([
+            "The author may be near a manuscript decision. Keep `manuscript/` Gate-only: proposal, audit, author decision, then `tyf write --decision <id>`.",
+            "Do not treat ordinary approval-like phrasing as a direct write instruction unless the Gate records exist.",
+        ])
+    return "\n".join(lines)
+
+
 def cmd_hook(args):
     if args.event == "session-start":
         print(_host_session_start_payload(_session_start_context(".")))
+        return
+    if args.event == "message-sent":
+        payload = _read_hook_payload()
+        context = _message_sent_context(_hook_prompt_text(payload), ".")
+        if context:
+            print(_host_message_sent_payload(context))
         return
     sys.exit(f"Unsupported TYF hook event: {args.event}")
 
@@ -3567,6 +3683,9 @@ def cmd_reflexes(args):
     print("- session-start: `tyf hook session-start` emits read-only workspace")
     print("  context so hosts can route through TYF automatically without")
     print("  asking the author to invoke skills.")
+    print("- message-sent: `tyf hook message-sent` can add read-only prompt")
+    print("  routing context for continuation, arrivals, character questions,")
+    print("  and Gate-adjacent prompts; unrelated prompts stay silent.")
     print("- documentation honesty: mutating commands run `tyf check` warn-only,")
     print("  unless TYF_NO_DOC_HOOK=1 is set.")
     print("- attentive amanuensis: after `tyf write`, new or resurfaced gaps are")
@@ -5225,7 +5344,7 @@ def main():
     s = sub.add_parser("reflexes", help="show TYF's transparent hooks and reflexes")
     s.set_defaults(fn=cmd_reflexes)
     s = sub.add_parser("hook", help="emit read-only host hook context")
-    s.add_argument("event", choices=("session-start",))
+    s.add_argument("event", choices=("session-start", "message-sent"))
     s.set_defaults(fn=cmd_hook)
     s = sub.add_parser("snapshot", help="stage and commit an explicit git recovery point")
     s.add_argument("--message", "-m", required=True)

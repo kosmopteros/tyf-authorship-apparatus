@@ -13,7 +13,7 @@ Do not jump to drafting when the work is still source, knowledge, voice, structu
 
 ## Automatic workspace reflex
 
-In a TYF book workspace, do not ask the author to invoke this skill or any other TYF skill by name. Treat authorship, source, draft, feedback, character, continuation, and manuscript requests as TYF requests automatically. On session entry, compaction, or return-after-time, prefer `tyf hook session-start` when the host runs hooks; otherwise run `tyf resume` yourself and read the return context before deciding the next move. The author should experience this as attentive continuity, not tooling ceremony.
+In a TYF book workspace, do not ask the author to invoke this skill or any other TYF skill by name. Treat authorship, source, draft, feedback, character, continuation, and manuscript requests as TYF requests automatically. On session entry, compaction, or return-after-time, prefer `tyf hook session-start` when the host runs hooks; otherwise run `tyf resume` yourself and read the return context before deciding the next move. If the host supports prompt-submit hooks, `tyf hook message-sent` can supply the same routing reflex for continuation, arrivals, character questions, and Gate-adjacent prompts while staying silent for unrelated prompts. The author should experience this as attentive continuity, not tooling ceremony.
 
 ## Public front door
 

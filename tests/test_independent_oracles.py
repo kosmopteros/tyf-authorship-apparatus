@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Small independent structural oracles for TYF's immediate feature claims.
 
-These complement the broad unittest smoke suite and the Codex plugin validator
-with direct structural checks from a second verification angle.
+These complement the broad unittest smoke suite and the repo-local Codex plugin
+validator with direct structural checks from a second verification angle.
 """
 
 from __future__ import annotations
@@ -60,6 +60,9 @@ def check_helper() -> None:
     assert "test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment" in tests
     assert "test_resume_reports_active_work_state_and_next_useful_move" in tests
     assert "test_hook_session_start_outputs_readonly_author_context" in tests
+    assert "test_hook_message_sent_routes_continue_prompt_readonly" in tests
+    assert "test_hook_message_sent_ignores_unrelated_prompt_without_context" in tests
+    assert "message-sent" in source
     assert "test_gate_preserves_utf8_manuscript_text_for_declared_language" in tests
     assert "test_canonical_event_journal_records_core_actions_with_hash_chain" in tests
     assert "test_doctor_flags_tampered_canonical_event_journal" in tests
@@ -307,6 +310,15 @@ def check_codex_skill() -> None:
 
     assert manifest["version"] == "0.5.0"
     assert manifest["skills"] == "./skills/"
+    codex_hooks_path = ROOT / ".codex-plugin" / "hooks" / "hooks.json"
+    assert codex_hooks_path.is_file()
+    codex_hooks = json.loads(codex_hooks_path.read_text(encoding="utf-8"))
+    hook_blob = json.dumps(codex_hooks, sort_keys=True)
+    assert "SessionStart" in codex_hooks.get("hooks", {})
+    assert "UserPromptSubmit" in codex_hooks.get("hooks", {})
+    assert "tyf hook session-start" in hook_blob
+    assert "tyf hook message-sent" in hook_blob
+    assert "TYF:" in hook_blob
     cursor = json.loads((ROOT / ".cursor-plugin" / "plugin.json").read_text(encoding="utf-8"))
     gemini = json.loads((ROOT / "gemini-extension.json").read_text(encoding="utf-8"))
     assert cursor["context_file"] == "author-context/AGENTS.md"

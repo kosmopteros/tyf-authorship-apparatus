@@ -59,6 +59,17 @@ def run_tyf(args, cwd):
     return p.returncode, (p.stdout + p.stderr)
 
 
+def run_tyf_stdin(args, cwd, stdin):
+    """Invoke the real CLI with stdin. Returns (returncode, combined_output)."""
+    p = subprocess.run(
+        [sys.executable, str(TYF), *args],
+        input=stdin,
+        cwd=str(cwd), capture_output=True, text=True, encoding="utf-8",
+        errors="replace", env=ENV,
+    )
+    return p.returncode, (p.stdout + p.stderr)
+
+
 def archive_treeish():
     """Return a tree-ish for the current tracked worktree, or HEAD if clean."""
     p = subprocess.run(
@@ -2467,6 +2478,56 @@ class CLIBehaviour(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_hook_message_sent_routes_continue_prompt_readonly(self):
+        ws = self.ws()
+        before = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
+        payload = json.dumps({
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "can we continue the book?",
+        })
+        rc, out = run_tyf_stdin(["hook", "message-sent"], ws, payload)
+        self.assertEqual(rc, 0, out)
+        data = json.loads(out)
+        hook = data["hookSpecificOutput"]
+        ctx = hook["additionalContext"]
+        self.assertEqual(hook["hookEventName"], "UserPromptSubmit")
+        self.assertIn("tyf resume", ctx)
+        self.assertIn("continue", ctx.lower())
+        self.assertIn("hidden amanuensis", ctx.lower())
+        after = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
+        self.assertEqual(after, before)
+
+    def test_hook_message_sent_outside_workspace_guides_book_start_without_writing(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-hook-message-outside-"))
+        try:
+            payload = json.dumps({
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "start my book from this folder",
+            })
+            rc, out = run_tyf_stdin(["hook", "message-sent"], tmp, payload)
+            self.assertEqual(rc, 0, out)
+            data = json.loads(out)
+            ctx = data["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("tyf init", ctx)
+            self.assertIn("tyf start", ctx)
+            self.assertIn("Do not hand the author a command list", ctx)
+            self.assertFalse((tmp / "WORKSPACE_STATE.yaml").exists())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_hook_message_sent_ignores_unrelated_prompt_without_context(self):
+        ws = self.ws()
+        before = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
+        payload = json.dumps({
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "what time is it?",
+        })
+        rc, out = run_tyf_stdin(["hook", "message-sent"], ws, payload)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(out.strip(), "")
+        after = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
+        self.assertEqual(after, before)
+
     @unittest.skipUnless(shutil.which("git"), "git not available")
     def test_snapshot_commits_workspace_changes_when_git_repo(self):
         ws = self.ws()
@@ -2804,7 +2865,105 @@ class DocCheck(unittest.TestCase):
             for entry in session
             for hook in entry.get("hooks", [])
         ]
+        statuses = [
+            hook.get("statusMessage", "")
+            for entry in session
+            for hook in entry.get("hooks", [])
+        ]
         self.assertIn("tyf hook session-start", commands)
+        self.assertTrue(any(status.startswith("TYF:") for status in statuses))
+
+    def test_claude_plugin_declares_message_sent_reflex_hook(self):
+        path = REPO / ".claude-plugin" / "hooks" / "hooks.json"
+        self.assertTrue(path.is_file(), "Claude plugin should ship a hook manifest")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        hooks = data.get("hooks", {})
+        prompt = hooks.get("UserPromptSubmit", [])
+        commands = [
+            hook.get("command", "")
+            for entry in prompt
+            for hook in entry.get("hooks", [])
+        ]
+        statuses = [
+            hook.get("statusMessage", "")
+            for entry in prompt
+            for hook in entry.get("hooks", [])
+        ]
+        self.assertIn("tyf hook message-sent", commands)
+        self.assertTrue(any(status.startswith("TYF:") for status in statuses))
+
+    def test_codex_plugin_declares_author_reflex_hooks(self):
+        path = REPO / ".codex-plugin" / "hooks" / "hooks.json"
+        self.assertTrue(path.is_file(), "Codex plugin should ship a hook manifest")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        hooks = data.get("hooks", {})
+        session_commands = [
+            hook.get("command", "")
+            for entry in hooks.get("SessionStart", [])
+            for hook in entry.get("hooks", [])
+        ]
+        prompt_commands = [
+            hook.get("command", "")
+            for entry in hooks.get("UserPromptSubmit", [])
+            for hook in entry.get("hooks", [])
+        ]
+        statuses = [
+            hook.get("statusMessage", "")
+            for event in ("SessionStart", "UserPromptSubmit")
+            for entry in hooks.get(event, [])
+            for hook in entry.get("hooks", [])
+        ]
+        self.assertIn("tyf hook session-start", session_commands)
+        self.assertIn("tyf hook message-sent", prompt_commands)
+        self.assertTrue(statuses)
+        self.assertTrue(all(status.startswith("TYF:") for status in statuses))
+
+    def test_codex_docs_name_hooks_and_trust_review_boundary(self):
+        portability = (REPO / "docs" / "PORTABILITY.md").read_text(encoding="utf-8")
+        readme = (REPO / "README.md").read_text(encoding="utf-8")
+        self.assertIn("`.codex-plugin/plugin.json`", portability)
+        self.assertIn("`hooks/hooks.json`", portability)
+        self.assertIn("TYF:", portability)
+        self.assertIn("Hook 1", portability)
+        self.assertIn("/hooks", portability)
+        self.assertIn("trust", portability.lower())
+        self.assertIn("Codex plugin", readme)
+        self.assertIn("message-sent", readme)
+
+    def test_codex_plugin_local_validator_catches_invalid_manifest_or_skill_metadata(self):
+        validator = REPO / "scripts" / "validate_codex_plugin.py"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugin_dir = root / ".codex-plugin"
+            plugin_dir.mkdir(parents=True)
+            (plugin_dir / "hooks").mkdir()
+            (plugin_dir / "plugin.json").write_text(json.dumps({
+                "name": "bad_plugin",
+                "version": "0.5",
+                "description": "Broken plugin",
+                "author": {},
+                "skills": "./bad-skills/",
+                "interface": {
+                    "shortDescription": "",
+                    "capabilities": [],
+                },
+            }), encoding="utf-8")
+            (plugin_dir / "hooks" / "hooks.json").write_text(json.dumps({
+                "hooks": {"SessionStart": []}
+            }), encoding="utf-8")
+            skills = root / "skills" / "bad"
+            skills.mkdir(parents=True)
+            (skills / "SKILL.md").write_text("---\nname: bad\n---\n# Bad\n", encoding="utf-8")
+            p = subprocess.run(
+                [sys.executable, str(validator), str(root)],
+                cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+                errors="replace",
+            )
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn("interface.displayName", p.stderr)
+        self.assertIn("version must use x.y.z", p.stderr)
+        self.assertIn("frontmatter description is required", p.stderr)
+        self.assertIn("missing UserPromptSubmit", p.stderr)
 
     def test_composition_skill_distinguishes_exploratory_from_structured_drafts(self):
         composing = (REPO / "skills" / "composing-as-amanuensis" / "SKILL.md").read_text(encoding="utf-8")

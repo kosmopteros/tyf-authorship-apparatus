@@ -2,13 +2,12 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|clear|compact",
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
             "command": "tyf hook session-start",
-            "statusMessage": "TYF: loading authorship workspace context",
-            "async": false
+            "statusMessage": "TYF: loading authorship workspace context"
           }
         ]
       }
@@ -19,8 +18,7 @@
           {
             "type": "command",
             "command": "tyf hook message-sent",
-            "statusMessage": "TYF: checking authorship prompt reflex",
-            "async": false
+            "statusMessage": "TYF: checking authorship prompt reflex"
           }
         ]
       }

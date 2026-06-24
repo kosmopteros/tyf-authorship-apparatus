@@ -315,6 +315,36 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outside_workspace_guides_init_without_writing -v"
     Then Exit code is 0
 
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: message-sent hook routes continuation prompts
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_message_sent_routes_continue_prompt_readonly -v"
+    Then Exit code is 0
+
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: message-sent hook guides book starts outside workspaces
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_message_sent_outside_workspace_guides_book_start_without_writing -v"
+    Then Exit code is 0
+
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: message-sent hook stays silent for unrelated prompts
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_message_sent_ignores_unrelated_prompt_without_context -v"
+    Then Exit code is 0
+
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.claude-plugin/hooks/hooks.json @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Claude plugin wires prompt-submit reflex
+    When Run "python tests/test_tyf.py DocCheck.test_claude_plugin_declares_message_sent_reflex_hook -v"
+    Then Exit code is 0
+
+  @covers:tyf-codex-plugin-valid @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/hooks/hooks.json @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Codex plugin wires automatic author reflex hooks
+    When Run "python tests/test_tyf.py DocCheck.test_codex_plugin_declares_author_reflex_hooks -v"
+    Then Exit code is 0
+
+  @covers:tyf-codex-skill-book-repo @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:docs/PORTABILITY.md @bind-file:README.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Codex hook docs name the trust review boundary
+    When Run "python tests/test_tyf.py DocCheck.test_codex_docs_name_hooks_and_trust_review_boundary -v"
+    Then Exit code is 0
+
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: install and portability docs route book workspaces to generated context
     When Run "python tests/test_tyf.py DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"
@@ -660,9 +690,9 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_independent_oracles.py onboarding"
     Then Exit code is 0
 
-  @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
+  @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:.codex-plugin/hooks/hooks.json @bind-file:skills/ @bind-file:scripts/validate_codex_plugin.py @tool-check:cli
   Scenario: Codex plugin happy path validates
-    When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
+    When Run "python scripts/validate_codex_plugin.py ."
     Then Exit code is 0
 
   @covers:tyf-codex-plugin-valid @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @bind-file:tests/test_independent_oracles.py @tool-check:cli
@@ -670,14 +700,14 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_independent_oracles.py plugin"
     Then Exit code is 0
 
-  @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
+  @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:.codex-plugin/hooks/hooks.json @bind-file:skills/ @bind-file:scripts/validate_codex_plugin.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: Codex plugin catches invalid manifest or skill metadata
-    When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
+    When Run "python tests/test_tyf.py DocCheck.test_codex_plugin_local_validator_catches_invalid_manifest_or_skill_metadata -v"
     Then Exit code is 0
 
-  @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:skills/ @tool-check:cli
+  @covers:tyf-codex-plugin-valid @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.codex-plugin/plugin.json @bind-file:.codex-plugin/hooks/hooks.json @bind-file:skills/ @bind-file:scripts/validate_codex_plugin.py @tool-check:cli
   Scenario: Codex plugin remains installable as a writing apparatus
-    When Run "python C:/Users/maste/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ."
+    When Run "python scripts/validate_codex_plugin.py ."
     Then Exit code is 0
 
   @covers:tyf-codex-skill-book-repo @bind-file:.codex-plugin/plugin.json @bind-file:skills/using-tyf/SKILL.md @bind-file:skills/using-tyf/agents/openai.yaml @bind-file:scripts/install.sh @bind-file:AGENTS.md @bind-file:CLAUDE.md @bind-file:GEMINI.md @bind-file:docs/PORTABILITY.md @bind-file:tests/test_independent_oracles.py @tool-check:cli

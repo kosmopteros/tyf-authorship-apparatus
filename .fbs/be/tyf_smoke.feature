@@ -295,6 +295,26 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py DocCheck.test_author_context_templates_do_not_include_private_development_reflex -v"
     Then Exit code is 0
 
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:.claude-plugin/hooks/hooks.json @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: session-start hook injects automatic author reflex context
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outputs_readonly_author_context CLIBehaviour.test_hook_session_start_outside_workspace_guides_init_without_writing DocCheck.test_claude_plugin_declares_session_start_reflex_hook -v"
+    Then Exit code is 0
+
+  @covers:tyf-automatic-author-reflex-contract @bind-file:scripts/tyf.py @bind-file:.claude-plugin/hooks/hooks.json @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: session-start hook has a happy path
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outputs_readonly_author_context DocCheck.test_claude_plugin_declares_session_start_reflex_hook -v"
+    Then Exit code is 0
+
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: automatic author reflex contexts keep skill calls agent-owned
+    When Run "python tests/test_tyf.py CLIBehaviour.test_init_creates_workspace_context_contracts DocCheck.test_author_context_templates_do_not_include_private_development_reflex -v"
+    Then Exit code is 0
+
+  @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: session-start hook stays read-only outside workspaces
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outside_workspace_guides_init_without_writing -v"
+    Then Exit code is 0
+
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:docs/PORTABILITY.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: install and portability docs route book workspaces to generated context
     When Run "python tests/test_tyf.py DocCheck.test_install_docs_route_author_workspaces_away_from_dev_context -v"

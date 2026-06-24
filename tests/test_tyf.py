@@ -2306,7 +2306,10 @@ class CLIBehaviour(unittest.TestCase):
         for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
             text = (ws / name).read_text(encoding="utf-8")
             self.assertIn("TYF workspace", text)
+            self.assertIn("Automatic TYF reflex", text)
+            self.assertIn("Do not ask the author to invoke skills", text)
             self.assertIn("tyf start", text)
+            self.assertIn("tyf resume", text)
             self.assertNotIn("tyf today", text)
             self.assertIn("single work", text.lower())
             self.assertIn("tyf structure work --source-ref", text)
@@ -2428,10 +2431,41 @@ class CLIBehaviour(unittest.TestCase):
         ws = self.ws()
         rc, out = run_tyf(["reflexes"], ws)
         self.assertEqual(rc, 0, out)
+        self.assertIn("session-start", out.lower())
         self.assertIn("documentation honesty", out.lower())
         self.assertIn("attentive amanuensis", out.lower())
         self.assertIn("tyf snapshot", out)
         self.assertIn("never commits silently", out.lower())
+
+    def test_hook_session_start_outputs_readonly_author_context(self):
+        ws = self.ws()
+        before = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
+        rc, out = run_tyf(["hook", "session-start"], ws)
+        self.assertEqual(rc, 0, out)
+        payload = json.loads(out)
+        ctx = payload["hookSpecificOutput"]["additionalContext"]
+        self.assertEqual(payload["hookSpecificOutput"]["hookEventName"], "SessionStart")
+        self.assertIn("TYF author workspace", ctx)
+        self.assertIn("automatic", ctx.lower())
+        self.assertIn("Do not ask the author to invoke skills", ctx)
+        self.assertIn("tyf resume", ctx)
+        self.assertIn("Active work: work", ctx)
+        after = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
+        self.assertEqual(after, before)
+
+    def test_hook_session_start_outside_workspace_guides_init_without_writing(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-hook-outside-"))
+        try:
+            rc, out = run_tyf(["hook", "session-start"], tmp)
+            self.assertEqual(rc, 0, out)
+            payload = json.loads(out)
+            ctx = payload["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("No TYF workspace", ctx)
+            self.assertIn("tyf init", ctx)
+            self.assertIn("tyf start", ctx)
+            self.assertFalse((tmp / "WORKSPACE_STATE.yaml").exists())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     @unittest.skipUnless(shutil.which("git"), "git not available")
     def test_snapshot_commits_workspace_changes_when_git_repo(self):
@@ -2747,7 +2781,10 @@ class DocCheck(unittest.TestCase):
             self.assertTrue(path.is_file(), f"{name} author context template should exist")
             text = path.read_text(encoding="utf-8")
             self.assertIn("TYF workspace", text)
+            self.assertIn("Automatic TYF reflex", text)
+            self.assertIn("Do not ask the author to invoke skills", text)
             self.assertIn("tyf start", text)
+            self.assertIn("tyf resume", text)
             self.assertIn("single work", text.lower())
             self.assertIn("tyf structure work --source-ref", text)
             self.assertIn("tyf attend work --source-ref", text)
@@ -2755,6 +2792,19 @@ class DocCheck(unittest.TestCase):
             self.assertIn("amanuensis", text.lower())
             for token in private_context_tokens(include_cli_word=True):
                 self.assertNotIn(token.strip(), text)
+
+    def test_claude_plugin_declares_session_start_reflex_hook(self):
+        path = REPO / ".claude-plugin" / "hooks" / "hooks.json"
+        self.assertTrue(path.is_file(), "Claude plugin should ship a hook manifest")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        hooks = data.get("hooks", {})
+        session = hooks.get("SessionStart", [])
+        commands = [
+            hook.get("command", "")
+            for entry in session
+            for hook in entry.get("hooks", [])
+        ]
+        self.assertIn("tyf hook session-start", commands)
 
     def test_composition_skill_distinguishes_exploratory_from_structured_drafts(self):
         composing = (REPO / "skills" / "composing-as-amanuensis" / "SKILL.md").read_text(encoding="utf-8")

@@ -17,7 +17,7 @@ Every template below assumes the book folder is the single work, with root-level
 > In my TYF workspace at <PATH>, load `managing-voice` and compare recent manuscript prose against the work's declared registers and exemplar passages. Report drift to `.review/voice-drift.md`. Change nothing.
 
 ## Return after idle: re-orientation
-> In my TYF workspace at <PATH>, load `working-the-workspace` and `scheduling-ongoing-work`. Produce a re-orientation digest: the active band, open gates, the most recent `.review/` findings, and the next decision waiting on me. Write it to `.proposals/reorientation.md`.
+> In my TYF workspace at <PATH>, run `tyf resume` first, then load `working-the-workspace` and `scheduling-ongoing-work`. Produce a re-orientation digest: the active band, open gates, the most recent `.review/` findings, and the next decision waiting on me. Write it to `.proposals/reorientation.md`.
 
 ## Daily: the attentive amanuensis (deterministic, zero tokens)
 > In my TYF workspace at <PATH>, run `tyf notice --save`. This surfaces gaps I left to fill, lines that trail off unfinished, claims with no source, a style sheet lagging its manuscript, and unused registers, then appends a dated digest to `.proposals/notices.md`. Do not modify anything; just hand me the list. If `tyf reconcile` shows old open items, include a one-line reminder of how many are still open.

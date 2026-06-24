@@ -33,7 +33,7 @@ def private_context_tokens() -> tuple[str, ...]:
 def check_helper() -> None:
     source = (ROOT / "scripts" / "tyf.py").read_text(encoding="utf-8")
     required = {
-        "start", "begin", "import", "capture", "resume", "reflexes", "snapshot", "propose",
+        "start", "begin", "import", "capture", "resume", "reflexes", "hook", "snapshot", "propose",
         "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
         "attend", "consult-character", "feedback", "session", "diagnose",
     }
@@ -43,7 +43,7 @@ def check_helper() -> None:
     )
     assert not missing, f"missing TYF commands: {missing}"
     for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_attend", "cmd_character",
-                    "cmd_consult_character", "cmd_resume",
+                    "cmd_consult_character", "cmd_resume", "cmd_hook",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
                     "cmd_adopt", "cmd_feedback", "cmd_session", "cmd_diagnose"):
         assert f"def {handler}(" in source, f"missing {handler}"
@@ -59,6 +59,7 @@ def check_helper() -> None:
     assert "test_init_creates_portable_workspace_marker" in tests
     assert "test_import_chat_preserves_raw_input_creates_titleless_work_and_fragment" in tests
     assert "test_resume_reports_active_work_state_and_next_useful_move" in tests
+    assert "test_hook_session_start_outputs_readonly_author_context" in tests
     assert "test_gate_preserves_utf8_manuscript_text_for_declared_language" in tests
     assert "test_canonical_event_journal_records_core_actions_with_hash_chain" in tests
     assert "test_doctor_flags_tampered_canonical_event_journal" in tests

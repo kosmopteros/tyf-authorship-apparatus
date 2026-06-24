@@ -11,6 +11,10 @@ TYF is a faithful apparatus for authorship. The author is the source. TYF is the
 
 Do not jump to drafting when the work is still source, knowledge, voice, structure, or audit. Pick the earliest applicable skill below and load it before acting.
 
+## Automatic workspace reflex
+
+In a TYF book workspace, do not ask the author to invoke this skill or any other TYF skill by name. Treat authorship, source, draft, feedback, character, continuation, and manuscript requests as TYF requests automatically. On session entry, compaction, or return-after-time, prefer `tyf hook session-start` when the host runs hooks; otherwise run `tyf resume` yourself and read the return context before deciding the next move. The author should experience this as attentive continuity, not tooling ceremony.
+
 ## Public front door
 
 When an author says "start my book", "new essay series", "set up TYF", or similar, do not hand them a command list. Load `initializing-a-workspace`, create or enter the workspace, and run the helper yourself. Prefer:

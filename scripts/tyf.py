@@ -35,6 +35,7 @@ Commands:
   tyf doctor [--repair]                   workspace integrity check; --repair creates
                                           any missing required structure
   tyf reflexes                            show transparent hooks and reflexes
+  tyf hook session-start                   emit read-only host context for TYF
   tyf snapshot --message M                explicit git recovery commit for a workspace
   tyf check [--strict] [--quiet]          documentation-honesty check on the pack
   tyf notice [--save] [--all] [--peek]    surface forgotten/unfinished/stale items;
@@ -489,6 +490,7 @@ def run_doc_check(root=None):
     # 5. manifests parse as JSON
     parsed_json = {}
     for j in (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
+              ".claude-plugin/hooks/hooks.json",
               ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json",
               "gemini-extension.json", "package.json"):
         p = os.path.join(root, j)
@@ -1101,6 +1103,29 @@ def _save_notices(root, notices):
 
 # ---------- commands ----------
 
+def _author_context_contract():
+    return """# TYF Workspace Instructions
+
+This is an author-owned TYF workspace. This book folder is the single work.
+
+## Automatic TYF reflex
+
+Do not ask the author to invoke skills or remember helper commands. Treat every authorship, source, draft, feedback, character, continuation, or manuscript request as a TYF request and silently choose the earliest applicable TYF skill yourself. Name the apparatus only when it helps the author see what was preserved, what changed, or what needs a decision.
+
+- On session entry, after compaction, or when the author says "continue", run `tyf resume` as hidden amanuensis machinery before choosing the next move.
+- If there is no workspace yet, run `tyf init`, then `tyf start`; a title can stay unknown.
+- If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
+- Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
+- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id> --query "<focus>"` and use `.review/gentle-attention.md` as hidden amanuensis guidance with transparent local retrieval, then pass relevant ids to `tyf propose --source-ref <id>`.
+- If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
+- If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
+- Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
+- Missing knowledge stays visible as `[AUTHOR: needed - what]`.
+- If the author edits `manuscript/` directly, use `tyf adopt work <unit> --evidence "<what happened>"` before the next controlled write.
+- Use `tyf notice --peek` for read-only inspection and `tyf snapshot --message "..."` only when the author wants an explicit git recovery point.
+"""
+
+
 def _required_structure(root):
     """The canonical TYF workspace layout. Returns (dirs, files) where files is
     a dict of relpath -> default content. Single source of truth for both init
@@ -1114,22 +1139,7 @@ def _required_structure(root):
         "redactor-canon", "outline", "drafts", "manuscript", ".review",
         ".proposals", ".hooks", ".tyf",
     ]
-    context_contract = """# TYF Workspace Instructions
-
-This is an author-owned TYF workspace. This book folder is the single work.
-
-- If the author says "start my book" or wants a first writing session, use `tyf start`; a title can stay unknown.
-- If the author brings existing material, use `tyf start <path>` to preserve it and open the writing runway before drafting.
-- Keep source, interview notes, and candidate prose in `sources/`, `knowledge-base/`, `voice/`, and `drafts/`.
-- `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id> --query "<focus>"` and use `.review/gentle-attention.md` as hidden amanuensis guidance with transparent local retrieval, then pass relevant ids to `tyf propose --source-ref <id>`.
-- If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
-- If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
-- Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
-- Missing knowledge stays visible as `[AUTHOR: needed - what]`.
-- If the author edits `manuscript/` directly, use `tyf adopt work <unit> --evidence "<what happened>"` before the next controlled write.
-- Use `tyf resume` to recover the active work, live review packets, pending proposals, open prompts, and next move.
-- Use `tyf notice --peek` for read-only inspection and `tyf snapshot --message "..."` only when the author wants an explicit git recovery point.
-"""
+    context_contract = _author_context_contract()
     files = {
         "WORKSPACE_STATE.yaml":
             f"active_work: {ROOT_WORK_ID}\nactive_band: section\nwrite_control:\n  compose: locked\n  revise: locked\nstatus: intake\n",
@@ -3471,9 +3481,92 @@ def _git_status_lines(scoped=False):
         return None, (p.stderr or p.stdout).strip()
     return [ln for ln in p.stdout.splitlines() if ln.strip()], ""
 
+def _host_session_start_payload(context):
+    return json.dumps(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": context,
+            }
+        },
+        ensure_ascii=False,
+    )
+
+
+def _session_start_context(root="."):
+    """Return read-only host context for a TYF author workspace."""
+    root = os.path.abspath(root)
+    if not os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml")):
+        return (
+            "No TYF workspace is active here. If the author wants to begin or "
+            "continue a book in this folder, run `tyf init`, then `tyf start` "
+            "or `tyf start <path>` for existing material. Do not hand the "
+            "author a command list; set up the workspace and report the "
+            "writing runway in plain language."
+        )
+
+    state = read_state(os.path.join(root, "WORKSPACE_STATE.yaml"))
+    work = _one_line(get(state, "active_work", default=ROOT_WORK_ID), ROOT_WORK_ID)
+    if not os.path.isfile(os.path.join(root, _work_path(work, "work.yaml"))):
+        work = ROOT_WORK_ID if os.path.isfile(os.path.join(root, "work.yaml")) else ""
+
+    lines = [
+        "This is a TYF author workspace. Route authorship work through TYF automatically.",
+        "Do not ask the author to invoke skills or remember helper commands.",
+        "Use the workspace context and helper output as hidden amanuensis machinery, then speak plainly.",
+    ]
+    if work:
+        wy = read_state(os.path.join(root, _work_path(work, "work.yaml")))
+        title = get(wy, "title") or "unknown"
+        title_status = get(wy, "title_status") or ("working" if title != "unknown" else "unknown")
+        language = get(wy, "language") or "undetermined"
+        status = get(wy, "status") or "unknown"
+        lines.extend([
+            "",
+            f"Active work: {work}",
+            f"  title: {title} ({title_status})",
+            f"  language: {language}",
+            f"  status: {status}",
+        ])
+        for rel in (
+            ".review/current-session.md",
+            ".review/current-diagnosis.md",
+            ".review/gentle-attention.md",
+            ".review/amanuensis-brief.md",
+            ".review/writing-runway.md",
+            "drafts/candidate-draft.md",
+        ):
+            if os.path.isfile(os.path.join(root, _work_path(work, rel))):
+                lines.append(f"  live packet: {_work_display_path(work, rel)}")
+    else:
+        lines.append("Active work: none yet")
+
+    lines.extend([
+        "",
+        "Automatic reflexes:",
+        "- For continue, what next, or return-after-time: run `tyf resume` before deciding.",
+        "- For new material, scaffold, chat, folder, zip, PDF, Pages file, audio, scan, or prior draft: run `tyf start <path>` before drafting.",
+        "- For a fresh book with no arrival: run `tyf start`; unknown title or language is acceptable.",
+        "- For unclear source-grounded questions: run `tyf attend work --source-ref <id> --query \"<focus>\"` and use the packet gently.",
+        "- Keep candidate prose in `drafts/`; write `manuscript/` only through proposal, audit, author decision, and `tyf write --decision <id>`.",
+        "- Use `tyf notice --peek` for read-only attention. Use `tyf snapshot --message \"...\"` only when the author wants a git recovery point.",
+    ])
+    return "\n".join(lines)
+
+
+def cmd_hook(args):
+    if args.event == "session-start":
+        print(_host_session_start_payload(_session_start_context(".")))
+        return
+    sys.exit(f"Unsupported TYF hook event: {args.event}")
+
+
 def cmd_reflexes(args):
     _require_workspace()
     print("tyf reflexes (transparent hooks)")
+    print("- session-start: `tyf hook session-start` emits read-only workspace")
+    print("  context so hosts can route through TYF automatically without")
+    print("  asking the author to invoke skills.")
     print("- documentation honesty: mutating commands run `tyf check` warn-only,")
     print("  unless TYF_NO_DOC_HOOK=1 is set.")
     print("- attentive amanuensis: after `tyf write`, new or resurfaced gaps are")
@@ -5131,6 +5224,9 @@ def main():
     s = sub.add_parser("doctor"); s.add_argument("--repair", action="store_true", help="create any missing required structure"); s.set_defaults(fn=cmd_doctor)
     s = sub.add_parser("reflexes", help="show TYF's transparent hooks and reflexes")
     s.set_defaults(fn=cmd_reflexes)
+    s = sub.add_parser("hook", help="emit read-only host hook context")
+    s.add_argument("event", choices=("session-start",))
+    s.set_defaults(fn=cmd_hook)
     s = sub.add_parser("snapshot", help="stage and commit an explicit git recovery point")
     s.add_argument("--message", "-m", required=True)
     s.set_defaults(fn=cmd_snapshot)

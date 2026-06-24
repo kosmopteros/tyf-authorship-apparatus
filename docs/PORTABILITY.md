@@ -4,6 +4,8 @@
 
 TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same eighteen skills plus a context file under the filename that harness expects. The author release ships clean templates in `author-context/`; an actual book workspace gets root `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `tyf init`. Pack-root contributor context may exist in a development clone, but it is not part of the author release archive.
 
+Where a host supports session-start hooks, TYF can also run `tyf hook session-start` to inject read-only workspace context automatically. The hook reports active work status and the next author reflexes; it does not write to the workspace. In harnesses without hook support, the generated context files carry the same routing contract.
+
 ## Portable Workspace Format
 
 A TYF workspace is a text-first author-work bundle. For the beta launch, the book folder is the single work. `tyf init` writes `tyf.portable.json` at the workspace root so agents can recognize and re-enter it after a move, zip, chat handoff, or harness switch. The marker identifies:
@@ -20,7 +22,7 @@ This means Markdown, YAML, and JSONL are the durable truth. SQLite is an index, 
 
 | Harness | Plugin / extension file | Release context template | Skills directory |
 |---|---|---|---|
-| Claude Code | `.claude-plugin/plugin.json` (+ `marketplace.json`) | `author-context/CLAUDE.md` | `~/.claude/skills/` |
+| Claude Code | `.claude-plugin/plugin.json` (+ `marketplace.json`, `hooks/hooks.json`) | `author-context/CLAUDE.md` | `~/.claude/skills/` |
 | Codex | `.codex-plugin/plugin.json` | `author-context/AGENTS.md` | `$CODEX_HOME/skills` or `~/.codex/skills/` |
 | Cursor | `.cursor-plugin/plugin.json` | `author-context/AGENTS.md` | Cursor skills dir |
 | Gemini CLI | `gemini-extension.json` | `author-context/GEMINI.md` | extension dir |

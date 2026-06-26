@@ -232,6 +232,105 @@ class CLIBehaviour(unittest.TestCase):
     def test_beta_portable_marker_declares_single_work_bundle(self):
         self.test_init_creates_portable_workspace_marker()
 
+    def test_init_creates_book_style_and_image_asset_scaffolding(self):
+        ws = self.ws()
+        style = ws / "design" / "book-style.yaml"
+        image_index = ws / "assets" / "images" / "index.jsonl"
+        image_readme = ws / "assets" / "images" / "README.md"
+
+        self.assertTrue(style.is_file())
+        self.assertTrue(image_index.is_file())
+        self.assertTrue(image_readme.is_file())
+        text = style.read_text(encoding="utf-8")
+        self.assertIn("paragraph_styles:", text)
+        self.assertIn("font_family:", text)
+        self.assertIn("image_rules:", text)
+
+        marker = json.loads((ws / "tyf.portable.json").read_text(encoding="utf-8"))
+        self.assertIn("design/book-style.yaml", marker["canonical_text_state"])
+        self.assertIn("assets/images/", marker["canonical_text_state"])
+
+    def test_surface_generates_static_review_bench_without_manuscript_write(self):
+        ws = self.ws()
+        (ws / "drafts" / "candidate-draft.md").write_text(
+            "# Candidate\n\nA paragraph that may become the book.\n",
+            encoding="utf-8",
+        )
+        (ws / "manuscript" / "chapter-01.md").write_text(
+            "# Approved\n\nThis is already in the manuscript.\n",
+            encoding="utf-8",
+        )
+        before = (ws / "manuscript" / "chapter-01.md").read_text(encoding="utf-8")
+
+        rc, out = run_tyf(["surface"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Draft Review Workbench", out)
+        self.assertIn("No manuscript text was written", out)
+        self.assertEqual((ws / "manuscript" / "chapter-01.md").read_text(encoding="utf-8"), before)
+
+        index = ws / ".review" / "surface" / "index.html"
+        data_path = ws / ".review" / "surface" / "workbench-data.json"
+        self.assertTrue(index.is_file())
+        self.assertTrue(data_path.is_file())
+        html = index.read_text(encoding="utf-8")
+        self.assertIn("TYF Draft Review Workbench", html)
+        self.assertIn("drafts/candidate-draft.md", html)
+        self.assertIn("Build Gate Packet", html)
+        self.assertIn("manuscript/ is read-only", html)
+
+        data = json.loads(data_path.read_text(encoding="utf-8"))
+        self.assertEqual(data["draft"]["path"], "drafts/candidate-draft.md")
+        self.assertEqual(data["manuscript"]["units"][0]["path"], "manuscript/chapter-01.md")
+        self.assertIn("paragraph_styles:", data["style"]["book_style"])
+        self.assertIn("image_rules:", data["style"]["book_style"])
+
+    def test_surface_heals_missing_style_and_asset_scaffolding(self):
+        ws = self.ws()
+        shutil.rmtree(ws / "design", ignore_errors=True)
+        shutil.rmtree(ws / "assets", ignore_errors=True)
+
+        rc, out = run_tyf(["surface"], ws)
+        self.assertEqual(rc, 0, out)
+        self.assertTrue((ws / "design" / "book-style.yaml").is_file())
+        self.assertTrue((ws / "assets" / "images" / "index.jsonl").is_file())
+        self.assertIn("Draft Review Workbench", out)
+
+    def test_surface_draft_save_requires_matching_base_hash(self):
+        ws = self.ws()
+        draft = ws / "drafts" / "candidate-draft.md"
+        draft.write_text("Original draft.\n", encoding="utf-8")
+        old = os.getcwd()
+        try:
+            os.chdir(ws)
+            data = tyf._surface_data("work")
+            base_hash = data["draft"]["sha256"]
+            saved = tyf._surface_save_draft(
+                "work", "drafts/candidate-draft.md", base_hash, "Saved draft.\n"
+            )
+            self.assertEqual(saved["status"], "saved")
+            self.assertEqual(draft.read_text(encoding="utf-8"), "Saved draft.\n")
+
+            conflicted = tyf._surface_save_draft(
+                "work", "drafts/candidate-draft.md", base_hash, "Clobber attempt.\n"
+            )
+            self.assertEqual(conflicted["status"], "conflict")
+            self.assertEqual(draft.read_text(encoding="utf-8"), "Saved draft.\n")
+        finally:
+            os.chdir(old)
+
+    def test_surface_draft_save_refuses_manuscript_paths(self):
+        ws = self.ws()
+        (ws / "manuscript" / "chapter-01.md").write_text("Approved.\n", encoding="utf-8")
+        old = os.getcwd()
+        try:
+            os.chdir(ws)
+            with self.assertRaises(ValueError):
+                tyf._surface_save_draft(
+                    "work", "manuscript/chapter-01.md", "any", "Nope.\n"
+                )
+        finally:
+            os.chdir(old)
+
     def test_learn_is_hidden_from_front_door_help_but_invokable(self):
         rc, out = run_tyf(["--help"], self.tmp)
         self.assertEqual(rc, 0, out)

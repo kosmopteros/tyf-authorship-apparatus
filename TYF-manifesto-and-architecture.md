@@ -190,6 +190,8 @@ workspace/
 ├── drafts/                             # candidate text from the amanuensis
 ├── manuscript/                         # behind the controlled write
 ├── style-sheet.md                      # running, the redactor's instrument
+├── design/book-style.yaml              # typeface, paragraph styles, production intent
+├── assets/images/                      # image files + image-use index
 ├── .review/                            # findings + write-log, never auto-applied
 │
 ├── sources/                            # raw, preserved, shared      [read-mostly]
@@ -231,7 +233,9 @@ overrides:
 
 **Apparatus memory is separate from the work.** Everything above is the author's, in plain text. Machine bookkeeping lives under `.tyf/`: `.tyf/events.jsonl` is the human-readable hash-chained journal of apparatus actions, while `.tyf/ledger.db` (stdlib SQLite, no third-party dependency) is the derived content-addressed notice index for statuses, dismissals, and real timestamps. The notice index is rebuildable by re-scanning content and mirrorable to Markdown with `tyf reconcile --export`. See `docs/ATTENTIVENESS.md` and `docs/WORKSPACE_CONTRACT.md`.
 
-**The `tyf` helper** performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
+**The `tyf` helper** performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `surface`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
+
+**The Draft Review Workbench** is the first local book surface. `tyf surface` generates an inspectable HTML/JSON table under `.review/surface/`: candidate draft on one side, approved manuscript units on the other, and book-style plus image-asset context alongside them. `tyf surface --serve` may save `drafts/candidate-draft.md`, but only by matching the loaded base hash against the current file; concurrent edits become conflicts. The manuscript pane is read-only. Moving candidate text into the manuscript still requires the Gate.
 
 ## 10. Portability: one skill, many runtimes
 

@@ -39,6 +39,8 @@ When the author asks why a passage does not land, what is wrong, where the secti
 
 When the author says a substantial draft or manuscript body already exists and needs typographic craft, language treatment, AI-cadence cleanup, Milchin-editor work, rubrication, or finish, load `typographer-redactor` before ordinary editing. If the existing source includes a PDF, Pages document, screenshots, illustrations, or visible layout, treat it as a whole work object first: layout, images, threshold pages, title pages, front/back matter, captions, and page choreography may decide what the prose means. Run `tyf treat` for the body or `tyf treat work --unit manuscript/<file>` for a sample, read `.review/typographic-treatment.md`, then propose a bounded treatment in `drafts/` or `.review/`. Do not return to broad discovery questions unless the treatment packet exposes a real missing author decision.
 
+When the author wants to see the manuscript, work alongside the amanuensis chat, edit candidate prose directly, add image blocks, or inspect paragraph/style decisions, run `tyf surface` for a static Draft Review Workbench. Use `tyf surface --serve` when local browser draft saving is useful. Treat this as a workbench, not a manuscript editor: it may save `drafts/candidate-draft.md` only when the loaded base hash still matches the file on disk, and it may create review packets, but `manuscript/` remains read-only and still requires the Gate.
+
 ## Selection order
 
 | The situation in front of you | Load |
@@ -53,6 +55,7 @@ When the author says a substantial draft or manuscript body already exists and n
 | A named character's response, reaction, or phrasing is requested | `composing-as-amanuensis` |
 | Terminology, logic, cross-refs, apparatus, or finish is in play | `keeping-the-redactor-canon` |
 | Existing draft or manuscript body needs typographic craft, language treatment, AI-cadence cleanup, rubrication, or finish | `typographer-redactor` |
+| The author wants a manuscript/draft workbench, visual review surface, style panel, or image-block assistance | `working-the-workspace` |
 | A draft is requested from known source and register | `composing-as-amanuensis` |
 | The author asks how it reads or whether it lands | `reading-sympathetically` |
 | The author brings beta-reader, editor, reviewer, or workshop feedback | `receiving-critique` |

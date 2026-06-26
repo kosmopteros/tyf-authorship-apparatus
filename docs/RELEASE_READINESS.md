@@ -45,7 +45,8 @@ imagined.
 - The exported author package excludes workshop debris and keeps clean author
   context templates.
 - The single-work beta surface is root-first: `work.yaml`, `drafts/`,
-  `.review/`, and `manuscript/`.
+  `.review/`, `manuscript/`, `design/book-style.yaml`, `assets/images/`,
+  and the optional `.review/surface/` Draft Review Workbench.
 - Arrival from chat, text, folder, zip, binary, unreadable, and oversized
   material preserves source before any drafting claim.
 - The Gate uses proposal, audit, review, decision, and write records rather than
@@ -56,6 +57,8 @@ imagined.
 ## Not Claimed Yet
 
 - Production-bulletproof cross-runtime behavior.
+- Print-ready PDF/KDP export, publisher templates, and final production
+  preflight.
 - Large-scale author usage across many books.
 - A mature auto-update path beyond notify-only `tyf update`.
 - A mature parallel-agent writing workflow.

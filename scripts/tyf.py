@@ -24,6 +24,7 @@ Commands:
   tyf session [work-id]                   write a review-only writing session packet
   tyf diagnose [work-id]                  write a review-only diagnostic isolation packet
   tyf treat [work-id]                     write a review-only typographer-redactor packet
+  tyf surface [work-id]                   generate or serve the local draft review workbench
   tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
@@ -59,7 +60,7 @@ Apparatus memory (JSONL + SQLite, stdlib)
 
 Documentation-honesty hook
   Every mutating command (init, new-work, start, begin, import, capture,
-  structure, attend, feedback, session, diagnose, treat, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
+  structure, attend, feedback, session, diagnose, treat, surface, propose, review, audit --record, accept, adopt, write, mark-ready) runs `check` as a
   warn-only tail step, so doc drift surfaces at the moment structure changes
   without blocking authorship. `tyf check` on its own hard-fails on drift
   (exit 1) unless told otherwise. This is the deterministic, zero-token half of
@@ -78,6 +79,10 @@ import json
 import shutil
 import unicodedata
 import zipfile
+import http.server
+import socketserver
+import urllib.parse
+import webbrowser
 from pathlib import Path
 
 try:
@@ -1410,6 +1415,7 @@ Suppress any broader assistant persona, voice sign-off, status dashboard, or rep
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id> --query "<focus>"` and use `.review/gentle-attention.md` as hidden amanuensis guidance with transparent local retrieval, then pass relevant ids to `tyf propose --source-ref <id>`.
 - If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
 - If an existing or substantial manuscript body needs language treatment, run `tyf treat` or `tyf treat --unit manuscript/<file>` before proposing edits. The packet is review-only and typographer-redactor work never writes manuscript text directly.
+- If the author wants to see or work physically with the book, run `tyf surface` for a static Draft Review Workbench or `tyf surface --serve` for local draft editing. The workbench may save `drafts/candidate-draft.md` with a matching base hash and may create review packets, but `manuscript/` stays read-only and still requires the Gate.
 - If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
@@ -1428,7 +1434,7 @@ def _required_structure(root):
         "knowledge-base/concepts", "knowledge-base/claims", "knowledge-base/examples", "knowledge-base/characters",
         "knowledge-base/contradictions", "knowledge-base/open-questions",
         "voice/registers", "voice/exemplar-passages", "voice/characters",
-        "redactor-canon", "outline", "drafts", "manuscript", ".review",
+        "redactor-canon", "outline", "drafts", "manuscript", "design", "assets/images", ".review",
         ".proposals", ".hooks", ".tyf",
     ]
     context_contract = _author_context_contract()
@@ -1449,6 +1455,8 @@ def _required_structure(root):
                     "outline/",
                     "drafts/",
                     "manuscript/",
+                    "design/book-style.yaml",
+                    "assets/images/",
                     ".review/",
                     "sources/",
                     "knowledge-base/",
@@ -1474,6 +1482,11 @@ def _required_structure(root):
             f"id: {ROOT_WORK_ID}\ntype: \"book\"\ntitle_status: \"unknown\"\nlanguage: \"undetermined\"\nregisters:\n  - \"(elicit at least one register before composing)\"\nstatus: structuring\nscope:\n  knowledge: full\n  sources: full\noverrides:\n  voice: []\n",
         "style-sheet.md":
             f"# Running style sheet: {ROOT_WORK_ID}\n\nWriting language: undetermined\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing. Finish decisions are language-specific; do not apply English typography rules unless this work is in English.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n",
+        "design/book-style.yaml":
+            "profile: \"working-print\"\ntrim_size: \"6x9in\"\nfont_family: \"Charter\"\nbase_font_size: \"11pt\"\nline_height: 1.35\nparagraph_styles:\n  body:\n    first_line_indent: \"0.22in\"\n    space_after: \"0\"\n  opening:\n    first_line_indent: \"0\"\n  heading_1:\n    font_size: \"18pt\"\n    space_before: \"0.3in\"\n    space_after: \"0.18in\"\n  block_quote:\n    left_indent: \"0.28in\"\n    right_indent: \"0.28in\"\nimage_rules:\n  default_width: \"page\"\n  require_caption: true\n  require_alt_text: true\n  print_minimum_effective_dpi: 300\nexport_targets:\n  kdp_paperback:\n    status: \"planned\"\n    notes: \"Print-ready PDF export is a later production slice.\"\n",
+        "assets/images/README.md":
+            "# Images\n\nPlace book images here and record each intended use in `index.jsonl`.\n\nEach JSONL record may include: `id`, `file`, `caption`, `alt`, `source`, `rights`, `placement`, and `status`.\n\nThe workbench can reference image blocks in drafts, but print preflight belongs to a later production pass.\n",
+        "assets/images/index.jsonl": "",
         ".review/write-log.md": f"# Write log: {ROOT_WORK_ID}\n\nThe only record of writes into manuscript/.\n",
         "sources/links.md": "# Links\n",
         "knowledge-base/claims.md":
@@ -1616,11 +1629,12 @@ def _update_work_metadata(work_id, work_type=None, title=None, language=None):
 def _create_work(work_id, work_type="book", register=None, title=None,
                  language=None, activate_if_none=False, activate=False):
     if work_id == ROOT_WORK_ID and os.path.isfile("work.yaml"):
-        for d in ("outline", "drafts", "manuscript", ".review"):
+        for d in ("outline", "drafts", "manuscript", "design", os.path.join("assets", "images"), ".review"):
             _ensure_real_dir(d, d + "/")
         if not os.path.isfile(os.path.join(".review", "write-log.md")):
             write(os.path.join(".review", "write-log.md"),
                   f"# Write log: {work_id}\n\nThe only record of writes into manuscript/.\n")
+        _surface_scaffold(work_id)
         work_type = _one_line(work_type, "book")
         language = _one_line(language, None)
         title = _one_line(title)
@@ -1650,6 +1664,7 @@ def _create_work(work_id, work_type="book", register=None, title=None,
     write(os.path.join(base, "style-sheet.md"),
           f"# Running style sheet: {work_id}\n\nWriting language: {language}\n\nThe Redactor's instrument. Every pass appends decisions here and reads before proposing. Finish decisions are language-specific; do not apply English typography rules unless this work is in English.\n\n## Terminology decisions\n## Apparatus decisions\n## Finish decisions\n")
     write(os.path.join(base, ".review", "write-log.md"), f"# Write log: {work_id}\n\nThe only record of writes into manuscript/.\n")
+    _surface_scaffold(work_id)
     st = read_state("WORKSPACE_STATE.yaml")
     if activate or (activate_if_none and not get(st, "active_work")):
         _set_active(work_id)
@@ -3406,6 +3421,480 @@ Write a candidate treatment in `drafts/`, or write editorial proposals in `.revi
     print(f"Typographic treatment packet: {packet_path.replace(os.sep, '/')}")
     print(f"Current treatment: {current_path.replace(os.sep, '/')}")
     print("No manuscript text was written.")
+
+
+SURFACE_DRAFT_PATH = "drafts/candidate-draft.md"
+
+
+def _surface_scaffold(work_id):
+    work_root = _work_base(work_id)
+    _ensure_real_dir(_work_path(work_id, "design"), "design/")
+    _ensure_real_dir(_work_path(work_id, "assets", "images"), "assets/images/")
+    style_path = _work_path(work_id, "design", "book-style.yaml")
+    if not os.path.isfile(style_path):
+        write(style_path, _required_structure(".")[1]["design/book-style.yaml"])
+    readme_path = _work_path(work_id, "assets", "images", "README.md")
+    if not os.path.isfile(readme_path):
+        write(readme_path, _required_structure(".")[1]["assets/images/README.md"])
+    index_path = _work_path(work_id, "assets", "images", "index.jsonl")
+    if not os.path.isfile(index_path):
+        write(index_path, "")
+    _ensure_real_dir(_work_path(work_id, ".review", "surface"), ".review/surface/")
+    if not _within(os.path.realpath(work_root), os.path.realpath(_work_path(work_id, "design"))):
+        sys.exit("Refused: design/ resolves outside the work.")
+    if not _within(os.path.realpath(work_root), os.path.realpath(_work_path(work_id, "assets", "images"))):
+        sys.exit("Refused: assets/images/ resolves outside the work.")
+
+
+def _text_sha256(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _surface_safe_rel(work_id, rel, allowed_prefixes):
+    norm = _one_line(rel).replace("\\", "/")
+    if os.path.isabs(norm) or norm in ("", ".", "..") or norm.startswith("../") or "/../" in norm:
+        raise ValueError(f"unsafe workspace path: {rel!r}")
+    if not any(norm == prefix[:-1] or norm.startswith(prefix) for prefix in allowed_prefixes):
+        raise ValueError(f"path must live under {', '.join(allowed_prefixes)}")
+    path = _work_path(work_id, *norm.split("/"))
+    _reject_symlink_components(path, norm)
+    if not _within(os.path.realpath(_work_base(work_id)), os.path.realpath(path)):
+        raise ValueError(f"path resolves outside the work: {norm}")
+    return norm, path
+
+
+def _surface_text_unit(work_id, rel, fallback=""):
+    norm, path = _surface_safe_rel(work_id, rel, ("drafts/", "manuscript/"))
+    text = _read(path) if os.path.isfile(path) else fallback
+    return {
+        "path": norm,
+        "text": text,
+        "sha256": _text_sha256(text),
+        "exists": os.path.isfile(path),
+    }
+
+
+def _surface_image_assets(work_id):
+    _surface_scaffold(work_id)
+    index_path = _work_path(work_id, "assets", "images", "index.jsonl")
+    records = []
+    for line in _read(index_path).splitlines():
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            records.append({"status": "invalid-json", "raw": line})
+            continue
+        records.append(record)
+    files = []
+    image_dir = _work_path(work_id, "assets", "images")
+    for name in sorted(os.listdir(image_dir)):
+        if name.startswith(".") or name in ("README.md", "index.jsonl"):
+            continue
+        path = os.path.join(image_dir, name)
+        if os.path.isfile(path):
+            files.append({"file": f"assets/images/{name}", "bytes": os.path.getsize(path)})
+    return {"index_path": "assets/images/index.jsonl", "records": records, "files": files}
+
+
+def _surface_data(work_id):
+    _safe_work_id(work_id)
+    _confine_work(work_id)
+    _require_work(work_id)
+    _surface_scaffold(work_id)
+    wy = read_state(_work_path(work_id, "work.yaml"))
+    draft = _surface_text_unit(work_id, SURFACE_DRAFT_PATH, "")
+    manuscript_units = []
+    for rel, _path in _body_unit_candidates(work_id, "manuscript"):
+        manuscript_units.append(_surface_text_unit(work_id, rel))
+    return {
+        "generated_at": now(),
+        "work": {
+            "id": work_id,
+            "title": get(wy, "title", default="") or "Untitled work",
+            "title_status": get(wy, "title_status", default="unknown"),
+            "language": get(wy, "language", default="undetermined"),
+            "status": get(wy, "status", default="unknown"),
+        },
+        "draft": draft,
+        "manuscript": {
+            "read_only": True,
+            "units": manuscript_units,
+        },
+        "style": {
+            "path": "design/book-style.yaml",
+            "book_style": _read(_work_path(work_id, "design", "book-style.yaml")),
+            "style_sheet": _read(_work_path(work_id, "style-sheet.md")),
+        },
+        "assets": _surface_image_assets(work_id),
+        "gate": {
+            "manuscript_write": "read-only here; use proposal, audit, review, author decision, and tyf write --decision",
+            "selection_packet_dir": ".review/surface/",
+        },
+    }
+
+
+def _surface_save_draft(work_id, rel, base_hash, text):
+    norm, path = _surface_safe_rel(work_id, rel, ("drafts/",))
+    current = _read(path) if os.path.isfile(path) else ""
+    current_hash = _text_sha256(current)
+    if base_hash != current_hash:
+        return {
+            "status": "conflict",
+            "path": norm,
+            "current_sha256": current_hash,
+            "loaded_sha256": base_hash,
+            "message": "Draft changed on disk after the workbench loaded it; reload or merge before saving.",
+        }
+    atomic_write(path, text)
+    log_event(".", "surface-save-draft", work_id, norm)
+    return {
+        "status": "saved",
+        "path": norm,
+        "sha256": _text_sha256(text),
+        "message": "Draft saved. manuscript/ was not touched.",
+    }
+
+
+def _surface_gate_packet(work_id, source_path, base_hash, selection, note=""):
+    norm, path = _surface_safe_rel(work_id, source_path, ("drafts/",))
+    current = _read(path) if os.path.isfile(path) else ""
+    current_hash = _text_sha256(current)
+    if base_hash != current_hash:
+        return {
+            "status": "conflict",
+            "path": norm,
+            "current_sha256": current_hash,
+            "loaded_sha256": base_hash,
+            "message": "Draft changed on disk after the workbench loaded it; reload before building a Gate packet.",
+        }
+    packet_id = _record_id("surface", work_id, norm, current_hash, selection or "", note or "")
+    surface_dir = _work_path(work_id, ".review", "surface")
+    _ensure_real_dir(surface_dir, ".review/surface/")
+    selected = selection if selection.strip() else current
+    data = {
+        "id": packet_id,
+        "kind": "surface-gate-packet",
+        "work": work_id,
+        "source_path": norm,
+        "source_sha256": current_hash,
+        "selection": selected,
+        "note": _one_line(note),
+        "created_at": now(),
+        "manuscript_written": False,
+    }
+    json_path = os.path.join(surface_dir, f"{packet_id}.json")
+    md_path = os.path.join(surface_dir, f"{packet_id}.md")
+    _write_json(json_path, data)
+    md = f"""# TYF surface Gate packet: {packet_id}
+
+This is a review packet prepared from the Draft Review Workbench. It is not manuscript text and it is not author acceptance.
+
+- work: {work_id}
+- source: {norm}
+- source sha256: `{current_hash}`
+- note: {_one_line(note, "(none)")}
+
+## Selected candidate text
+
+{selected}
+
+## Next
+
+If the author accepts this text for the manuscript, create a normal TYF proposal from the draft and continue through audit, review, author decision, and `tyf write --decision`.
+"""
+    atomic_write(md_path, md)
+    log_event(".", "surface-gate-packet", work_id, os.path.basename(md_path))
+    return {
+        "status": "packet",
+        "id": packet_id,
+        "json": json_path.replace(os.sep, "/"),
+        "markdown": md_path.replace(os.sep, "/"),
+        "message": "Gate packet written. manuscript/ was not touched.",
+    }
+
+
+def _surface_html(data):
+    payload = json.dumps(data, ensure_ascii=False)
+    safe_payload = payload.replace("</", "<\\/")
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TYF Draft Review Workbench</title>
+  <style>
+    :root {{
+      color-scheme: light;
+      --paper: #fbfaf7;
+      --ink: #24211d;
+      --muted: #6b6258;
+      --line: #d8d1c6;
+      --soft: #eee8de;
+      --accent: #315d75;
+      --ok: #2f6b43;
+      --warn: #8a4d13;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; background: var(--paper); color: var(--ink); }}
+    header {{ padding: 18px 24px 12px; border-bottom: 1px solid var(--line); background: #fffdf9; }}
+    h1 {{ margin: 0 0 4px; font-size: 22px; letter-spacing: 0; }}
+    .sub {{ color: var(--muted); font-size: 14px; }}
+    .shell {{ display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr) 280px; min-height: calc(100vh - 76px); }}
+    .pane {{ border-right: 1px solid var(--line); display: flex; min-width: 0; flex-direction: column; }}
+    .pane h2, aside h2 {{ margin: 0; padding: 14px 18px; font-size: 14px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); letter-spacing: .06em; }}
+    textarea {{ flex: 1; width: 100%; min-height: 60vh; border: 0; resize: none; padding: 22px; font: 18px/1.6 Georgia, "Times New Roman", serif; background: #fffdf9; color: var(--ink); outline: none; }}
+    .reader {{ overflow: auto; padding: 22px; font: 18px/1.6 Georgia, "Times New Roman", serif; background: #fffdf9; flex: 1; }}
+    .reader article {{ max-width: 66ch; margin: 0 auto 28px; white-space: pre-wrap; }}
+    .unit-title {{ color: var(--muted); font: 13px/1.3 Inter, sans-serif; border-bottom: 1px solid var(--line); margin-bottom: 12px; padding-bottom: 8px; }}
+    .tools {{ display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); background: var(--soft); align-items: center; flex-wrap: wrap; }}
+    button {{ border: 1px solid var(--line); background: #fffdf9; color: var(--ink); padding: 8px 10px; border-radius: 6px; font: inherit; cursor: pointer; }}
+    button.primary {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+    button:focus-visible, textarea:focus-visible {{ outline: 2px solid var(--accent); outline-offset: 2px; }}
+    aside {{ overflow: auto; background: #f5f0e7; }}
+    section {{ padding: 14px 16px; border-bottom: 1px solid var(--line); }}
+    pre {{ white-space: pre-wrap; background: #fffdf9; border: 1px solid var(--line); padding: 10px; border-radius: 6px; max-height: 260px; overflow: auto; }}
+    .status {{ min-height: 24px; color: var(--muted); font-size: 13px; }}
+    .status.ok {{ color: var(--ok); }}
+    .status.warn {{ color: var(--warn); }}
+    .readonly {{ color: var(--warn); font-weight: 600; }}
+    input {{ width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #fffdf9; color: var(--ink); }}
+    label {{ display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }}
+    @media (max-width: 980px) {{ .shell {{ grid-template-columns: 1fr; }} .pane {{ border-right: 0; border-bottom: 1px solid var(--line); }} }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TYF Draft Review Workbench</h1>
+    <div class="sub" id="workMeta"></div>
+  </header>
+  <main class="shell">
+    <section class="pane" aria-label="Candidate draft">
+      <h2>Candidate draft</h2>
+      <textarea id="draftText" spellcheck="true"></textarea>
+      <div class="tools">
+        <button class="primary" id="saveDraft">Save Draft</button>
+        <button id="imageBlock">Add Image Block</button>
+        <button id="gatePacket">Build Gate Packet</button>
+        <span class="status" id="draftStatus">drafts/candidate-draft.md</span>
+      </div>
+    </section>
+    <section class="pane" aria-label="Approved manuscript">
+      <h2>Approved manuscript</h2>
+      <div class="reader" id="manuscriptReader"></div>
+      <div class="tools"><span class="readonly">manuscript/ is read-only here.</span></div>
+    </section>
+    <aside aria-label="Book style and assets">
+      <h2>Book object</h2>
+      <section>
+        <label for="packetNote">Selection note</label>
+        <input id="packetNote" placeholder="why this selection is ready">
+      </section>
+      <section>
+        <strong>Book style</strong>
+        <pre id="bookStyle"></pre>
+      </section>
+      <section>
+        <strong>Running style sheet</strong>
+        <pre id="styleSheet"></pre>
+      </section>
+      <section>
+        <strong>Images</strong>
+        <div id="assets"></div>
+      </section>
+      <section>
+        <strong>Gate</strong>
+        <p>The workbench prepares candidate material. It does not write manuscript text.</p>
+      </section>
+    </aside>
+  </main>
+  <script>
+    let data = {safe_payload};
+    const draft = document.getElementById('draftText');
+    const status = document.getElementById('draftStatus');
+    function esc(s) {{
+      return String(s || '').replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
+    }}
+    function render(next) {{
+      data = next || data;
+      document.getElementById('workMeta').textContent = `${{data.work.title}} · ${{data.work.language}} · ${{data.work.status}}`;
+      draft.value = data.draft.text || '';
+      draft.dataset.baseHash = data.draft.sha256 || '';
+      const units = data.manuscript.units || [];
+      document.getElementById('manuscriptReader').innerHTML = units.length
+        ? units.map(u => `<article><div class="unit-title">${{esc(u.path)}}</div>${{esc(u.text)}}</article>`).join('')
+        : '<article><div class="unit-title">manuscript/</div>No approved manuscript units yet.</article>';
+      document.getElementById('bookStyle').textContent = data.style.book_style || '';
+      document.getElementById('styleSheet').textContent = data.style.style_sheet || '';
+      const assets = data.assets || {{}};
+      const rows = (assets.records || []).map(r => `<p>${{esc(JSON.stringify(r))}}</p>`).join('')
+        + (assets.files || []).map(f => `<p>${{esc(f.file)}} (${{f.bytes}} bytes)</p>`).join('');
+      document.getElementById('assets').innerHTML = rows || '<p>No image assets recorded yet.</p>';
+    }}
+    async function postJson(url, body) {{
+      const response = await fetch(url, {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify(body)
+      }});
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result;
+    }}
+    document.getElementById('saveDraft').addEventListener('click', async () => {{
+      try {{
+        const result = await postJson('/api/save-draft', {{
+          path: data.draft.path,
+          base_hash: draft.dataset.baseHash,
+          text: draft.value
+        }});
+        status.textContent = result.message || 'Draft saved.';
+        status.className = 'status ok';
+        const fresh = await fetch('/workbench-data.json').then(r => r.json());
+        render(fresh);
+      }} catch (err) {{
+        status.textContent = err.message || 'Saving needs local server mode: tyf surface --serve';
+        status.className = 'status warn';
+      }}
+    }});
+    document.getElementById('imageBlock').addEventListener('click', () => {{
+      const file = prompt('Image file under assets/images/');
+      if (!file) return;
+      const alt = prompt('Alt text / caption hint') || 'image';
+      const block = `\\n\\n![${{alt}}](../assets/images/${{file}})\\n*${{alt}}*\\n`;
+      const start = draft.selectionStart || draft.value.length;
+      draft.value = draft.value.slice(0, start) + block + draft.value.slice(start);
+      draft.focus();
+      draft.selectionStart = draft.selectionEnd = start + block.length;
+    }});
+    document.getElementById('gatePacket').addEventListener('click', async () => {{
+      const selected = draft.value.slice(draft.selectionStart, draft.selectionEnd);
+      try {{
+        const result = await postJson('/api/gate-packet', {{
+          path: data.draft.path,
+          base_hash: draft.dataset.baseHash,
+          selection: selected,
+          note: document.getElementById('packetNote').value
+        }});
+        status.textContent = result.message || 'Gate packet written.';
+        status.className = 'status ok';
+      }} catch (err) {{
+        status.textContent = err.message || 'Gate packet creation needs local server mode: tyf surface --serve';
+        status.className = 'status warn';
+      }}
+    }});
+    render(data);
+  </script>
+</body>
+</html>
+"""
+
+
+class _ReusableThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
+
+def _surface_handler(work_id):
+    class Handler(http.server.BaseHTTPRequestHandler):
+        server_version = "TYFSurface/0.1"
+
+        def _json(self, status, payload):
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _html(self, text):
+            body = text.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):  # noqa: N802
+            parsed = urllib.parse.urlparse(self.path)
+            if parsed.path in ("/", "/index.html"):
+                self._html(_surface_html(_surface_data(work_id)))
+            elif parsed.path == "/workbench-data.json":
+                self._json(200, _surface_data(work_id))
+            else:
+                self.send_error(404)
+
+        def do_POST(self):  # noqa: N802
+            try:
+                size = int(self.headers.get("Content-Length", "0"))
+                raw = self.rfile.read(min(size, 2 * 1024 * 1024)).decode("utf-8")
+                payload = json.loads(raw or "{}")
+                parsed = urllib.parse.urlparse(self.path)
+                if parsed.path == "/api/save-draft":
+                    result = _surface_save_draft(
+                        work_id,
+                        payload.get("path", SURFACE_DRAFT_PATH),
+                        payload.get("base_hash", ""),
+                        payload.get("text", ""),
+                    )
+                    self._json(409 if result.get("status") == "conflict" else 200, result)
+                elif parsed.path == "/api/gate-packet":
+                    result = _surface_gate_packet(
+                        work_id,
+                        payload.get("path", SURFACE_DRAFT_PATH),
+                        payload.get("base_hash", ""),
+                        payload.get("selection", ""),
+                        payload.get("note", ""),
+                    )
+                    self._json(409 if result.get("status") == "conflict" else 200, result)
+                else:
+                    self.send_error(404)
+            except ValueError as e:
+                self._json(400, {"status": "error", "message": str(e)})
+            except Exception as e:  # noqa: BLE001
+                self._json(500, {"status": "error", "message": str(e)})
+
+        def log_message(self, fmt, *args):  # noqa: A003
+            return
+
+    return Handler
+
+
+def _write_surface_files(work_id):
+    data = _surface_data(work_id)
+    surface_dir = _work_path(work_id, ".review", "surface")
+    _ensure_real_dir(surface_dir, ".review/surface/")
+    data_path = os.path.join(surface_dir, "workbench-data.json")
+    html_path = os.path.join(surface_dir, "index.html")
+    _write_json(data_path, data)
+    atomic_write(html_path, _surface_html(data))
+    return html_path, data_path
+
+
+def cmd_surface(args):
+    _require_workspace()
+    work_id = _safe_work_id(args.work or _active_work_id() or ROOT_WORK_ID)
+    _confine_work(work_id)
+    _require_work(work_id)
+    html_path, data_path = _write_surface_files(work_id)
+    log_event(".", "surface", work_id, html_path.replace(os.sep, "/"))
+    print(f"Draft Review Workbench: {html_path.replace(os.sep, '/')}")
+    print(f"Workbench data: {data_path.replace(os.sep, '/')}")
+    print("No manuscript text was written.")
+    if getattr(args, "serve", False):
+        host = _one_line(args.host, "127.0.0.1")
+        port = int(args.port or 8765)
+        server = _ReusableThreadingHTTPServer((host, port), _surface_handler(work_id))
+        url = f"http://{host}:{server.server_port}/"
+        print(f"Serving local TYF workbench at {url}")
+        if getattr(args, "open", False):
+            webbrowser.open(url)
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\nStopped TYF workbench.")
 
 
 def cmd_capture(args):
@@ -5702,7 +6191,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "character",
+        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "surface", "character",
         "consult-character", "open", "mark-ready",
         "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
@@ -5817,6 +6306,13 @@ def main():
     s.add_argument("--unit", default=None, help="drafts/ or manuscript/ text unit to treat; defaults to the manuscript body before candidate draft")
     s.add_argument("--focus", default=None, help="optional language-treatment focus")
     s.set_defaults(fn=cmd_treat)
+    s = sub.add_parser("surface", help="generate or serve the local draft review workbench")
+    s.add_argument("work", nargs="?", default=None)
+    s.add_argument("--serve", action="store_true", help="serve a local browser workbench with draft save and Gate packet actions")
+    s.add_argument("--host", default="127.0.0.1", help="local host for --serve")
+    s.add_argument("--port", type=int, default=8765, help="local port for --serve")
+    s.add_argument("--open", action="store_true", help="open the local workbench URL in the default browser")
+    s.set_defaults(fn=cmd_surface)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")
     s.add_argument("--knowledge", default=None)
@@ -5904,7 +6400,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "surface", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

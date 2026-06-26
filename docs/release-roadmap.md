@@ -17,8 +17,10 @@
 - Promote the current canonical event journal from action history toward the authority for derived SQLite projections.
 - Windows PowerShell install and exported release-tree check/install now have local smoke tests; add macOS and Linux host validation for published archives next.
 
-## Later workbench surface
+## Workbench and production surface
 
+- Shipped the first Draft Review Workbench slice: local HTML/JSON review table, served draft editing with base-hash conflict protection, book-style scaffolding, image-asset index, and read-only manuscript pane.
+- Add production preflight later: true pagination, KDP trim/bleed, PDF export, publisher templates, image resolution checks, font embedding checks, and final print-readiness reports.
 - Revisit the author-facing ceremonial vocabulary as an interface layer backed by the plain runtime ontology.
 - Add richer source ingestion for PDFs, transcripts, and citation indexes.
 - Add richer lock-aware collaborative workflows for multi-agent and scheduled writing sessions, including stale-lock review and recovery guidance.

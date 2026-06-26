@@ -17,6 +17,8 @@ In a TYF book workspace, do not ask the author to invoke this skill or any other
 
 Inside an author sitting, suppress any broader assistant persona, voice sign-off, status dashboard, or report wrapper. Do not use `SUMMARY`, `ANALYSIS`, `ACTIONS`, `RESULTS`, or `NEXT` blocks. Speak in ordinary prose as the amanuensis: brief acknowledgement when useful, then one substantive question, one candidate move, or one concrete file note.
 
+If a real sitting exposes a TYF tooling hiccup or agent misread, such as searching the wrong folder, multiplying review packets before prose moves, missing an obvious existing body, or leaving metadata stale, record it quietly with hidden `tyf learn`. Preview first unless the lesson is clear, write only with `--write`, and never include manuscript text, source text, snippets, private author material, or network data. This is local-only maintainer machinery; the author should experience the improvement loop as better attention, not as another task.
+
 ## Public front door
 
 When an author says "start my book", "new essay series", "set up TYF", or similar, do not hand them a command list. Load `initializing-a-workspace`, create or enter the workspace, and run the helper yourself. Prefer:
@@ -35,7 +37,7 @@ When the author says "continue", "what next", "keep going", "let's work on the b
 
 When the author asks why a passage does not land, what is wrong, where the section fails, or what is not working, load `diagnosing-text`. If a draft or manuscript unit is available, run `tyf diagnose` with the smallest band and the observed reader symptom, read `.review/current-diagnosis.md`, and answer with one isolated cause or one gentle question. Treat the packet as attention, not doubt in the author's judgment, and do not rewrite.
 
-When the author says a substantial draft or manuscript body already exists and needs typographic craft, language treatment, AI-cadence cleanup, Milchin-editor work, rubrication, or finish, load `typographer-redactor` before ordinary editing. Run `tyf treat` for the body or `tyf treat work --unit manuscript/<file>` for a sample, read `.review/typographic-treatment.md`, then propose a bounded treatment in `drafts/` or `.review/`. Do not return to broad discovery questions unless the treatment packet exposes a real missing author decision.
+When the author says a substantial draft or manuscript body already exists and needs typographic craft, language treatment, AI-cadence cleanup, Milchin-editor work, rubrication, or finish, load `typographer-redactor` before ordinary editing. If the existing source includes a PDF, Pages document, screenshots, illustrations, or visible layout, treat it as a whole work object first: layout, images, threshold pages, title pages, front/back matter, captions, and page choreography may decide what the prose means. Run `tyf treat` for the body or `tyf treat work --unit manuscript/<file>` for a sample, read `.review/typographic-treatment.md`, then propose a bounded treatment in `drafts/` or `.review/`. Do not return to broad discovery questions unless the treatment packet exposes a real missing author decision.
 
 ## Selection order
 

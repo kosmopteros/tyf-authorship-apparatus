@@ -44,12 +44,14 @@ Commands:
                                           ledger-backed; never modifies
   tyf dismiss <hash>                      quiet a surfaced item; resurfaces on context change
   tyf reconcile [--export]                show the ledger; --export mirrors it to Markdown
+  tyf learn [--write]                     hidden local-only tooling learning packet
   tyf update [--force]                    notify-only check for a newer release; never modifies
 
 Apparatus memory (JSONL + SQLite, stdlib)
   The body of work stays in Markdown and YAML, owned by and legible to the
   author. Only apparatus bookkeeping lives under .tyf/: events.jsonl is the
-  human-readable hash-chained spine of apparatus actions, while ledger.db is the
+  human-readable hash-chained spine of apparatus actions, learnings.jsonl stores
+  local-only review candidates for tooling improvements, and ledger.db is the
   derived SQLite notice index and event mirror. It uses only stdlib modules:
   no third-party dependencies. Notice state is rebuildable by re-scanning
   content, and mirrorable to Markdown with `tyf reconcile --export`. See
@@ -956,6 +958,288 @@ def log_event(root, kind, ref="", detail=""):
         conn.close()
     except Exception:  # noqa: BLE001  # degradation: ok: apparatus memory must never break a real action
         pass  # apparatus memory must never break a real action
+
+
+# ---------- local learning: review-only tooling improvement candidates ----------
+
+LEARNING_SCHEMA_VERSION = 1
+
+
+def _learning_path(root):
+    return os.path.join(_tyf_dir(root), "learnings.jsonl")
+
+
+def _learning_privacy():
+    return {
+        "mode": "local-only",
+        "network": False,
+        "source_text": False,
+        "snippets": False,
+    }
+
+
+def _workspace_hash(root):
+    return hashlib.sha256(os.path.realpath(root).encode("utf-8")).hexdigest()[:12]
+
+
+def _learning_id(payload):
+    body = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "tyf-learn:" + hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+
+
+def _generated_learning_privacy_ok(record):
+    privacy = record.get("privacy")
+    return (
+        isinstance(privacy, dict)
+        and privacy.get("mode") == "local-only"
+        and privacy.get("network") is False
+        and privacy.get("source_text") is False
+        and privacy.get("snippets") is False
+    )
+
+
+def _clean_learning_record(record):
+    if not isinstance(record, dict):
+        return None
+    if record.get("schema_version") != LEARNING_SCHEMA_VERSION:
+        return None
+    if not _generated_learning_privacy_ok(record):
+        return None
+    required = ("id", "category", "signal", "suggested_tyf", "confidence", "disposition")
+    if any(not isinstance(record.get(key), str) or not record.get(key, "").strip()
+           for key in required):
+        return None
+    if not isinstance(record.get("evidence"), dict):
+        return None
+    return record
+
+
+def _iter_learning_records(path):
+    if not os.path.isfile(path):
+        return []
+    records = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    loaded = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                clean = _clean_learning_record(loaded)
+                if clean is not None:
+                    records.append(clean)
+    except OSError:  # degradation: ok: unreadable learning packets export as empty
+        return []
+    return records
+
+
+def _learning_record(root, category, signal, evidence, suggested_tyf, confidence):
+    evidence = evidence if isinstance(evidence, dict) else {"kind": "manual"}
+    record = {
+        "schema_version": LEARNING_SCHEMA_VERSION,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat(),
+        "audience": "tyf-maintainers",
+        "category": _one_line(category),
+        "signal": _one_line(signal),
+        "evidence": evidence,
+        "suggested_tyf": _one_line(suggested_tyf),
+        "confidence": _one_line(confidence or "medium"),
+        "privacy": _learning_privacy(),
+        "disposition": "candidate",
+        "source": {
+            "kind": "local-tyf-workspace",
+            "workspace_hash": _workspace_hash(root),
+        },
+    }
+    record["id"] = _learning_id({
+        "category": record["category"],
+        "signal": record["signal"],
+        "evidence": record["evidence"],
+        "suggested_tyf": record["suggested_tyf"],
+    })
+    return record
+
+
+def _append_learning_records(path, records):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    existing = {record.get("id") for record in _iter_learning_records(path)}
+    for record in records:
+        if record["id"] in existing:
+            continue
+        append(path, json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+        existing.add(record["id"])
+
+
+def _candidate_draft_state(root):
+    path = os.path.join(root, "drafts", "candidate-draft.md")
+    text = _read(path)
+    if not text:
+        return "missing"
+    if "[Start drafting here." in text and len(text.strip()) < 400:
+        return "placeholder"
+    return "moved"
+
+
+def _count_files(root, rel, suffix=None):
+    base = os.path.join(root, rel)
+    if not os.path.isdir(base):
+        return 0
+    count = 0
+    for cur, _dirs, files in os.walk(base):
+        for name in files:
+            if suffix is None or name.endswith(suffix):
+                count += 1
+    return count
+
+
+def build_learning_records(root, manual=None, scan=True):
+    records = []
+    if manual:
+        evidence_items = [_one_line(item) for item in manual.get("evidence", []) if _one_line(item)]
+        records.append(_learning_record(
+            root,
+            manual["category"],
+            manual["signal"],
+            {
+                "kind": "manual-observation",
+                "observations": evidence_items,
+            },
+            manual["suggestion"],
+            manual.get("confidence", "medium"),
+        ))
+
+    if not scan:
+        return records
+
+    review_count = _count_files(root, ".review", ".md")
+    proposal_count = _count_files(root, ".proposals")
+    manuscript_count = _count_files(root, "manuscript")
+    clean_source_count = _count_files(root, os.path.join("drafts", "clean-source"), ".md")
+    candidate_state = _candidate_draft_state(root)
+    if review_count >= 4 and candidate_state != "moved" and proposal_count == 0 and manuscript_count == 0:
+        records.append(_learning_record(
+            root,
+            "amanuensis-posture",
+            "Review packets are accumulating while candidate prose has not moved.",
+            {
+                "kind": "workspace-scan",
+                "review_markdown_files": review_count,
+                "proposal_files": proposal_count,
+                "manuscript_files": manuscript_count,
+                "candidate_draft": candidate_state,
+                "clean_source_files": clean_source_count,
+            },
+            "After recovery or treatment packets exist, prefer a bounded candidate sample or one author question before creating more review paperwork.",
+            "high",
+        ))
+
+    work_state = read_state(os.path.join(root, "work.yaml"))
+    if clean_source_count and work_state.get("language") == "undetermined":
+        records.append(_learning_record(
+            root,
+            "workspace-metadata",
+            "A clean source body exists while the work language remains undetermined.",
+            {
+                "kind": "workspace-scan",
+                "clean_source_files": clean_source_count,
+                "language": "undetermined",
+            },
+            "When recovering a readable body, prompt or infer a review-only language candidate so finish rules do not stay stale.",
+            "medium",
+        ))
+
+    events, _problems = _read_event_journal(root)
+    start_count = sum(1 for event in events if event.get("kind") == "start")
+    import_count = sum(1 for event in events if event.get("kind") == "import")
+    if start_count >= 4 and import_count:
+        records.append(_learning_record(
+            root,
+            "command-churn",
+            "Repeated arrival handling reopened the writing runway many times in one workspace.",
+            {
+                "kind": "event-scan",
+                "start_events": start_count,
+                "import_events": import_count,
+            },
+            "Reuse the current writing runway after adjacent imports instead of letting each import/start pair imply a fresh author-facing restart.",
+            "medium",
+        ))
+    return records
+
+
+def _render_learning_report(records):
+    lines = [
+        "# TYF Learning Packet",
+        "",
+        "Scope: review-only, local-only tooling improvement candidates.",
+        "Privacy: no network, no manuscript/source text, no snippets.",
+        "",
+    ]
+    if not records:
+        lines.append("(no learning candidates recorded)")
+        return "\n".join(lines) + "\n"
+    for record in records:
+        lines.append(f"## {record.get('id', 'tyf-learning')}")
+        lines.append(f"- disposition: {record.get('disposition', 'candidate')}")
+        lines.append(f"- category: {record.get('category', '')}")
+        lines.append(f"- signal: {record.get('signal', '')}")
+        lines.append(f"- suggested TYF: {record.get('suggested_tyf', '')}")
+        lines.append(f"- confidence: {record.get('confidence', '')}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def cmd_learn(args):
+    _require_workspace()
+    root = os.path.abspath(".")
+    path = _learning_path(root)
+
+    if args.export:
+        records = _iter_learning_records(path)
+        if args.json:
+            print(json.dumps({"ok": True, "records": records}, indent=2, sort_keys=True))
+        else:
+            print(_render_learning_report(records), end="")
+        return
+
+    manual_supplied = any((args.category, args.signal, args.suggestion, args.evidence))
+    manual = None
+    if manual_supplied:
+        missing = [name for name, value in (
+            ("--category", args.category),
+            ("--signal", args.signal),
+            ("--suggestion", args.suggestion),
+        ) if not value]
+        if missing:
+            sys.exit("Refused: manual learning records require " + ", ".join(missing))
+        manual = {
+            "category": args.category,
+            "signal": args.signal,
+            "suggestion": args.suggestion,
+            "evidence": args.evidence or [],
+            "confidence": args.confidence,
+        }
+    records = build_learning_records(root, manual=manual, scan=(args.scan or not manual_supplied))
+    if args.write:
+        _append_learning_records(path, records)
+    mode = "write" if args.write else "preview"
+    if args.json:
+        print(json.dumps({
+            "ok": True,
+            "mode": mode,
+            "path": path if args.write else None,
+            "privacy": _learning_privacy(),
+            "records": records,
+        }, indent=2, sort_keys=True))
+        return
+    verb = "recorded" if args.write else "previewed"
+    print(f"learn: {verb} {len(records)} review-only local-only candidate(s)"
+          + (f" in {path}" if args.write else "; nothing was written (use --write to persist)"))
+    print("privacy: local-only; no network; no manuscript/source text or snippets")
+    for record in records:
+        print(f"  - {record['category']}: {record['signal']}")
 
 def reconcile_notices(root, notices, update=True):
     """Diff current notices against the SQLite ledger. Returns (new, still_open,
@@ -3068,7 +3352,7 @@ def cmd_treat(args):
 
     packet = f"""# TYF typographic treatment: {treatment_id}
 
-This is a review-only typographer-redactor packet. It treats an existing draft or manuscript body as a reader instrument, not as raw source to rediscover.
+This is a review-only typographer-redactor packet. It treats an existing draft or manuscript body as a whole work object and reader instrument, not as raw source to rediscover. For formatted or illustrated arrivals, inspect layout, images, thresholds, front matter, back matter, and page choreography before reducing the work to plain text.
 
 No manuscript text was written. manuscript/ remains Gate-only. Applied changes still require editorial proposal, author acceptance, and the controlled write.
 
@@ -3096,6 +3380,7 @@ No manuscript text was written. manuscript/ remains Gate-only. Applied changes s
 - Logic: test whether each connective earns its inference and whether the argument follows.
 - Composition: ask whether the order of sections and paragraphs is the path the reader needs.
 - Rubrication: test whether headings and breaks form a load-bearing skeleton rather than decorative labels.
+- Layout/body object: check layout, images, thresholds, section breaks, title pages, illustrations, and front/back matter as meaning-bearing parts of the work.
 - Language and style: treat precision, rhythm, register, and voice after the earlier passes are named.
 - Typographic finish: apply language-specific punctuation, quotes, spacing, numerals, and apparatus rules.
 
@@ -5433,7 +5718,35 @@ def _require_event_journal_ready(root="."):
                  f"{first}. Run `tyf doctor` and reconcile before mutating the workspace.")
 
 
+def _add_learn_arguments(parser):
+    parser.add_argument("--category", default=None, help="systemic learning category, not manuscript content")
+    parser.add_argument("--signal", default=None, help="compact operational hiccup or misread, not source text")
+    parser.add_argument("--suggestion", default=None, help="candidate TYF improvement suggested by this signal")
+    parser.add_argument("--evidence", action="append", default=[],
+                        help="short operational evidence label; repeat for multiple labels")
+    parser.add_argument("--confidence", choices=("low", "medium", "high"), default="medium")
+    parser.add_argument("--scan", action="store_true", help="also scan the workspace for deterministic learning signals")
+    parser.add_argument("--export", action="store_true", help="print recorded candidates without appending")
+    parser.add_argument("--write", action="store_true", help="persist generated candidates to .tyf/learnings.jsonl")
+    parser.add_argument("--json", action="store_true", help="emit machine-readable output")
+    parser.set_defaults(cmd="learn", fn=cmd_learn)
+
+
+def _run_hidden_learn_command(argv):
+    parser = argparse.ArgumentParser(
+        prog="tyf learn",
+        description="local-only review packet for TYF tooling learning candidates",
+    )
+    _add_learn_arguments(parser)
+    args = parser.parse_args(argv)
+    args.fn(args)
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "learn":
+        _run_hidden_learn_command(sys.argv[2:])
+        return
+
     p = argparse.ArgumentParser(prog="tyf", description="TYF workspace helper")
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("init"); s.add_argument("name", nargs="?", default="."); s.add_argument("--force", action="store_true", help="scaffold even into a non-empty non-TYF directory"); s.set_defaults(fn=cmd_init)

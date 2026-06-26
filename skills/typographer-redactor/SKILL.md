@@ -9,7 +9,7 @@ description: Use when a substantial draft, manuscript chapter, or full-work body
 
 The typographer-redactor prepares an existing body of work for the reader. This is real craft, not punctuation decoration: the Milchin tradition of facts, logic, composition, rubrication, language and style, plus language-specific typographic finish.
 
-Use this when the work already has a body and the useful move is treatment rather than discovery. Do not ask philosophical entry questions when the draft is already 80 percent there. Treat the page, the paragraph, the chapter, and the body as reader instruments.
+Use this when the work already has a body and the useful move is treatment rather than discovery. Do not ask philosophical entry questions when the draft is already 80 percent there. Treat the page, the paragraph, the chapter, and the body as reader instruments. When an existing source arrives as a formatted manuscript, PDF, Pages document, illustrated draft, screenshots, or exported layout, treat it first as a whole work object. Layout, images, threshold pages, front matter, back matter, and page choreography can carry argument; do not flatten them into plain text before deciding what the work is doing.
 
 ## The disciplined move
 
@@ -41,6 +41,8 @@ Run the passes separately. Do not collapse them into "make it better".
 ## Full-work body posture
 
 When `manuscript/` already contains chapters, prefer a body treatment over a fresh interview. Inventory the body, pick a representative sample, and propose a treatment pass of roughly 500 to 800 words before scaling to the whole work. Use the strongest author-authored passages as the style key. If Act I is clearly the best register anchor, use it as the treatment standard for later acts.
+
+For imported or recovered existing work, the mega layer is where the typographer-redactor earns its keep. Inspect the whole work object before line editing: layout, images, threshold pages, section sequence, title pages, front matter, back matter, captions, rubrication, and visual transitions. A decision that looks wrong in plain text may be right in the designed body. Text-only treatment is micro or meso; it must not overrule the book-level reading.
 
 The meta/corpus layer is out of scope for this beta posture unless the author explicitly asks for it. Stay inside the single work: body, chapters, sections, notes, illustrations, front matter, back matter, and apparatus.
 

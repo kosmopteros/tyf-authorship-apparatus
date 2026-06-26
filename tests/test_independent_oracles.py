@@ -69,6 +69,11 @@ def check_helper() -> None:
     assert "test_doctor_flags_missing_canonical_event_journal" in tests
     assert "test_doctor_flags_malformed_canonical_event_journal" in tests
     assert "test_mutating_command_refuses_missing_canonical_event_journal" in tests
+    assert 'prog="tyf learn"' in source
+    assert 'sys.argv[1] == "learn"' in source
+    assert "learnings.jsonl" in source
+    assert "test_learn_is_hidden_from_front_door_help_but_invokable" in tests
+    assert "test_learn_write_persists_local_review_candidate" in tests
 
 
 def check_gate() -> None:
@@ -583,6 +588,8 @@ def check_typographer_redactor() -> None:
         "Language and style",
         "Typographic finish",
         "AI cadence",
+        "whole work object",
+        "layout, images, thresholds",
         "No manuscript text was written",
         "manuscript/ remains Gate-only",
     ):
@@ -598,11 +605,17 @@ def check_typographer_redactor() -> None:
     assert "Facts/source status" in typographer
     assert "AI cadence" in typographer
     assert "full-work body" in typographer
+    assert "whole work object" in typographer
+    assert "layout" in typographer
+    assert "images" in typographer
     assert "typographer-redactor" in using
     assert "tyf treat" in using
+    assert "layout" in using
     assert "typographer-redactor" in editing
     assert "typographer-redactor" in redactor
     assert "typographic treatment" in readme.lower()
+    assert "whole work object" in readme
+    assert "layout" in readme
     assert ".review/typographic-treatment.md" in contract
 
 

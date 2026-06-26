@@ -232,6 +232,112 @@ class CLIBehaviour(unittest.TestCase):
     def test_beta_portable_marker_declares_single_work_bundle(self):
         self.test_init_creates_portable_workspace_marker()
 
+    def test_learn_is_hidden_from_front_door_help_but_invokable(self):
+        rc, out = run_tyf(["--help"], self.tmp)
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("learn", out.lower())
+
+        ws = self.ws()
+        rc, out = run_tyf(
+            [
+                "learn",
+                "--category", "workspace-discovery",
+                "--signal", "agent searched the wrong parent folder",
+                "--suggestion", "When an author names an explicit path, inspect that path before concluding a workspace is absent.",
+            ],
+            ws,
+        )
+        self.assertEqual(rc, 0, out)
+        self.assertIn("previewed", out)
+        self.assertIn("local-only", out)
+        self.assertIn("review-only", out)
+        self.assertFalse((ws / ".tyf" / "learnings.jsonl").exists())
+
+    def test_learn_write_persists_local_review_candidate(self):
+        ws = self.ws()
+
+        rc, out = run_tyf(
+            [
+                "learn",
+                "--category", "amanuensis-posture",
+                "--signal", "analysis packet multiplied before candidate prose moved",
+                "--suggestion", "Prefer a concrete treatment sample or one author question after the recovery packet exists.",
+                "--evidence", "review-count-high candidate-placeholder-unchanged",
+                "--confidence", "high",
+                "--write",
+            ],
+            ws,
+        )
+
+        self.assertEqual(rc, 0, out)
+        self.assertIn("recorded", out)
+        records = [
+            json.loads(line)
+            for line in (ws / ".tyf" / "learnings.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        self.assertEqual(len(records), 1)
+        rec = records[0]
+        self.assertEqual(rec["schema_version"], 1)
+        self.assertEqual(rec["disposition"], "candidate")
+        self.assertEqual(rec["privacy"]["mode"], "local-only")
+        self.assertIs(rec["privacy"]["network"], False)
+        self.assertIs(rec["privacy"]["source_text"], False)
+        self.assertIs(rec["privacy"]["snippets"], False)
+        self.assertEqual(rec["category"], "amanuensis-posture")
+        self.assertIn("suggested_tyf", rec)
+
+    def test_learn_export_skips_corrupt_or_privacy_invalid_records(self):
+        ws = self.ws()
+        path = ws / ".tyf" / "learnings.jsonl"
+        valid = {
+            "schema_version": 1,
+            "id": "tyf-learn:valid",
+            "timestamp": "2026-06-26T18:00:00+00:00",
+            "audience": "tyf-maintainers",
+            "category": "workspace-discovery",
+            "signal": "path search missed explicit workspace",
+            "evidence": {"kind": "manual", "observations": ["path-scope"]},
+            "suggested_tyf": "Prefer explicit author-provided paths before broad home-folder search.",
+            "confidence": "high",
+            "privacy": {
+                "mode": "local-only",
+                "network": False,
+                "source_text": False,
+                "snippets": False,
+            },
+            "disposition": "candidate",
+            "source": {"kind": "manual-observation", "workspace_hash": "abc"},
+        }
+        poisoned = dict(valid)
+        poisoned["id"] = "tyf-learn:poison"
+        poisoned["privacy"] = dict(valid["privacy"], source_text=True)
+        path.write_text("{bad json\n" + json.dumps(poisoned) + "\n" + json.dumps(valid) + "\n", encoding="utf-8")
+
+        rc, out = run_tyf(["learn", "--export", "--json"], ws)
+
+        self.assertEqual(rc, 0, out)
+        payload = json.loads(out)
+        self.assertTrue(payload["ok"])
+        self.assertEqual([rec["id"] for rec in payload["records"]], ["tyf-learn:valid"])
+
+    def test_learn_scans_for_review_packet_churn_without_prose_movement(self):
+        ws = self.ws()
+        for name in ("a.md", "b.md", "c.md", "d.md"):
+            (ws / ".review" / name).write_text("# review packet\n", encoding="utf-8")
+        (ws / "drafts" / "clean-source").mkdir(parents=True)
+        (ws / "drafts" / "clean-source" / "TOC.md").write_text("# Clean source\n", encoding="utf-8")
+
+        rc, out = run_tyf(["learn", "--write", "--json"], ws)
+
+        self.assertEqual(rc, 0, out)
+        payload = json.loads(out)
+        categories = {rec["category"] for rec in payload["records"]}
+        self.assertIn("amanuensis-posture", categories)
+        signals = "\n".join(rec["signal"] for rec in payload["records"])
+        self.assertIn("review", signals.lower())
+        self.assertIn("candidate", signals.lower())
+
     def test_write_refuses_without_decision(self):
         ws = self.ws()
         run_tyf(["new-work", "demo"], ws)

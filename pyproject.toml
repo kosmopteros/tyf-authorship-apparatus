@@ -22,6 +22,8 @@ tyf-workbench = "tyf_workbench_live:main"
 tyf-graph = "tyf_graph_projection:main"
 tyf-concept-review = "tyf_concept_review:main"
 tyf-continuity-review = "tyf_continuity_review:main"
+tyf-continuity-decision = "tyf_continuity_decision:main"
+tyf-polish-review = "tyf_polish_review:main"
 
 [tool.setuptools]
 py-modules = [
@@ -39,6 +41,8 @@ py-modules = [
   "tyf_graph_projection",
   "tyf_concept_review",
   "tyf_continuity_review",
+  "tyf_continuity_decision",
+  "tyf_polish_review",
 ]
 
 [tool.setuptools.package-dir]

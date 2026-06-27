@@ -20,6 +20,7 @@ keywords = ["authorship", "writing", "editing", "voice", "skills"]
 tyf = "tyf:main"
 tyf-workbench = "tyf_workbench_live:main"
 tyf-graph = "tyf_graph_projection:main"
+tyf-concept-review = "tyf_concept_review:main"
 
 [tool.setuptools]
 py-modules = [
@@ -35,6 +36,7 @@ py-modules = [
   "tyf_codex_schema",
   "tyf_codex_approvals",
   "tyf_graph_projection",
+  "tyf_concept_review",
 ]
 
 [tool.setuptools.package-dir]

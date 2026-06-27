@@ -19,6 +19,7 @@ keywords = ["authorship", "writing", "editing", "voice", "skills"]
 [project.scripts]
 tyf = "tyf:main"
 tyf-workbench = "tyf_workbench_live:main"
+tyf-graph = "tyf_graph_projection:main"
 
 [tool.setuptools]
 py-modules = [
@@ -33,6 +34,7 @@ py-modules = [
   "tyf_codex_hook_validate",
   "tyf_codex_schema",
   "tyf_codex_approvals",
+  "tyf_graph_projection",
 ]
 
 [tool.setuptools.package-dir]

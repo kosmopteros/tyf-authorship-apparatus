@@ -84,7 +84,7 @@ def is_loopback(host: str) -> bool:
 
 
 def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: str):
-    base = wb.make_handler(work_id)
+    base = wb.make_handler(work_id, work_root, workspace, session_key)
 
     class Handler(base):
         server_version = "TYFWorkbenchLive/0.1"

@@ -15,7 +15,7 @@ from pathlib import Path
 import re
 import sqlite3
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -176,7 +176,15 @@ def jsonl_files(work_root: Path) -> List[Path]:
 
 def audit_jsonl_ledgers(work_root: Path) -> Dict[str, Any]:
     files: List[Dict[str, Any]] = []
-    totals = {"files": 0, "records": 0, "invalid_lines": 0, "hash_chain_ledgers": 0, "append_logs": 0, "empty": 0}
+    totals = {
+        "files": 0,
+        "records": 0,
+        "invalid_lines": 0,
+        "hash_chain_ledgers": 0,
+        "append_logs": 0,
+        "mutable_record_stores": 0,
+        "empty": 0,
+    }
     for path in jsonl_files(work_root):
         r = rel(work_root, path)
         records, total, invalid = read_jsonl_records(path)
@@ -198,6 +206,10 @@ def audit_jsonl_ledgers(work_root: Path) -> Dict[str, Any]:
             chain = audit_event_chain(records)
             classification = "hash-chain-ledger" if chain.get("valid") else "broken-hash-chain-ledger"
             totals["hash_chain_ledgers"] += 1
+        elif r == "knowledge-base/author-notes.jsonl":
+            chain = {"chain": "mutable-record-store", "valid": invalid == 0, "breaks": []}
+            classification = "mutable-record-store-jsonl"
+            totals["mutable_record_stores"] += 1
         else:
             chain = {"chain": "append-log", "valid": invalid == 0, "breaks": []}
             classification = "append-log-jsonl"
@@ -245,11 +257,12 @@ def build_graph(work_id: str, work_root: Path, root: Path) -> Dict[str, Any]:
     for note in notes:
         note_id = str(note.get("id") or wb.short_hash(json.dumps(note, sort_keys=True)))
         source_path = "knowledge-base/author-notes.jsonl"
-        note_node = builder.add_node(f"note:{note_id}", "author-note", str(note.get("body") or note_id)[:80], "author-explicit" if note.get("provenance") == "author" else "amanuensis-derived", source_path, file_sha(work_root / source_path), note)
+        provenance = "author-explicit" if note.get("provenance") == "author" else "amanuensis-derived"
+        note_node = builder.add_node(f"note:{note_id}", "author-note", str(note.get("body") or note_id)[:80], provenance, source_path, file_sha(work_root / source_path), note)
         target = note.get("target_path") or ""
         if target and target != "book":
             target_node = builder.add_node(f"file:{target}", "target-file", target, "apparatus-structural", target, file_sha(work_root / target), {"path": target})
-            builder.add_edge(note_node, target_node, "notes", "author-explicit", source_path, file_sha(work_root / source_path))
+            builder.add_edge(note_node, target_node, "notes", provenance, source_path, file_sha(work_root / source_path))
         for t in terms(str(note.get("body") or ""), 8):
             term_node = builder.add_node(f"term:{t}", "term", t, "machine-derived")
             builder.add_edge(note_node, term_node, "mentions-term", "machine-derived", source_path, file_sha(work_root / source_path), 0.4)
@@ -373,6 +386,7 @@ This graph is a rebuildable projection. It is not a source of truth.
 - invalid lines: {report['ledger_totals'].get('invalid_lines', 0)}
 - hash-chain ledgers: {report['ledger_totals'].get('hash_chain_ledgers', 0)}
 - append logs: {report['ledger_totals'].get('append_logs', 0)}
+- mutable record stores: {report['ledger_totals'].get('mutable_record_stores', 0)}
 - empty JSONL files: {report['ledger_totals'].get('empty', 0)}
 
 ## Rule

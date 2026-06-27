@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live TYF Workbench wrapper with Codex status and stale draft badges."""
+"""Live TYF Workbench wrapper with near-real-time status and stale draft badges."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from pathlib import Path
 import secrets
 import socketserver
 import sys
+import time
 import urllib.parse
 import webbrowser
 from typing import Any, Dict, Optional
@@ -23,22 +24,25 @@ import tyf_workbench_status as status_model  # noqa: E402
 
 DEFAULT_PORT = 8767
 MAX_POST_BYTES = 4 * 1024 * 1024
+LIVE_EVENT_INTERVAL_SEC = 1.0
+LIVE_EVENT_LIMIT = 180
 
 PANEL = """      <section>
-        <strong>Codex status</strong>
-        <div id="codexStatusBox" class="note-card"><div class="meta">No Codex status recorded yet.</div></div>
+        <strong>Assistant status</strong>
+        <div id="codexStatusBox" class="note-card"><div class="meta">No assistant status recorded yet.</div></div>
       </section>
       <section>
-        <strong>Draft state</strong>
+        <strong>Save safety</strong>
         <div id="conflictBadge" class="note-card"><div class="meta">Draft state not checked yet.</div></div>
       </section>
       <section>
-        <strong>Approval requests</strong>
+        <strong>Needs your approval</strong>
         <div id="approvalBox" class="note-card"><div class="meta">No pending approval request.</div></div>
       </section>
 """
 
 SCRIPT = r"""
+    let liveStatusTimer = null;
     function objectSummary(obj) {
       if (!obj || Object.keys(obj).length === 0) return '<div class="meta">none</div>';
       const label = obj.status || obj.method || obj.type || obj.kind || 'recorded';
@@ -52,25 +56,45 @@ SCRIPT = r"""
       const bridge = live.bridge || {};
       const approval = live.approval || {};
       document.getElementById('codexStatusBox').innerHTML = objectSummary(Object.keys(codex).length ? codex : bridge);
-      document.getElementById('approvalBox').innerHTML = Object.keys(approval).length ? `<div><strong>${esc(approval.status || 'pending')}</strong></div><div class="body">${esc(approval.title || approval.method || 'Codex approval request')}</div><div class="meta">${esc(approval.id || '')}</div>` : '<div class="meta">No pending approval request.</div>';
+      document.getElementById('approvalBox').innerHTML = Object.keys(approval).length ? `<div><strong>${esc(approval.status || 'pending')}</strong></div><div class="body">${esc(approval.title || approval.method || 'Approval requested')}</div><div class="meta">${esc(approval.id || '')}</div>` : '<div class="meta">No pending approval request.</div>';
       const d = activeDraft();
       const row = d ? (live.drafts || []).find(x => x.path === d.path) : null;
       const stale = !!(row && d && d.sha256 && row.sha256 && row.sha256 !== d.sha256);
-      if (stale) document.getElementById('conflictBadge').innerHTML = `<div class="warn"><strong>Stale draft on disk</strong></div><div class="meta">${esc(d.path)}</div>`;
-      else if (d && row) document.getElementById('conflictBadge').innerHTML = `<div class="ok"><strong>Draft hash current</strong></div><div class="meta">${esc(d.path)}</div>`;
+      if (stale) document.getElementById('conflictBadge').innerHTML = `<div class="warn"><strong>Changed outside this window</strong></div><div class="meta">${esc(d.path)}</div>`;
+      else if (d && row) document.getElementById('conflictBadge').innerHTML = `<div class="ok"><strong>Safe to save</strong></div><div class="meta">${esc(d.path)}</div>`;
       else document.getElementById('conflictBadge').innerHTML = '<div class="meta">No active draft to check.</div>';
     }
     async function pollLiveStatus() {
       try { renderLiveStatus(await fetch('/api/live-status', {cache:'no-store'}).then(r => r.json())); }
       catch (err) { document.getElementById('codexStatusBox').innerHTML = '<div class="warn">Live status unavailable.</div>'; }
     }
+    function startLivePolling() {
+      if (liveStatusTimer) return;
+      pollLiveStatus();
+      liveStatusTimer = setInterval(pollLiveStatus, 3000);
+    }
+    function connectLiveStatus() {
+      if (!window.EventSource) { startLivePolling(); return; }
+      const stream = new EventSource('/api/live-events');
+      stream.onmessage = event => {
+        try { renderLiveStatus(JSON.parse(event.data)); }
+        catch (err) { startLivePolling(); }
+      };
+      stream.onerror = () => {
+        stream.close();
+        startLivePolling();
+      };
+    }
 """
 
 
 def enhanced_html(data: Dict[str, Any]) -> str:
     html = wb.surface_html(data)
+    html = html.replace("Gate packet from selection", "Prepare for manuscript review")
+    html = html.replace("Amanuensis context", "Share this moment")
+    html = html.replace("Footnote candidate", "Make footnote candidate")
     html = html.replace("      <section>\n        <strong>Images</strong>", PANEL + "      <section>\n        <strong>Images</strong>")
-    html = html.replace("    document.getElementById('refreshData').addEventListener('click', reload);\n    render();", "    document.getElementById('refreshData').addEventListener('click', async () => { await reload(); await pollLiveStatus(); });\n" + SCRIPT + "\n    render();\n    pollLiveStatus();\n    setInterval(pollLiveStatus, 3000);")
+    html = html.replace("    document.getElementById('refreshData').addEventListener('click', reload);\n    render();", "    document.getElementById('refreshData').addEventListener('click', async () => { await reload(); await pollLiveStatus(); });\n" + SCRIPT + "\n    render();\n    connectLiveStatus();")
     return html
 
 
@@ -87,7 +111,23 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
     base = wb.make_handler(work_id, work_root, workspace, session_key)
 
     class Handler(base):
-        server_version = "TYFWorkbenchLive/0.1"
+        server_version = "TYFWorkbenchLive/0.2"
+
+        def send_live_events(self) -> None:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+            for _ in range(LIVE_EVENT_LIMIT):
+                payload = status_model.live_status(work_id, work_root, workspace)
+                body = f"data: {json.dumps(payload, ensure_ascii=False, separators=(',', ':'))}\n\n".encode("utf-8")
+                try:
+                    self.wfile.write(body)
+                    self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+                time.sleep(LIVE_EVENT_INTERVAL_SEC)
 
         def do_GET(self):  # noqa: N802
             parsed = urllib.parse.urlparse(self.path)
@@ -95,6 +135,8 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
                 self.html_response(enhanced_html(wb.collect_data(work_id, work_root, workspace, token=session_key)))
             elif parsed.path == "/api/live-status":
                 self.json_response(200, status_model.live_status(work_id, work_root, workspace))
+            elif parsed.path == "/api/live-events":
+                self.send_live_events()
             else:
                 super().do_GET()
 
@@ -102,7 +144,7 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
 
 
 def run(argv: Optional[list[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="TYF live Workbench with Codex status and conflict badges")
+    parser = argparse.ArgumentParser(description="TYF live Workbench with assistant status and save-safety badges")
     parser.add_argument("work", nargs="?", default=None)
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")

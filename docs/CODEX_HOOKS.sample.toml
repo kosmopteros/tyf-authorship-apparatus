@@ -1,0 +1,42 @@
+# Sample Codex hooks for TYF Workbench visibility.
+#
+# Exact hook configuration shape may vary by Codex version. Keep this as a
+# readable wiring sample: each hook invokes the tolerant recorder and passes the
+# Codex hook JSON payload on stdin. The recorder writes only status files under
+# .review/surface/ and never edits draft or manuscript prose.
+
+[hooks.SessionStart]
+command = "python"
+args = [
+  "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_codex_hook.py",
+  "SessionStart",
+  "--workspace",
+  "/absolute/path/to/your-tyf-book-workspace"
+]
+
+[hooks.UserPromptSubmit]
+command = "python"
+args = [
+  "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_codex_hook.py",
+  "UserPromptSubmit",
+  "--workspace",
+  "/absolute/path/to/your-tyf-book-workspace"
+]
+
+[hooks.PostToolUse]
+command = "python"
+args = [
+  "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_codex_hook.py",
+  "PostToolUse",
+  "--workspace",
+  "/absolute/path/to/your-tyf-book-workspace"
+]
+
+[hooks.Stop]
+command = "python"
+args = [
+  "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_codex_hook.py",
+  "Stop",
+  "--workspace",
+  "/absolute/path/to/your-tyf-book-workspace"
+]

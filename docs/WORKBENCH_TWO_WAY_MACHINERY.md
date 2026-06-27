@@ -2,6 +2,8 @@
 
 Status: design plus first runnable scaffolds for Workbench, MCP, Codex bridge, hooks, and schema compatibility.
 
+See also: `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md` for the 12-lens external-style critique and convergence map.
+
 This document specifies how the TYF Workbench, TYF MCP server, Codex hooks, and optional Codex app-server bridge should work together without turning TYF into a cloud product or a raw filesystem tool.
 
 ## Direct answer: is it local?
@@ -300,6 +302,7 @@ Implemented now:
 - active context packet path in `.review/surface/active-context.md`
 - Codex turn status record path in `.review/surface/codex-turn-status.json`
 - focused tests for Workbench, MCP, hook recorder, and bridge context
+- external-style critique convergence in `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md`
 
 Still to implement before browser-native chat is complete:
 

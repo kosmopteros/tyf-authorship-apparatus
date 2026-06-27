@@ -1,6 +1,6 @@
 ---
 name: working-the-workspace
-description: Use whenever operating on the workspace files or repo: reading or writing sources, knowledge-base, voice, works, drafts, or manuscript; deciding where a pass may write; or when unsure which directory a result belongs in
+description: "Use whenever operating on the workspace files or repo: reading or writing sources, knowledge-base, voice, drafts, review records, or manuscript; deciding where a pass may write; or when unsure which directory a result belongs in"
 ---
 
 # Working the workspace
@@ -18,17 +18,18 @@ workspace/
 ├── WORKSPACE_STATE.yaml      durable state: active work, active band, gates
 ├── manifest.yaml             voice inheritance, hooks
 ├── ASSUMPTIONS.md            explicit, updated as the author learns
-├── sources/             raw, preserved, shared          [read-mostly]
+├── work.yaml                 type, registers, status, scope, overrides
+├── outline/                  thesis, argument-spine, chapter outlines
+├── drafts/                   candidate text from the amanuensis   [Compose writes here]
+├── manuscript/               the work itself                       [controlled write only]
+├── style-sheet.md            running, the redactor's instrument
+├── design/book-style.yaml     typeface, paragraph styles, export profile intent
+├── assets/images/             image files and image-use index
+├── .review/                  findings, never auto-applied          [Propose/Audit write here]
+├── sources/             raw, preserved, source fragments [read-mostly]
 ├── knowledge-base/           concepts, claims, argument spine, claims index
 ├── voice/             registers, fences, anti-patterns
-├── redactor-canon/           terminology, logic, apparatus, type rules
-└── works/<id>/
-    ├── work.yaml             type, registers, status, scope, overrides
-    ├── outline/              thesis, argument-spine, chapter outlines
-    ├── drafts/               candidate text from the amanuensis   [Compose writes here]
-    ├── manuscript/           the work itself                       [controlled write only]
-    ├── style-sheet.md        running, the redactor's instrument
-    └── .review/              findings, never auto-applied          [Propose/Audit write here]
+└── redactor-canon/           terminology, logic, apparatus, type rules
 ```
 
 ## Who may write where
@@ -38,30 +39,37 @@ workspace/
 | Elicit (ingest, interview) | `sources/`, `knowledge-base/`, `voice/` | any `manuscript/` |
 | Read (sympathetic read) | nothing | everything |
 | Diagnose | nothing | everything |
-| Propose (editor) | `works/<id>/.review/` | `manuscript/`, `drafts/` |
-| Compose (Amanuensis) | `works/<id>/drafts/` | `manuscript/` |
-| Audit (adversarial audit) | `works/<id>/.review/` | `manuscript/` |
-| Revise (the controlled write) | `works/<id>/manuscript/` | nothing it was not given |
+| Propose (editor) | `.review/` | `manuscript/`, `drafts/` |
+| Compose (Amanuensis) | `drafts/` | `manuscript/` |
+| Audit (adversarial audit) | `.review/` | `manuscript/` |
+| Revise (the controlled write) | `manuscript/` | nothing it was not given |
 
 ## The disciplined move
 
 Before writing anything, name the pass you are in and check the table. If the pass has no write access to the target directory, you are in the wrong pass. Route the result to where that pass may write, or stop and go through the controlled write.
 
-The only path into `manuscript/` is `tyf write`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
+The only path into `manuscript/` is `tyf write --decision <id>`, after `tyf propose`, `tyf audit --record`, `tyf review`, and `tyf accept --evidence`; `tyf propose --source-ref <id>` binds preserved source fragments into the Gate, `tyf review <work> <proposal-id>` writes the author-readable acceptance packet, `tyf accept --lines 2,5-8` narrows the accepted subset when the author approves only selected source lines, and `tyf accept --patch <diff>` applies an exact reviewed unified diff. The helper updates `work.yaml` status as the Gate advances and refuses acceptance before `audited`, before an author review packet exists, or writing before `accepted`. A read-only pass that "just fixes one thing" in the manuscript has broken the contract.
+
+`tyf surface` writes a local Draft Review Workbench under `.review/surface/`. The static workbench shows `drafts/candidate-draft.md`, approved `manuscript/` units, `design/book-style.yaml`, the running style sheet, and `assets/images/`. `tyf surface --serve` may save the candidate draft from the browser, but only when the draft's loaded base hash still matches the file on disk; stale saves are conflicts, not overwrites. It may create review packets for the Gate. It never writes to `manuscript/`.
+
+For a first writing session, `tyf start` creates or reuses the root single work even when the title is unknown, records any supplied title or writing language, creates or reuses `sources/interviews/work-first-session.md`, writes `.review/writing-runway.md`, and creates `drafts/candidate-draft.md` for candidate prose. If a scaffold/chat/folder/zip arrives, `tyf start <path>` preserves it under `sources/imports/` and links the orientation packet into the runway before drafting. `tyf begin <id>` is the explicit-id form when a stable id is already needed. `tyf import <path>` preserves later material under `sources/imports/`, writes an orientation packet, and updates active root title/language metadata when supplied; zip and folder arrivals stay contained until the author accepts an organization plan. `tyf capture work --kind source|voice|claim|question --text <text>` appends author-supplied material into the shared source, voice, or knowledge substrate; source captures and textual imports mint stable files under `sources/fragments/`. These commands are elicitation and setup paths; none writes to `manuscript/`.
 
 ## Rationalization table
 
 | What you will tell yourself | The reality | Do instead |
 |---|---|---|
-| "It is one small fix, I will edit the manuscript directly." | One uncontrolled write is the whole contract broken. | Route through `tyf write` with author acceptance. |
+| "It is one small fix, I will edit the manuscript directly." | One uncontrolled write is the whole contract broken. | Route through proposal, audit, review, decision, and `tyf write --decision`. |
+| "The author edited it by hand, so TYF is stuck." | Direct author edits are legitimate, but the apparatus needs a new base hash. | Run `tyf adopt <work> <unit> --evidence "<what happened>"`, then continue through the Gate. |
 | "Drafts and manuscript are basically the same." | Drafts are candidates; the manuscript is the work. | Compose writes to `drafts/` only. |
+| "The workbench is open, so I can edit the manuscript in the browser." | The workbench is a review table. The manuscript pane is read-only. | Save draft changes, then use the Gate for manuscript movement. |
 | "I will tidy the sources while I am here." | The sources is the source of truth and is read-mostly. | Add derived structure to the knowledge base, leave the raw intact. |
 | "I am not sure which pass I am in, I will just write." | Unsure-which-pass is exactly when the contract leaks. | Name the pass first; consult the table. |
 
 ## Red flags: stop if you catch yourself
 
-- Writing to `manuscript/` outside `tyf write`.
+- Writing to `manuscript/` outside `tyf write --decision`.
 - Composing into `manuscript/` instead of `drafts/`.
+- Treating `tyf surface --serve` as a manuscript editor instead of a draft workbench.
 - Editing the raw sources.
 - Writing without naming the current pass.
 
@@ -69,8 +77,23 @@ The only path into `manuscript/` is `tyf write`. A read-only pass that "just fix
 
 ```
 tyf status            # active work, band, open gates, write-zone reminder
+tyf start [path]      # preserve an optional arrival and open the draft runway
+tyf start --title "<title>" --language "<writing language>"
+tyf import <path>    # preserve an arrival and create an orientation packet
+tyf resume [work]    # active work, return context, prompts, and next useful move
+tyf begin <work> --language "<writing language>"
+                     # advanced first-session packet with explicit id
+tyf capture <work>     # append author source, voice, claim, or question material
+tyf surface [work]     # local draft/manuscript workbench; --serve saves drafts only
 tyf doctor            # read-only integrity check, including stray manuscript writes
-tyf write <work>       # the only writer into manuscript/
+tyf reflexes          # show visible hooks and git recovery behavior
+tyf snapshot -m <msg> # explicit git recovery commit; never automatic
+tyf propose <work> --from <draft> [--source-ref <id>]
+tyf audit <work> <unit> --record --proposal <proposal-id> --verdict pass --findings-answered
+tyf review <work> <proposal-id>
+tyf accept <work> <proposal-id> [--lines 2,5-8 | --patch <diff>] --evidence "<author acceptance>"
+tyf adopt <work> <unit> --evidence "<author direct edit>"
+tyf write <work> --decision <decision-id>
 ```
 
 ## Next

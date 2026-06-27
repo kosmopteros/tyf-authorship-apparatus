@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tyf hook session-start",
+            "statusMessage": "TYF: loading authorship workspace context"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tyf hook message-sent",
+            "statusMessage": "TYF: checking authorship prompt reflex"
+          }
+        ]
+      }
+    ]
+  }
+}

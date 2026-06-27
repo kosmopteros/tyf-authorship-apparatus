@@ -106,7 +106,7 @@ This is the product lens. A skill that only works on clean input is a demo, not 
 - **Concurrent writes** (a scheduled task and a manual write touch the same file): break: last-write-wins silently clobbers. Should: log both, and `tyf doctor` should surface a manuscript file whose log is inconsistent.
 - **Draft deleted between proposal and write**: break: it writes stale or empty content. Should: verify the source exists and is current before applying.
 - **Partial acceptance** ("take edits 1 and 3, not 2"): break: it applies all or none. Should: apply exactly the accepted subset.
-- **Write requested with no prior acceptance at all**: break: it treats the request itself as approval. Should: require explicit confirmation (the `--confirm` contract).
+- **Write requested with no prior acceptance at all**: break: it treats the request itself as approval. Should: require a proposal record, passing audit record, author review packet, and decision record before `tyf write --decision`.
 - **Manuscript edited outside the gate** (author hand-edits in their editor): break: the apparatus assumes it owns the file. Should: detect the out-of-band change (no matching log entry) and reconcile, not overwrite.
 
 ## initializing-a-workspace

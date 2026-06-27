@@ -11,13 +11,16 @@ The redactor is the integrity substrate, parallel to voice. Voice registers gove
 
 The Canon is read and updated by every Diagnose, Propose, Revise, and Audit pass, at every band. The redactor is not a band. It is a layer the bands all consult, the way every pass consults the voice registers.
 
-## The three magnifications
+## The body magnifications
 
 The same integrity discipline runs at every zoom level.
 
-- **micro** (glyph, sentence): punctuation, em-dash discipline, cadence, the typographic finish. The lower-band typographer canon lives here and is shared across registers.
-- **macro** (section, architecture, argument): terminology consistency, kept promises, compositional balance, logical coherence, no orphaned or circular claims, sound transitions.
-- **meta** (the whole work, across sessions): the canon itself plus the running style sheet, the persistent record every pass reads before touching prose and writes to after.
+- **micro** (glyph, mark, sentence): punctuation, dash discipline, cadence, quote style, numerals, binding, and typographic finish for the work's writing language.
+- **meso** (sentence, paragraph, section): Milchin passes for facts/source status, logic, composition, rubrication, language and style.
+- **macro** (chapter, module, body section): terminology consistency, kept promises, compositional balance, no orphaned or circular claims, sound transitions, honest headings.
+- **mega** (the single work body): front/body/back matter, chapter sequence, apparatus, proportional treatment, and full-work reader service.
+
+The cross-work meta layer is not the default TYF beta scope. Use it only when the author explicitly asks for corpus or public-surface coherence.
 
 ## What the Canon holds
 
@@ -25,11 +28,11 @@ The same integrity discipline runs at every zoom level.
 - **Logic rules:** the claim graph must not contradict itself; every load-bearing claim resolves; assumptions are stated.
 - **Composition rules:** each part makes a promise the work keeps; sequence is deliberate.
 - **Apparatus rules:** citation style, cross-reference format, note conventions, index discipline. Cross-references must resolve to real targets. Documentation that routes behavior is apparatus too: when structure or naming changes, the routing docs must stay true. See `keeping-documentation-honest`.
-- **Typographic finish:** the five-scale typographer canon, including em-dash discipline. Shared across all registers.
+- **Typographic finish:** the typographer-redactor canon, including punctuation, spacing, numerals, quotes, apparatus, and language-specific finish. Shared across all registers, but never treated as language-neutral.
 
 ## The running style sheet
 
-Each work carries `works/<id>/style-sheet.md`. It is the redactor's working instrument: a living record of every decision made about terminology, apparatus, and finish for that work. Every pass appends decisions to it and reads it before proposing. The style sheet is how a decision made in chapter two survives to chapter nine.
+Each book folder carries `style-sheet.md` for its single work. It is the redactor's working instrument: a living record of every decision made about terminology, apparatus, and finish for that work. Every pass appends decisions to it and reads it before proposing. The style sheet is how a decision made in chapter two survives to chapter nine.
 
 ## The disciplined move
 
@@ -40,7 +43,7 @@ At each band, run the integrity checks for that magnification and reconcile agai
 | What you will tell yourself | The reality | Do instead |
 |---|---|---|
 | "Terminology variation reads more naturally." | Drift between terms is a defect the reader pays for. | Hold the canonical term; log variants as forbidden in the style sheet. |
-| "Typographer means punctuation only." | Milchin is structural and logical integrity across all bands. | Run macro checks too: terminology, cross-refs, logic, composition. |
+| "Typographer means punctuation only." | Milchin is structural and logical integrity across all body scales. | Run the typographer-redactor pass: facts/source status, logic, composition, rubrication, language/style, and finish. |
 | "This cross-reference is probably fine." | A reference that does not resolve is a broken apparatus. | Verify the target exists; flag it if it does not. |
 | "I will keep the style decisions in my head." | A decision not written down does not survive the session. | Append every decision to the running style sheet. |
 | "Integrity overrides the author's odd phrasing." | Voice is fenced; the canon governs integrity, not taste. | Keep the voice; raise the integrity issue separately. |
@@ -56,7 +59,7 @@ At each band, run the integrity checks for that magnification and reconcile agai
 
 ```markdown
 ## Redactor canon entry: <work>
-Magnification: micro | macro | meta
+Magnification: micro | meso | macro | mega
 Kind: terminology | logic | composition | apparatus | finish
 Rule / decision:
 Applies to:

@@ -1,6 +1,23 @@
 # Keep shell scripts, the launcher, and Python at LF regardless of a
 # contributor's core.autocrlf. A CR in a `set -euo pipefail` line or in a
 # `#!/usr/bin/env` shebang breaks bash and direct script execution on POSIX.
-*.sh     text eol=lf
-*.py     text eol=lf
-bin/tyf  text eol=lf
+*.sh      text eol=lf
+*.ps1     text eol=crlf
+*.py      text eol=lf
+bin/tyf   text eol=lf
+
+# Release archives should ship the apparatus, not the workshop residue used to
+# build and test it.
+.fbs/** export-ignore
+fbs.yaml export-ignore
+.claude/commands/fbs-* export-ignore
+.claude/settings.json export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
+/GEMINI.md export-ignore
+.pytest_cache/** export-ignore
+**/__pycache__/** export-ignore
+*.pyc export-ignore
+build/** export-ignore
+dist/** export-ignore
+*.egg-info/** export-ignore

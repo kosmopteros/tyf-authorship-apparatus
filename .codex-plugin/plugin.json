@@ -1,8 +1,40 @@
 {
   "name": "tyf",
-  "version": "0.2.1",
-  "description": "A faithful apparatus for authorship. Skills install into the Codex agent skills directory (~/.agents/skills/). The author is the source; TYF never becomes the writer.",
-  "skills_dir": "skills",
-  "context_file": "AGENTS.md",
+  "version": "0.5.0",
+  "description": "A faithful apparatus for authorship. Skills install into $CODEX_HOME/skills or ~/.codex/skills for Codex. The author is the source; TYF never becomes the writer.",
+  "author": {
+    "name": "TYF",
+    "url": "https://github.com/kosmopteros/tyf-authorship-apparatus"
+  },
+  "homepage": "https://github.com/kosmopteros/tyf-authorship-apparatus#readme",
+  "repository": "https://github.com/kosmopteros/tyf-authorship-apparatus",
+  "keywords": [
+    "authorship",
+    "writing",
+    "editing",
+    "voice",
+    "codex",
+    "skills",
+    "tyf"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TYF",
+    "shortDescription": "A faithful apparatus for authorship.",
+    "longDescription": "TYF bundles portable authorship skills and a helper discipline so agents preserve source, protect register, propose edits, and keep manuscript writes under explicit author control.",
+    "developerName": "TYF",
+    "category": "Productivity",
+    "capabilities": [
+      "Writing",
+      "Skills"
+    ],
+    "websiteURL": "https://github.com/kosmopteros/tyf-authorship-apparatus",
+    "defaultPrompt": [
+      "Start writing today with TYF, even without a title: set up the workspace, run `tyf start`, and open the candidate draft runway.",
+      "Bring in a scaffold, chat, folder, or zip with `tyf start <path>` so it is preserved before drafting.",
+      "Audit a chapter before manuscript."
+    ],
+    "brandColor": "#415A77"
+  },
   "license": "MIT"
 }

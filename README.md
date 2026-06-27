@@ -2,6 +2,8 @@
 
 *The Yours Faithfully. A faithful apparatus for authorship.*
 
+**v0.5.0 "Single Book Folder".**
+
 TYF is not a writing assistant. TYF is not a productivity system. TYF is not a knowledge-management tool.
 
 TYF is a faithful apparatus for authorship. Its job is to preserve source, elicit knowledge, protect register, propose edits, and enforce the controlled write. The author is the source. TYF is the interviewer, the amanuensis, the first reader, the faithful editor, and the redactor. It never becomes the writer.
@@ -22,7 +24,7 @@ other harnesses     portability targets, not yet all tested
 
 The moment a task touches source material, voice, claims, or a manuscript, the agent checks the TYF skills and loads the earliest applicable one instead of jumping to drafting. The skills enforce the commitments mechanically: the author is the source, the system proposes but never disposes, gaps are marked instead of confabulated, voice is read on every pass, the same operation runs at every zoom level, nothing is done until it has been attacked, and the controlled write is the only path into the manuscript.
 
-## The sixteen skills
+## The nineteen skills
 
 **Lifecycle**
 
@@ -30,6 +32,7 @@ The moment a task touches source material, voice, claims, or a manuscript, the a
 |---|---|
 | `initializing-a-workspace` | Scaffold a new workspace, then run intake |
 | `working-the-workspace` | File and repo discipline; read-only zones; the controlled write path |
+| `continuing-the-work` | Resume a sitting with one small next move and a stop condition |
 | `scheduling-ongoing-work` | Hooks and Cowork scheduled tasks for the iterative phase |
 | `keeping-documentation-honest` | After any structural change, check that the routing docs are still true |
 
@@ -43,7 +46,9 @@ The moment a task touches source material, voice, claims, or a manuscript, the a
 | `structuring-knowledge` | Concepts, claims, argument spine, claims index, gaps |
 | `composing-as-amanuensis` | Draft candidate text from supplied material, under write control |
 | `reading-sympathetically` | Report the reading experience; read-only |
+| `receiving-critique` | Preserve and triage beta-reader or editor feedback |
 | `diagnosing-text` | Diagnose at any band; read-only |
+| `typographer-redactor` | Treat an existing whole work object: Milchin passes, body/layout, AI cadence, typographic finish |
 | `editing-faithfully` | Propose edits, then controlled revise |
 | `auditing-adversarially` | Adversarial audit before done |
 | `controlling-manuscript-writes` | The only path into the manuscript |
@@ -53,17 +58,19 @@ The moment a task touches source material, voice, claims, or a manuscript, the a
 | Skill | What it does |
 |---|---|
 | `managing-voice` | How the work sounds: registers, fences, anti-patterns, AI-tell |
-| `keeping-the-redactor-canon` | Whether it holds together: terminology, logic, composition, apparatus, finish, across micro, macro, and meta |
+| `keeping-the-redactor-canon` | Whether it holds together: terminology, logic, composition, apparatus, finish, across body scales |
 
 ## The pipeline
 
 ```
-init → ingest → interview → structure → voice + redactor → compose → read / diagnose → edit → audit → controlled write → schedule
+init → ingest → interview → structure → continue → voice + redactor → compose → read / diagnose → edit → audit → controlled write → schedule
 ```
 
 Each step has a skill. Voice and Redactor are not steps; they are substrates every pass consults. The discipline is not to skip upstream when the work is still source, knowledge, voice, structure, or audit. Audit shows once in the line, but it also runs again after the controlled write, because the write itself can introduce issues; see `controlling-manuscript-writes`.
 
 ## Install
+
+**If you are an author, start with a paste prompt.** Open [docs/START_HERE.md](docs/START_HERE.md), paste the Codex or Claude Cowork prompt into your agent, and let the agent install or load TYF, set up the workspace, and ask the first source questions. You should not need to learn the helper commands before starting.
 
 **Cowork is the primary deployment target for v1**, because it gives TYF local files, drop-in skills, a plugin that bundles them, and a native scheduler for the ongoing-work cadence. It is one strong runtime, not the center of the project; the core is the skills, the helper, and the workspace contract, which outlive any one runtime. See `cowork/SETUP.md` for the full path, `cowork/PROJECT_INSTRUCTIONS.md` for the standing instructions to paste into a project, and `cowork/SCHEDULED_TASKS.md` for paste-ready schedule templates.
 
@@ -73,17 +80,54 @@ Each step has a skill. Voice and Redactor are not steps; they are substrates eve
 bash scripts/install.sh claude     # or: codex | cursor | <explicit path>
 ```
 
-Then place the matching context file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) where your harness reads session context.
+On Windows without bash:
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 codex
+```
+
+For a book workspace, run `tyf init` in the book folder, or `tyf init <book-folder>` near it, so TYF writes the local `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` context without contributor-only routing. If a harness needs manual context before a workspace exists, use the matching file from `author-context/`; the pack-root context files are for contributing to TYF itself.
+
+For Codex specifically, TYF has two layers. Install the TYF skills once into `$CODEX_HOME/skills` or `~/.codex/skills` so `$using-tyf` is available. The Codex plugin ships the skills and hook manifest; its automatic hooks identify themselves with `TYF:` status messages. The generated `AGENTS.md` carries the same routing for book repos. Then, inside each book repo, `tyf init` writes the local `AGENTS.md` workspace contract so Codex entering that repo knows to run `tyf resume`, `tyf start`, or `tyf start <path>` before drafting. The author should not need to invoke a skill by name after the workspace context exists.
 
 ## The helper
 
-`tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. Put it on your PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
+`tyf` performs the concrete file operations so the agent does not freelance, and it is the single writer into `manuscript/`. The public entrypoint for an author who wants to write today is simple:
 
 ```
-tyf init <name>          tyf new-work <id> --type book --register <r>
-tyf status               tyf open <work>          tyf mark-ready <work> <unit>
-tyf audit <work> <unit>  tyf write <work> --from <draft> --confirm
+tyf start
+```
+
+That treats the book folder as the single work, records any supplied working title or writing language, creates `sources/interviews/work-first-session.md`, opens `.review/writing-runway.md`, creates `drafts/candidate-draft.md`, and tells the agent where to start writing candidate prose. If the author brings a chat, PDF, Pages file, formatted manuscript, audio file, scan, giant text dump, folder, scaffold, or zip, use `tyf start <path>` so TYF preserves the arrival first, links the orientation packet into the writing runway, and prints the source fragment id when textual source was minted. Existing work arrivals also write `.review/existing-work-recovery.md`, a review-only packet for spine, source status, draft status, voice clues, illustration inventory, and open author decisions before forward drafting. None of this writes manuscript text; it only makes a real writing session possible. Put `tyf` on PATH with `scripts/install.sh` (which links `bin/tyf`), by adding this repo's `bin/` directory to PATH, or with `pipx install .`. Workspace commands are run from the workspace root; `tyf check` inspects the pack and is run from a repo clone (or with `TYF_PACK_ROOT` set).
+
+Advanced commands for agents and maintainers:
+
+```
+tyf init [<name>]        tyf start [<path>] [--kind dump|chat|bundle|source] [--title <t>] [--language <language>]
+tyf begin <id> --title <t> --register <r> [--language <language>]
+tyf import <path> [--kind auto|source|chat|bundle|dump|transcript|note] [--work <id>]
+tyf capture <work> --kind source|voice|claim|question --text <text>
+tyf structure <work> --source-ref <id> [--record <json>]  # source fragment -> claims/examples/questions + amanuensis brief
+tyf attend [work] [--source-ref <id>] [--query <focus>]  # source-grounded gentle next questions
+tyf session [work] [--focus <focus>] [--minutes <n>]
+tyf diagnose [work] [--unit drafts/candidate-draft.md] [--band section] [--symptom <s>]
+tyf treat [work] [--unit manuscript/<file>] [--focus <focus>]
+tyf surface [work] [--serve] [--port <n>] [--open]
+tyf character <name> [--knowledge <text>] [--voice <text>]
+tyf consult-character <work> <name> --prompt <question>
+tyf feedback [work] --from <reader> (--text <feedback> | --file <path>)
+tyf status               tyf resume [<work>]      tyf open <work>          tyf mark-ready <work> <unit>
+tyf propose <work> --from <draft> [--dest <file>] [--source-ref <id>]
+tyf audit <work> <unit> --record --proposal <id> --verdict pass --findings-answered
+tyf review <work> <proposal-id>   # author-readable acceptance packet
+tyf accept <work> <proposal-id> [--lines 2,5-8 | --patch <diff>] --evidence "<author accepted this>"
+tyf adopt <work> <unit> --evidence "<author edited this directly>"
+tyf write <work> --decision <decision-id>
 tyf doctor [--repair]    # workspace integrity check; --repair heals missing structure
+tyf reflexes             # show TYF's visible hooks and recovery behavior
+tyf hook session-start   # emit read-only host context for automatic routing
+tyf hook message-sent    # emit read-only prompt-submit routing context
+tyf snapshot -m <msg>    # explicit git recovery commit for the workspace
 tyf check                # documentation-honesty check (zero tokens, deterministic)
 tyf notice [--save] [--all] [--peek]   # attentive amanuensis: surface new/forgotten/stale items
 tyf dismiss <hash>       # quiet an item; resurfaces if its context changes
@@ -91,23 +135,53 @@ tyf reconcile [--export] # show the ledger; --export mirrors it to Markdown
 tyf update [--force]     # notify-only: is a newer release out? (see UPDATING.md)
 ```
 
-`tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed ledger (`.tyf/ledger.db`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.
+`tyf start [path]` is the low-friction way to start writing today without turning TYF into the writer. It can run without a title, treats the book folder as the active single work, records any supplied title or writing language in `work.yaml`, preserves an optional cold-start scaffold through the import/orientation lane, creates or reuses `sources/interviews/work-first-session.md`, writes a session runway at `.review/writing-runway.md`, and creates a candidate-prose file at `drafts/candidate-draft.md`. The first-session packet includes a gentle attention deck for source, pressure, voice, care, flattening-risk, and one possible first passage; the author should answer only what helps begin one candidate passage. It tells the agent to pick one prompt, avoid questionnaire behavior, treat hesitation as source, and stop asking once candidate prose can begin. A faithful next candidate beats an endless perfection pass. It explicitly treats title, final structure, and audit readiness as non-blocking for drafting. The Gate comes later, when candidate prose is ready to become manuscript.
 
-`tyf check` verifies the pack's own consistency: skill count, names, dead references, command drift, identical context files, valid JSON, no stray em-dashes. It runs automatically warn-only after every mutating command (so doc drift surfaces the moment structure changes, with no reliance on git or memory) and hard-fails as a standalone command for CI. This is the deterministic, zero-token half of the `keeping-documentation-honest` discipline; semantic drift still needs a reading pass.
+Fresh intake prompts use `[PROMPT: ...]` so `tyf notice` does not nag a new author for unanswered first-session questions. Non-Latin titles and UTF-8 source, draft, and manuscript text are preserved as authored text; language-specific editorial rules remain explicit author/skill guidance rather than hidden defaults.
+
+`tyf import <path>` is the arrival lane for projects that do not start from zero. Text files and chat exports are preserved under `sources/imports/`, get an orientation packet, and mint source fragments when appropriate. If a text fragment is minted, the orientation points the agent to `tyf structure work --source-ref <id>`, which can extract explicit labelled claims, examples, and questions into the knowledge base and writes `.review/amanuensis-brief.md` for drafting context. For non-English, unlabeled, or nuanced material, the amanuensis interprets the source and supplies a language-neutral JSON record with `--record`; the helper validates, IDs, stores, and links rather than deciding meaning. Questions in that brief are gentle attention, not doubt in the author's judgment; adversarial pressure belongs to audit. If the arrival is a binary or unreadable source, such as an image-only PDF, Pages file, scan, `.docx`, audio file, or too-large text dump, TYF preserves it and marks `Extraction needed` instead of pretending it read the contents: use OCR or transcription, document conversion, or chunk explicitly, before structuring. Do not invent contents from preserved artifacts, and do not imply the full file was read when no source fragment was minted. Existing work is not assumed to be governed manuscript: when prior-manuscript or illustration signals appear, TYF writes `.review/existing-work-recovery.md` for a review-only spine recovery, source-status map, uncertain or AI-drafted passage map, voice clues, illustration inventory, open author decisions, and one next writing move before forward drafting. For formatted or illustrated existing work, recovery and treatment must treat the arrival as a whole work object: layout, images, threshold pages, title pages, front/back matter, captions, and page choreography may decide what the prose means before sentence-level cleanup begins. If `--title` or `--language` is supplied while the root work is active, `work.yaml` is updated instead of dropping the answer. Zip and folder arrivals are containment-first: TYF preserves the raw bundle, writes an orientation/triage packet with a listing and analysis questions, and does not unpack or merge it into live workspace directories until the author accepts an organization plan. A TYF-shaped archive is recognized as such in the orientation packet, but it is still reviewed before merging. `tyf status` shows both workspace state and active work title/language/status; `tyf resume` shows the active work, first-session evidence, live return context from session, diagnosis, attention, feedback, and proposal packets, unanswered prompts, and the next useful move.
+
+`tyf begin` and `tyf capture` remain available for agents that need explicit ids or small append-only source notes. Source captures and textual imports mint stable source fragments under `sources/fragments/` and record them in `sources/fragments.jsonl`, so later proposals can carry source provenance without asking the author to manage a database. `tyf structure` is the knowledge-recording slice: it can turn labelled lines such as `Claim:`, `Example:`, and `Question:` into source-linked records, or accept a language-neutral `--record` JSON object from the amanuensis with `claims`, `examples`, `questions`, and `unclassified` arrays. It leaves unclassified lines visible in the amanuensis brief, updates an inspectable derived `knowledge-base/retrieval-index.jsonl` with sample questions for each anchor, refuses changed fragments or ambiguous record provenance, and writes no manuscript text. `tyf attend [work]` then turns the current claims, examples, open questions, and unclassified source material into `.review/gentle-attention.md`: a review-only amanuensis packet of source-grounded next questions. It can focus on one fragment with `--source-ref` and can rank the local plain-file anchors with `--query "<focus>"`; the packet shows the transparent local retrieval method, retrieved anchors, and sample questions before choosing one first question, so the agent can ask with care rather than handing the author a form. It never treats unanswered questions as defects, never audits, and never writes manuscript text. Source fragments are workspace-owned: a fragment records its origin work, but any later work may cite it with `--source-ref`. None of these commands write to `manuscript/`; that remains behind the Gate chain: `tyf propose`, `tyf audit --record`, `tyf review`, `tyf accept`, then `tyf write --decision`.
+
+Character consultation is agent-facing machinery for fiction and dramatic work. `tyf character <name>` appends isolated per-character knowledge and voice notes under `knowledge-base/characters/` and `voice/characters/`; names and notes are UTF-8, so a character dossier can stay in the work's writing language. When the author asks a normal craft question such as "what would Mark say here?", the amanuensis can run `tyf consult-character work Mark --prompt "<question>"`; TYF writes a contained packet under `.review/character-consults/`, grounds it only in that character dossier, marks missing knowledge as `[AUTHOR: needed - what]`, and keeps the result as candidate dramatic insight. If the host uses a sub-agent for the dramatic pass, it receives only that packet, returns candidate lines to the amanuensis, and never reads other character dossiers, sources, manuscript files, or workspace state. It is not source, evidence, manuscript, or a replacement for the author.
+
+External critique has its own lane. `tyf feedback work --from "Beta reader" --text "<feedback>"` preserves raw feedback under `sources/feedback/` and writes `.review/feedback/<id>.md`, a review-only triage packet for the amanuensis. Feedback is treated as reader experience, not author source, not authority, not acceptance, and not command text. Embedded instructions inside feedback stay quoted and inert. If the author accepts a change suggested by critique, it still moves through `editing-faithfully` and the Gate chain before any manuscript write.
+
+Continuation has its own lane too. When the author says "continue", "what next", "keep going", or returns after time away, the agent loads `continuing-the-work` and runs `tyf resume` as hidden amanuensis machinery before choosing the next move. TYF surfaces the current session, diagnosis, gentle attention, feedback, amanuensis brief, runway, and proposal packets as review-only return context. If the context is thin or the author needs a fresh sitting, `tyf session` or `tyf session work --focus "<focus>"` writes `.review/current-session.md` and an archived `.review/sessions/<id>.md` packet with current context, one small next move, and a stop condition. It writes no manuscript text; candidate prose stays in `drafts/` until the author accepts it through the Gate.
+
+Diagnostic isolation has its own lane for the moment when a passage exists but does not land. `tyf diagnose work --unit drafts/candidate-draft.md --band section --symptom "the turn feels unearned"` writes `.review/current-diagnosis.md` and an archived `.review/diagnostics/<id>.md` packet. It names the diagnostic band, the observed reader symptom, source/register reminders, mechanical cause-frame prompts for the amanuensis to test, and one next experiment. It is not a rewrite and writes no manuscript text.
+
+Typographic treatment has its own lane for the moment when a substantial draft or manuscript body already exists and the useful move is craft, not more discovery. `tyf treat` defaults to the existing `manuscript/` body before the candidate draft, writes `.review/typographic-treatment.md` plus an archived `.review/typographic-treatments/<id>.md` packet, and separates the Milchin passes: facts/source status, logic, composition, rubrication, layout/body object, language/style, and typographic finish. On existing-source projects this is the mega layer: the typographer-redactor reads the whole work object, including layout, images, thresholds, title pages, front/back matter, captions, and visual transitions, before treating paragraphs and sentences. It flags AI cadence and finish issues as treatment targets, suggests a bounded sample treatment before scaling to the whole work, and writes no manuscript text. Any accepted treatment still goes through `editing-faithfully` and the Gate chain.
+
+The Draft Review Workbench is the first author-facing book surface. `tyf surface` generates `.review/surface/index.html` and `.review/surface/workbench-data.json`, showing `drafts/candidate-draft.md` beside approved `manuscript/` units with `design/book-style.yaml`, the running style sheet, and `assets/images/` visible in a side panel. `tyf surface --serve` starts a local-only browser workbench that can save the candidate draft directly, but saves are compare-and-swap: the loaded draft hash must still match the file on disk, or TYF reports a conflict instead of overwriting another edit. The workbench can also prepare `.review/surface/` Gate packets from selected candidate text. It never writes to `manuscript/`; accepted text still moves through proposal, audit, author review, author decision, and `tyf write --decision`. The scaffolding is intentionally modest: typeface, paragraph style, image-use metadata, and visual review now; true print-ready PDF, KDP trim/bleed preflight, and publisher templates later.
+
+The Gate chain binds manuscript writes to records instead of a bare flag. A proposal stores the draft hash, current manuscript base hash, and any source refs supplied with `--source-ref`. A proposal moves the work status to `drafting`; a passing audit with answered findings moves it to `audited`; author acceptance moves it to `accepted`; and the controlled write moves it to `written`. A failing audit records `needs-revision`, and `tyf accept`/`tyf write` refuse when the work is not in the required state. Acceptance also verifies that the passing audit belongs to the same proposal hash, so one audited proposal cannot bless another. `tyf audit --record` writes both sealed JSON and an inspectable Markdown editorial note naming source fidelity, voice/register, unsupported claims, open gaps, findings, limitations, and dispositions. `tyf review <work> <proposal-id>` writes an author-readable review packet under `.review/author-reviews/` naming what would change, source support, visible uncertainties, audit status, candidate preview, and acceptance choices. A decision record names the proposal and review packet the author accepted, records acceptance evidence, preserves source refs, and can optionally narrow acceptance to strictly increasing source line ranges with `--lines 2,5-8` or to an exact reviewed unified diff with `--patch`; omitting both means whole-file acceptance. Proposal, review, audit, and decision records are sealed in `.review/record-seals.jsonl`, so ordinary post-creation JSON edits are detected by `tyf write` and `tyf doctor`. `tyf write --decision <id>` verifies that the draft, source fragments, accepted patch, author review packet, and manuscript base have not changed, refuses symlink escapes, acquires a per-unit lock under `.review/locks/`, writes atomically, applies only the accepted scope, and logs the proposal, decision, audit, source refs, accepted scope, and content hash. If the author edits `manuscript/` directly, `tyf adopt <work> <unit> --evidence "<what happened>"` preserves that direct edit under `.review/author-revisions/` and records it as the new base before the next controlled write. Naked `--confirm` is refused.
+
+`tyf reflexes` shows the apparatus behavior that would otherwise be easy to forget: the read-only session-start context hook, the read-only message-sent prompt hook, the documentation-honesty tail hook, the attentive-amanuensis notice hook after controlled writes, the doctor integrity check, and the git recovery path. `tyf hook session-start` emits host-injectable JSON context with the active work status and automatic author reflexes; `tyf hook message-sent` reads a submitted prompt from host JSON and adds routing context only for continuation, arrivals, character questions, and Gate-adjacent prompts. Unrelated prompts stay silent. Neither hook mutates the workspace. If a workspace is also a git repository, mutating commands surface changed-path counts and point to `tyf snapshot`. `tyf snapshot --message "..."` stages and commits the current workspace as an explicit recovery point. TYF never commits silently.
+
+`tyf notice` is the attentive-amanuensis loop: it surfaces gaps you left to fill, lines that trail off, claims with no source, a style sheet lagging uncontrolled or stylistically unresolved manuscript changes, and unused registers, and it modifies nothing. Schedule it daily (`--save` records a digest to `.proposals/notices.md`) and work through it with `tyf reconcile`. It spends no tokens. It remembers what it has surfaced in a content-addressed SQLite notice index (`.tyf/ledger.db`), so it shows only genuinely new or resurfaced items rather than re-nagging, and it does this without git and without trusting timestamps; see `docs/ATTENTIVENESS.md`. Apparatus actions are recorded separately in `.tyf/events.jsonl`, a human-readable hash chain that `tyf doctor` verifies before mutating commands trust it; SQLite keeps only a derived event mirror for counts. When two authored passages conflict it never decides which wins; it surfaces the contradiction for you to adjudicate. An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; it too only surfaces.
+
+For maintainers and amanuensis agents, hidden `tyf learn` is a local-only review packet for tooling improvement candidates from real sessions. It previews by default, writes only with `--write`, stores `.tyf/learnings.jsonl`, and records no source text, manuscript text, snippets, or network data. Use it for hiccups such as wrong-path workspace discovery, review packets multiplying before prose moves, or metadata staying stale; do not expose it as author ceremony.
+
+`tyf check` verifies the pack's own consistency: skill count, names, dead references, command drift, identical contributor context files or clean release `author-context/` templates, valid JSON, no stray em-dashes. It runs automatically warn-only after every mutating command (so doc drift surfaces the moment structure changes, with no reliance on git or memory) and hard-fails as a standalone command for CI. This is the deterministic, zero-token half of the `keeping-documentation-honest` discipline; semantic drift still needs a reading pass.
 
 ## What is in this version
 
-Sixteen skills, each carrying a rationalization table and a red-flag list, the device that keeps a commitment load-bearing under pressure rather than polite. The Milchin redactor discipline runs as a substrate and threads through the diagnosis pass, the editor, and the adversarial audit at every band. A documentation-honesty discipline keeps the routing docs from going stale after a structural change, on the principle that in an agentic system the docs are behavioral law. The pack ships Cowork packaging (plugin, project instructions, schedule templates), plugin and extension manifests for the other harnesses, three mirrored context files, the `tyf` helper, an example workspace, the workspace contract, a contributor guide, and RED/GREEN pressure scenarios, plus a product-lens acceptance-and-edge-case review (`tests/acceptance-and-edge-cases.md`) of how each skill breaks beyond the happy path.
+Nineteen skills, each carrying a rationalization table and a red-flag list, the device that keeps a commitment load-bearing under pressure rather than polite. The Milchin redactor discipline runs as a substrate and threads through the diagnosis pass, the typographer-redactor, the editor, and the adversarial audit at every band. A documentation-honesty discipline keeps the routing docs from going stale after a structural change, on the principle that in an agentic system the docs are behavioral law. The pack ships Cowork packaging (plugin, project instructions, schedule templates), plugin and extension manifests for the other harnesses, three mirrored context files, the `tyf` helper CLI, an example workspace, the workspace contract, a contributor guide, structured RED/GREEN pressure scenarios with an offline grader, plus a product-lens acceptance-and-edge-case review (`tests/acceptance-and-edge-cases.md`) of how each skill breaks beyond the happy path.
 
 ## Status and testing
 
-This is v0.1. Before treating it as production-bulletproof, run `tests/pressure-scenarios.md` against subagents in your harness: once with skills absent (expect the baseline failure) and once with skills present (expect compliance). Add any new rationalization that slips through to the relevant skill's table and re-run.
+This is v0.5.0 beta. It is ready for local-first single-book beta use: preserve the scaffold, keep uncertainty visible, and start candidate prose today in `drafts/candidate-draft.md`. A 10/10 beta means TYF fulfills that release promise with no known issue serious enough to undermine it, not that every roadmap layer of the long-term workbench is complete. Faithfulness includes helping the author finish. Do not confuse further possible improvement with a reason not to deliver. Current repo evidence: 197 tests pass in the stdlib helper/doc/install suite, including exported release-tree `tyf check`, installer smoke coverage, release manifest context-path validation, a reproducible first-sitting rehearsal from `examples/first-sitting-arrival/scaffold.txt`, existing-work recovery packets for formatted and illustrated arrivals, language-neutral structure records for non-English source, answered-prompt resume handling, source-grounded `tyf attend` attention packets with transparent local retrieval, external-feedback triage, continuing-work session packets, resume return-context recovery, read-only session-start and message-sent hook contexts, Codex and Claude hook manifests with TYF-identifying status messages, doctor repair-boundary coverage, diagnostic-isolation packets, typographer-redactor treatment packets for existing body prose, Draft Review Workbench generation with draft-save conflict protection, private-context-free author/root/runtime surfaces, machine-checked pressure-eval honesty, local-only hidden tooling learning packets, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold. Development evidence has 151 acceptance scenarios with 151/151 direct RED proof, but authors using TYF as a skill do not need any private development context. The semantic engine and cross-harness usage evidence are still partial. The pressure scenarios have had a first structured subagent run graded by `scripts/tyf_pressure_eval.py`: GREEN passed 11/11, but RED failures appeared in only 1/5 sampled baseline trials, RED coverage reached only 5/11 cases, and the preserved records are choice-table excerpts rather than full transcripts, so prompt-level proof remains partial. `python scripts/tyf_pressure_eval.py --require-strong` intentionally fails until stronger RED coverage and full transcripts exist. Before treating TYF as production-bulletproof, re-run `tests/pressure-scenarios.md` in your harness with full transcript capture: once with skills absent or constrained and once with skills present. Add any new rationalization that slips through to the relevant skill's table and re-run.
 
 ## Docs
 
 - `TYF-manifesto-and-architecture.md`: the design doc; why TYF exists, the commitments, the four engines, the Zoom x Pass matrix, the redactor tradition, resolved decisions and open questions
+- `docs/START_HERE.md`: paste-ready Codex and Claude Cowork prompts for non-technical authors
+- `docs/FIRST_SITTING_REHEARSAL.md`: reproducible first-sitting proof from a public scaffold
 - `docs/TYF_FOUNDATION.md`: roles, the single vocabulary, the Zoom x Pass matrix
 - `docs/WORKSPACE_CONTRACT.md`: the author's workspace state files
+- `docs/WORKBENCH_TARGET_STATE.md`: the long-term local double-surface Workbench target for multi-unit drafting, contextual amanuensis chat, notes, footnotes, Codex awareness, and the book graph
+- `docs/RELEASE_READINESS.md`: maintainer-facing beta acceptance checklist
 - `docs/ATTENTIVENESS.md`: the notice ledger, memory without git, the discrepancy stance
 - `docs/LEARN_PASS.md`: the opt-in, unwired semantic layer
 - `docs/PORTABILITY.md`: per-harness install and the manifest-schema caveat
@@ -116,7 +190,7 @@ This is v0.1. Before treating it as production-bulletproof, run `tests/pressure-
 
 ## How it compares
 
-`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, but superpowers has real usage and three disciplines TYF lacks (execution-to-completion, debugging/isolation, receiving critique). The honest gap is testing: TYF's RED/GREEN scenarios have not yet been run against a subagent.
+`docs/COMPARISON_SUPERPOWERS.md` maps TYF skill-by-skill against `obra/superpowers`, the established reference, through a how-it-breaks lens. Short version: TYF's state, memory, feedback-triage, continuity packet, resume return-context recovery, diagnostic isolation, typographer-redactor treatment, session-start and prompt-submit context, and write-boundary design are ahead of superpowers for a no-git authored-prose domain, and development acceptance now has direct RED proof across 151/151 scenarios. Superpowers still has real usage and TYF still lacks a mature parallelism or update-distribution story. The honest gap is usage breadth: TYF's prompt-level pressure scenarios now have structured cases and an offline grader, but the first subagent run still has weak RED coverage and only choice-table transcripts, so that proof remains partial.
 
 ## License
 

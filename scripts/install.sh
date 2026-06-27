@@ -3,7 +3,7 @@
 # Usage:
 #   bash scripts/install.sh                 # interactive: pick a harness
 #   bash scripts/install.sh claude          # ~/.claude/skills
-#   bash scripts/install.sh codex           # ~/.agents/skills
+#   bash scripts/install.sh codex           # ${CODEX_HOME:-~/.codex}/skills
 #   bash scripts/install.sh cursor          # ~/.cursor/skills
 #   bash scripts/install.sh /custom/path    # any explicit skills directory
 #
@@ -18,7 +18,7 @@ BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 resolve_target() {
   case "${1:-}" in
     claude)  echo "$HOME/.claude/skills" ;;
-    codex)   echo "$HOME/.agents/skills" ;;
+    codex)   echo "${CODEX_HOME:-$HOME/.codex}/skills" ;;
     cursor)  echo "$HOME/.cursor/skills" ;;
     "")      echo "" ;;
     *)       echo "$1" ;;
@@ -79,8 +79,22 @@ else
   echo "  If you copy the helper elsewhere, set TYF_PACK_ROOT=$ROOT so 'tyf check' finds the pack."
 fi
 
-# 3. Context file
+# 3. Context guidance
 echo
-echo "Last step: place the matching context file where your harness reads session context:"
-echo "  source: $ROOT/$(ctx_file_for "$HARNESS")"
+echo "Book workspace context:"
+echo '  For a book workspace, run `tyf init` in the book folder, or `tyf init <book-folder>` near it.'
+echo "  Use the generated context files."
+echo "  Do not copy the pack development context into a book workspace."
+echo "  Clean author-context templates are available at: $ROOT/author-context/"
+echo
+ctx_hint="$(ctx_file_for "$HARNESS")"
+if [ -f "$ROOT/$ctx_hint" ]; then
+  echo "Contributor context for working on this TYF pack:"
+  echo "  $ROOT/$ctx_hint"
+else
+  echo "Contributor context:"
+  echo "  This author release archive does not include pack-root contributor context files."
+  echo "  Use $ROOT/author-context/ before workspace init, or run tyf init in a book folder."
+fi
+echo
 echo "Then verify: ask the agent to list its TYF skills; it should route through 'using-tyf' first."

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "inventory": {
+    "source": "git",
+    "files_scanned": 53,
+    "max_files": null,
+    "truncated": false,
+    "counts": {
+      "src": 1,
+      "tests": 1,
+      "docs": 1
+    },
+    "unscanned_code": []
+  },
+  "selection": {
+    "src": [
+      "scripts/tyf.py"
+    ],
+    "tests": [
+      "tests/test_tyf.py"
+    ],
+    "docs": [
+      "README.md"
+    ]
+  },
+  "omissions": {
+    "inventory_truncated": false,
+    "reason": ""
+  },
+  "llm_prompt_budget": {
+    "tokens": "",
+    "chars": ""
+  },
+  "display_top": 40,
+  "candidate_recovery_top": 40,
+  "truth_status": "review-manifest-not-proof"
+}

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Using TYF"
+  short_description: "Route authorship work through TYF."
+  brand_color: "#415A77"
+  default_prompt: "Use $using-tyf to start writing my book today from this repo, preserving any scaffold first and keeping the title optional."
+policy:
+  allow_implicit_invocation: true

@@ -7,13 +7,19 @@ description: Use when the author needs to think aloud, be interviewed, or surfac
 
 ## Overview
 
-You interview the author to surface what is not yet written down: the thesis, the tension it resolves, the personal stake, the shape of an argument, examples the author never recorded, and the registers they write in.
+You interview the author to surface what is not yet written down: the thesis, the tension it resolves, the personal stake, the shape of an argument, examples the author never recorded, and the registers they write in. The useful question is a gesture of attention, not a vote of no-confidence. Ask as someone holding the work with the author, not as someone prosecuting the author.
 
 This is an Elicit pass at the knowledge bands. It is the highest-value work in TYF, because what it pulls out is the irreplaceable material no model can supply.
 
 ## The disciplined move
 
 The temptation is to propose a thesis, an outline, or a voice on the author's behalf and let them nod along. That inverts the apparatus. You pressure what the author already believes until it is sharp. You never invent what they should believe or want.
+
+**First sitting.** When `tyf start` has created `sources/interviews/work-first-session.md`, use its gentle attention deck before inventing a new interview plan. The author does not have to answer every prompt. Pick one prompt, ask it as attention, and stop when candidate prose can begin. One strong source, image, pressure, voice cue, or first-passage target is enough; unanswered prompts stay visible as invitations.
+
+**Later sitting.** After `tyf structure` has created source-linked claims, examples, questions, and an amanuensis brief, `tyf attend work` can write `.review/gentle-attention.md`. Use it when you need the next right question. Ask the packet's one first question before using the longer list. Its questions are invitations to notice what wants care, not doubt in the author's judgment and not audit pressure.
+
+**Question quality.** A good TYF question must be passage-opening. It should ask for a concrete scene, source line, object, contradiction, embodied encounter, or first sentence. Once the author has named the pressure, do not ask a broad binary such as outer machine versus inner wound. Ask where the pressure actually happened, which existing line still has heat, or what single image can carry it onto the page.
 
 **Thesis interrogation.** Do not proceed past the argument band until the author has stated, in one paragraph, the thesis and the tension it resolves. Push on it. Ask what breaks if the thesis is wrong, who disagrees, and what it costs to believe. You sharpen the author's thesis; you do not author one.
 
@@ -29,6 +35,8 @@ The temptation is to propose a thesis, an outline, or a voice on the author's be
 | "The author seems unsure, I should decide the structure." | Uncertainty is the reason to widen options, not to choose for them. | Propose two or three scaffolds; let them accept, reject, or rearrange. |
 | "Their thesis is basically clear, let us move on." | "Basically clear" is where unsupported argument hides. | Ask what breaks if it is false. If they cannot answer, it is not sharp yet. |
 | "I will infer their voice from how they type to me." | Chat register is rarely the authored register. | Elicit example passages or explicit preferences; do not guess. |
+| "I should work through the whole gentle attention deck." | A deck is not a form. Too many questions turns attention into extraction. | Ask one question at a time and stop when the next passage can begin. |
+| "The author named the theme, so I should ask which conceptual doorway to use." | Abstract doorways feel like coaching, not amanuensis work. | Ask for one concrete scene, object, source line, or first sentence that would let the passage start. |
 
 ## Red flags: stop if you catch yourself
 

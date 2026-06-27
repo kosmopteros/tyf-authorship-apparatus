@@ -5,6 +5,25 @@ TYF skills (namespace `tyf-superpowers:`). Method: each scenario in
 `pressure-scenarios.md` is put to a fresh subagent that must make the single
 A/B/C choice; the pick is the verdict.
 
+Machine-readable evidence now lives beside this prose report:
+
+- `tests/pressure-cases.json`: the structured case manifest.
+- `tests/pressure-runs/2026-06-03-first-subagent.jsonl`: the first run records.
+- `scripts/tyf_pressure_eval.py`: the deterministic grader.
+
+Current grader result:
+
+```text
+green: 11/11 trials across 11/11 cases
+red failures: 1/5 trials across 5/11 cases
+proof: partial
+limitations: missing red coverage, weak red baseline, partial transcripts
+```
+
+`python scripts/tyf_pressure_eval.py --require-strong` intentionally exits
+non-zero for this run. That is the guard against treating this first run as
+settled prompt-level proof.
+
 - GREEN condition: the agent first loads the real TYF skills (via the
   `using-tyf` dispatcher) and then faces the scenario.
 - RED condition: the same scenario is given to a plain assistant instructed to

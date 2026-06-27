@@ -2,9 +2,9 @@
 """RC doctor for a single-author TYF workspace.
 
 The doctor verifies the private-RC safety surface: workspace shape, JSONL parse
-health, event-ledger integrity, rebuildable review projections, and live
-Workbench HTML generation. It writes a local report and never edits manuscript
-prose.
+health, event-ledger integrity, rebuildable review projections, live Workbench
+HTML generation, and architecture contracts. It writes a local report and never
+edits manuscript prose.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+import tyf_architecture_contracts as arch_contracts  # noqa: E402
 import tyf_concept_review as concept_review  # noqa: E402
 import tyf_continuity_review as continuity_review  # noqa: E402
 import tyf_graph_projection as graph_projection  # noqa: E402
@@ -66,6 +67,28 @@ def registry_checks(work_root: Path) -> List[Dict[str, Any]]:
             continue
         parsed = parse_jsonl(path)
         checks.append(check("jsonl parses: " + rel, parsed["invalid"] == 0, json.dumps(parsed), "error"))
+    return checks
+
+
+def architecture_checks() -> List[Dict[str, Any]]:
+    route_hits = arch_contracts.forbidden_route_hits()
+    write_hits = arch_contracts.suspicious_direct_manuscript_writes()
+    storage_classes = arch_contracts.storage_contract()
+    required_classes = [
+        "canonical-prose",
+        "canonical-author-record",
+        "mutable-record-store",
+        "hash-chain-ledger",
+        "append-log",
+        "generated-review",
+        "rebuildable-cache",
+        "recovery-artifact",
+    ]
+    checks = [
+        check("architecture storage classes declared", all(c in storage_classes for c in required_classes), ", ".join(sorted(storage_classes))),
+        check("no forbidden manuscript route markers", not route_hits, json.dumps(route_hits)),
+        check("no suspicious non-Gate manuscript writes", not write_hits, json.dumps(write_hits)),
+    ]
     return checks
 
 
@@ -119,6 +142,7 @@ def doctor(work_arg: Optional[str] = None) -> Dict[str, Any]:
     else:
         checks.append(check("event ledger hash-chain verifies", False, ".tyf/events.jsonl missing"))
     checks.extend(registry_checks(work_root))
+    checks.extend(architecture_checks())
     checks.extend(build_checks(work_id, work_root, root))
     failures = [c for c in checks if not c["ok"] and c.get("severity") == "error"]
     report = {

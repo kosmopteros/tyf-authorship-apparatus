@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live TYF Workbench wrapper with near-real-time status and stale draft badges."""
+"""Live TYF Workbench wrapper with near-real-time status and recovery actions."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+import tyf_recovery as recovery  # noqa: E402
 import tyf_workbench_v06 as wb  # noqa: E402
 import tyf_workbench_status as status_model  # noqa: E402
 
@@ -36,6 +37,10 @@ PANEL = """      <section>
         <div id="conflictBadge" class="note-card"><div class="meta">Draft state not checked yet.</div></div>
       </section>
       <section>
+        <strong>Review dashboard</strong>
+        <div id="reviewDashboardBox" class="note-card"><div class="meta">Run continuity/polish reviews to see a summary here.</div></div>
+      </section>
+      <section>
         <strong>Needs your approval</strong>
         <div id="approvalBox" class="note-card"><div class="meta">No pending approval request.</div></div>
       </section>
@@ -51,16 +56,72 @@ SCRIPT = r"""
       const paths = Array.isArray(obj.changed_paths) && obj.changed_paths.length ? `<div class="meta">${esc(obj.changed_paths.join(', '))}</div>` : '';
       return `<div><strong>${esc(label)}</strong></div><div class="body">${esc(summary)}</div><div class="meta">${esc(when)}</div>${paths}`;
     }
+    function reviewLine(name, item) {
+      if (!item || !item.exists) return `<div class="meta">${esc(name)}: not run</div>`;
+      const counts = item.counts || {};
+      const total = counts.total || 0;
+      const likely = counts['likely-fix'] || 0;
+      const review = counts.review || 0;
+      const low = counts.low || 0;
+      return `<div><strong>${esc(name)}</strong>: ${total}</div><div class="meta">${likely} likely fixes · ${review} review · ${low} low</div><div class="meta">${esc(item.path || '')}</div>`;
+    }
+    function renderReviewDashboard(dashboard) {
+      dashboard = dashboard || {};
+      document.getElementById('reviewDashboardBox').innerHTML = [
+        reviewLine('Continuity', dashboard.continuity),
+        reviewLine('Polish', dashboard.polish),
+        reviewLine('Concepts', dashboard.concept),
+        dashboard.graph && dashboard.graph.exists ? `<div><strong>Graph</strong>: ${dashboard.graph.nodes || 0} nodes · ${dashboard.graph.edges || 0} edges</div><div class="meta">${esc(dashboard.graph.path || '')}</div>` : '<div class="meta">Graph: not run</div>'
+      ].join('<hr>');
+    }
+    async function postRecovery(url, payload) {
+      const response = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','X-TYF-Token':data.token || ''}, body: JSON.stringify(payload || {})});
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result;
+    }
+    function wireRecoveryButtons(d) {
+      const reloadBtn = document.getElementById('reloadDiskDraft');
+      const copyBtn = document.getElementById('saveBrowserCopy');
+      const packetBtn = document.getElementById('prepareConflictPacket');
+      if (reloadBtn) reloadBtn.onclick = async () => {
+        try {
+          const r = await postRecovery('/api/reload-disk', {path: d.path});
+          draft.value = r.text || '';
+          draft.dataset.baseHash = r.sha256 || '';
+          d.text = r.text || '';
+          d.sha256 = r.sha256 || '';
+          setStatus('Reloaded disk version. Your browser text was replaced by the current disk draft.', 'ok');
+          await pollLiveStatus();
+        } catch (err) { setStatus(err.message || 'Could not reload disk version.', 'warn'); }
+      };
+      if (copyBtn) copyBtn.onclick = async () => {
+        try {
+          const r = await postRecovery('/api/save-browser-copy', {path: d.path, browser_text: draft.value, note: 'Saved from Workbench recovery action'});
+          setStatus('Saved browser version as copy: ' + r.copy_path, 'ok');
+        } catch (err) { setStatus(err.message || 'Could not save browser copy.', 'warn'); }
+      };
+      if (packetBtn) packetBtn.onclick = async () => {
+        try {
+          const r = await postRecovery('/api/conflict-packet', {path: d.path, loaded_sha256: d.sha256 || draft.dataset.baseHash || '', browser_text: draft.value, note: 'Prepared from Workbench recovery action'});
+          setStatus('Prepared conflict packet: ' + r.report, 'ok');
+        } catch (err) { setStatus(err.message || 'Could not prepare conflict packet.', 'warn'); }
+      };
+    }
     function renderLiveStatus(live) {
       const codex = live.codex || {};
       const bridge = live.bridge || {};
       const approval = live.approval || {};
       document.getElementById('codexStatusBox').innerHTML = objectSummary(Object.keys(codex).length ? codex : bridge);
       document.getElementById('approvalBox').innerHTML = Object.keys(approval).length ? `<div><strong>${esc(approval.status || 'pending')}</strong></div><div class="body">${esc(approval.title || approval.method || 'Approval requested')}</div><div class="meta">${esc(approval.id || '')}</div>` : '<div class="meta">No pending approval request.</div>';
+      renderReviewDashboard(live.review_dashboard || {});
       const d = activeDraft();
       const row = d ? (live.drafts || []).find(x => x.path === d.path) : null;
       const stale = !!(row && d && d.sha256 && row.sha256 && row.sha256 !== d.sha256);
-      if (stale) document.getElementById('conflictBadge').innerHTML = `<div class="warn"><strong>Changed outside this window</strong></div><div class="meta">${esc(d.path)}</div>`;
+      if (stale) {
+        document.getElementById('conflictBadge').innerHTML = `<div class="warn"><strong>Changed outside this window</strong></div><div class="meta">${esc(d.path)}</div><div style="margin-top:8px"><button id="reloadDiskDraft">Reload disk version</button> <button id="saveBrowserCopy">Save my version as copy</button> <button id="prepareConflictPacket">Prepare conflict packet</button></div>`;
+        wireRecoveryButtons(d);
+      }
       else if (d && row) document.getElementById('conflictBadge').innerHTML = `<div class="ok"><strong>Safe to save</strong></div><div class="meta">${esc(d.path)}</div>`;
       else document.getElementById('conflictBadge').innerHTML = '<div class="meta">No active draft to check.</div>';
     }
@@ -111,7 +172,13 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
     base = wb.make_handler(work_id, work_root, workspace, session_key)
 
     class Handler(base):
-        server_version = "TYFWorkbenchLive/0.2"
+        server_version = "TYFWorkbenchLive/0.3"
+
+        def read_payload(self) -> Dict[str, Any]:
+            size = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(min(size, MAX_POST_BYTES)).decode("utf-8")
+            data = json.loads(raw or "{}")
+            return data if isinstance(data, dict) else {}
 
         def send_live_events(self) -> None:
             self.send_response(200)
@@ -140,11 +207,32 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
             else:
                 super().do_GET()
 
+        def do_POST(self):  # noqa: N802
+            parsed = urllib.parse.urlparse(self.path)
+            if parsed.path in ("/api/reload-disk", "/api/save-browser-copy", "/api/conflict-packet"):
+                if not self.require_token():
+                    return
+                try:
+                    payload = self.read_payload()
+                    path = wb.one_line(payload.get("path"))
+                    if parsed.path == "/api/reload-disk":
+                        self.json_response(200, recovery.reload_disk_version(work_root, path))
+                    elif parsed.path == "/api/save-browser-copy":
+                        self.json_response(200, recovery.save_browser_copy(work_id, work_root, workspace, path, str(payload.get("browser_text") or ""), str(payload.get("note") or "")))
+                    else:
+                        self.json_response(200, recovery.write_conflict_packet(work_id, work_root, workspace, path, wb.one_line(payload.get("loaded_sha256")), str(payload.get("browser_text") or ""), str(payload.get("note") or "")))
+                except ValueError as e:
+                    self.json_response(400, {"status": "error", "message": str(e)})
+                except Exception as e:  # noqa: BLE001
+                    self.json_response(500, {"status": "error", "message": str(e)})
+            else:
+                super().do_POST()
+
     return Handler
 
 
 def run(argv: Optional[list[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="TYF live Workbench with assistant status and save-safety badges")
+    parser = argparse.ArgumentParser(description="TYF live Workbench with assistant status, save-safety, recovery, and review dashboard")
     parser.add_argument("work", nargs="?", default=None)
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")

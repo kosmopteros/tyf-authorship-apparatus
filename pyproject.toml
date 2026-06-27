@@ -24,6 +24,8 @@ tyf-concept-review = "tyf_concept_review:main"
 tyf-continuity-review = "tyf_continuity_review:main"
 tyf-continuity-decision = "tyf_continuity_decision:main"
 tyf-polish-review = "tyf_polish_review:main"
+tyf-recovery = "tyf_recovery:main"
+tyf-rc-doctor = "tyf_rc_doctor:main"
 
 [tool.setuptools]
 py-modules = [
@@ -43,6 +45,8 @@ py-modules = [
   "tyf_continuity_review",
   "tyf_continuity_decision",
   "tyf_polish_review",
+  "tyf_recovery",
+  "tyf_rc_doctor",
 ]
 
 [tool.setuptools.package-dir]

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Plain-file live status helpers for the TYF Workbench.
 
-The browser can poll this state to show Codex turn status, bridge status,
-approval state, and stale draft hashes. This module performs read-only
-inspection and never writes draft or manuscript prose.
+The browser can poll this state to show assistant turn status, bridge status,
+approval state, stale draft hashes, and review dashboard summaries. This module
+performs read-only inspection and never writes draft or manuscript prose.
 """
 
 from __future__ import annotations
@@ -56,6 +56,49 @@ def draft_rows(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
+def severity_counts(issues: List[Dict[str, Any]]) -> Dict[str, int]:
+    counts: Dict[str, int] = {"likely-fix": 0, "review": 0, "low": 0, "info": 0, "total": 0}
+    for item in issues:
+        severity = str(item.get("severity") or "review")
+        counts[severity] = counts.get(severity, 0) + 1
+        counts["total"] += 1
+    return counts
+
+
+def review_summary(work_root: Path) -> Dict[str, Any]:
+    continuity = read_json(surface(work_root, "continuity-review.json"), {})
+    polish = read_json(surface(work_root, "polish-review.json"), {})
+    concept = read_json(surface(work_root, "concept-review.json"), {})
+    graph_report = read_json(surface(work_root, "graph-build-report.json"), {})
+    return {
+        "continuity": {
+            "exists": bool(continuity),
+            "path": ".review/surface/continuity-review.md",
+            "counts": severity_counts(continuity.get("issues", []) if isinstance(continuity.get("issues"), list) else []),
+            "summary": continuity.get("summary", {}) if isinstance(continuity, dict) else {},
+        },
+        "polish": {
+            "exists": bool(polish),
+            "path": ".review/surface/polish-review.md",
+            "counts": severity_counts(polish.get("issues", []) if isinstance(polish.get("issues"), list) else []),
+            "summary": polish.get("summary", {}) if isinstance(polish, dict) else {},
+        },
+        "concept": {
+            "exists": bool(concept),
+            "path": ".review/surface/concept-review.md",
+            "counts": severity_counts(concept.get("issues", []) if isinstance(concept.get("issues"), list) else []),
+            "summary": concept.get("summary", {}) if isinstance(concept, dict) else {},
+        },
+        "graph": {
+            "exists": bool(graph_report),
+            "path": ".review/surface/graph-build-report.md",
+            "nodes": graph_report.get("nodes", 0) if isinstance(graph_report, dict) else 0,
+            "edges": graph_report.get("edges", 0) if isinstance(graph_report, dict) else 0,
+            "ledger_totals": graph_report.get("ledger_totals", {}) if isinstance(graph_report, dict) else {},
+        },
+    }
+
+
 def live_status(work_id: str, work_root: Path, root: Path) -> Dict[str, Any]:
     data = wb.collect_data(work_id, work_root, root)
     return {
@@ -65,6 +108,7 @@ def live_status(work_id: str, work_root: Path, root: Path) -> Dict[str, Any]:
         "codex": read_json(surface(work_root, "codex-turn-status.json"), {}),
         "bridge": read_json(surface(work_root, "codex-bridge-status.json"), {}),
         "approval": read_json(surface(work_root, "codex-approval-current.json"), {}),
+        "review_dashboard": review_summary(work_root),
     }
 
 

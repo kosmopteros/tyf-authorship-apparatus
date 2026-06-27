@@ -1,0 +1,73 @@
+# Sample Codex MCP configuration for TYF Workbench.
+#
+# Put this in a trusted book workspace at `.codex/config.toml`, or adapt it for
+# `~/.codex/config.toml`. Use absolute paths when the TYF pack lives outside the
+# book workspace.
+
+[mcp_servers.tyf_workbench]
+command = "python"
+args = [
+  "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_workbench_mcp.py",
+  "--workspace",
+  "/absolute/path/to/your-tyf-book-workspace"
+]
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+enabled = true
+required = false
+default_tools_approval_mode = "prompt"
+
+enabled_tools = [
+  "get_active_workbench_context",
+  "get_active_selection",
+  "read_unit_context",
+  "search_book_graph",
+  "list_author_notes",
+  "create_author_note",
+  "propose_footnote_from_note",
+  "prepare_gate_packet",
+  "refresh_book_graph",
+  "refresh_book_map",
+  "surface_current_conflicts",
+  "record_codex_turn_status"
+]
+
+# Read-only context tools can be auto-approved. The author should still see
+# visible tool-use indicators in the Codex client.
+[mcp_servers.tyf_workbench.tools.get_active_workbench_context]
+approval_mode = "approve"
+
+[mcp_servers.tyf_workbench.tools.get_active_selection]
+approval_mode = "approve"
+
+[mcp_servers.tyf_workbench.tools.read_unit_context]
+approval_mode = "approve"
+
+[mcp_servers.tyf_workbench.tools.search_book_graph]
+approval_mode = "approve"
+
+[mcp_servers.tyf_workbench.tools.list_author_notes]
+approval_mode = "approve"
+
+[mcp_servers.tyf_workbench.tools.surface_current_conflicts]
+approval_mode = "approve"
+
+# Append-only or packet-writing actions should prompt. They do not touch
+# manuscript text, but they still create author-facing apparatus records.
+[mcp_servers.tyf_workbench.tools.create_author_note]
+approval_mode = "prompt"
+
+[mcp_servers.tyf_workbench.tools.propose_footnote_from_note]
+approval_mode = "prompt"
+
+[mcp_servers.tyf_workbench.tools.prepare_gate_packet]
+approval_mode = "prompt"
+
+[mcp_servers.tyf_workbench.tools.refresh_book_graph]
+approval_mode = "prompt"
+
+[mcp_servers.tyf_workbench.tools.refresh_book_map]
+approval_mode = "prompt"
+
+[mcp_servers.tyf_workbench.tools.record_codex_turn_status]
+approval_mode = "approve"

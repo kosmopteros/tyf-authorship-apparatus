@@ -180,6 +180,7 @@ This is v0.5.0 beta. It is ready for local-first single-book beta use: preserve 
 - `docs/FIRST_SITTING_REHEARSAL.md`: reproducible first-sitting proof from a public scaffold
 - `docs/TYF_FOUNDATION.md`: roles, the single vocabulary, the Zoom x Pass matrix
 - `docs/WORKSPACE_CONTRACT.md`: the author's workspace state files
+- `docs/WORKBENCH_TARGET_STATE.md`: the long-term local double-surface Workbench target for multi-unit drafting, contextual amanuensis chat, notes, footnotes, Codex awareness, and the book graph
 - `docs/RELEASE_READINESS.md`: maintainer-facing beta acceptance checklist
 - `docs/ATTENTIVENESS.md`: the notice ledger, memory without git, the discrepancy stance
 - `docs/LEARN_PASS.md`: the opt-in, unwired semantic layer

@@ -4,8 +4,8 @@
     {
       "candidate_id": "cand:98d7d0ec4df2",
       "item_role": "requirement",
-      "matched_requirement": "req:3b338964",
-      "matched_score": 0.056,
+      "matched_requirement": "req:fd24e14d",
+      "matched_score": 0.105,
       "relation": "novel",
       "review_actions": [
         "accept",
@@ -25,8 +25,8 @@
     {
       "candidate_id": "cand:5443c081bcf0",
       "item_role": "requirement",
-      "matched_requirement": "req:a4629e7a",
-      "matched_score": 0.068,
+      "matched_requirement": "req:baf5eefa",
+      "matched_score": 0.073,
       "relation": "novel",
       "review_actions": [
         "accept",
@@ -46,8 +46,8 @@
     {
       "candidate_id": "cand:f5677ac67987",
       "item_role": "requirement",
-      "matched_requirement": "req:d6e294d5",
-      "matched_score": 0.068,
+      "matched_requirement": "req:baf5eefa",
+      "matched_score": 0.103,
       "relation": "novel",
       "review_actions": [
         "accept",
@@ -67,8 +67,8 @@
     {
       "candidate_id": "cand:0d8c98840b61",
       "item_role": "contradiction-ruling",
-      "matched_requirement": "req:681a56b1",
-      "matched_score": 0.026,
+      "matched_requirement": "req:a145ae89",
+      "matched_score": 0.054,
       "relation": "needs-ruling",
       "review_actions": [
         "accept",
@@ -88,8 +88,8 @@
     {
       "candidate_id": "cand:8395fe65096c",
       "item_role": "requirement",
-      "matched_requirement": "req:ae34c916",
-      "matched_score": 0.049,
+      "matched_requirement": "req:18b23109",
+      "matched_score": 0.081,
       "relation": "novel",
       "review_actions": [
         "accept",
@@ -105,25 +105,67 @@
       "source_path": "external:pasted-text.txt",
       "source_role": "corrected-roast",
       "text": "proposal/acceptance distinction;"
+    },
+    {
+      "candidate_id": "cand:f00d955a1e6d",
+      "item_role": "requirement",
+      "matched_requirement": "req:e6b15557",
+      "matched_score": 0.178,
+      "relation": "novel",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 0,
+      "source_path": "conversation",
+      "source_role": "",
+      "text": "TYF should capture real author-session hiccups and agent misreads as local, review-only tooling learning candidates so Alexander can write two books while surfacing practical improvements to TYF. Learn from SOLO's local-only fbs learn pattern, but keep TYF independent of SOLO and avoid storing manuscript source text or snippets."
+    },
+    {
+      "candidate_id": "cand:455cc91e78bf",
+      "item_role": "requirement",
+      "matched_requirement": "req:81811df2",
+      "matched_score": 0.146,
+      "relation": "novel",
+      "review_actions": [
+        "accept",
+        "edit",
+        "reject",
+        "defer",
+        "split",
+        "promote-to-Be-gap",
+        "convert-to-critique"
+      ],
+      "review_disposition": "candidate-review",
+      "source_line": 0,
+      "source_path": "user: TYF workbench request 2026-06-26",
+      "source_role": "",
+      "text": "Build the first local TYF book workbench slice: a file-backed Draft Review Workbench where the author can view/edit candidate draft beside the approved manuscript, see book typeface/paragraph style and image asset scaffolding, and prepare selections for the controlled Gate without uncontrolled manuscript writes. Defer print-ready KDP/PDF, full pagination, publisher templates, and full WYSIWYG layout to later work."
     }
   ],
   "readout": {
     "be_gaps": 0,
-    "candidates": 5,
+    "candidates": 7,
     "contradictions": 1,
     "duplicates": 0,
-    "novel": 4,
+    "novel": 6,
     "recommended_next_action": "review contradiction rulings first",
     "refinements": 0,
     "summary": {
       "needs-ruling": 1,
-      "novel": 4
+      "novel": 6
     }
   },
   "summary": {
     "needs-ruling": 1,
-    "novel": 4
+    "novel": 6
   },
   "truth_status": "review-only-reconciliation",
-  "ts": "2026-06-22T11:18:31.018623+00:00"
+  "ts": "2026-06-26T21:40:43.331248+00:00"
 }

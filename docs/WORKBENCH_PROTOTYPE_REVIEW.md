@@ -2,6 +2,8 @@
 
 Status: review after scaffolding the Workbench, MCP bridge, Codex bridge, hook recorder, schema helper, and focused tests.
 
+See also: `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md` for the 12-lens external-style critique and convergence map.
+
 ## What is now scaffolded
 
 - `scripts/tyf_workbench_v06.py`: local multi-unit writing desk.

@@ -19,6 +19,8 @@ keywords = ["authorship", "writing", "editing", "voice", "skills"]
 [project.scripts]
 tyf = "tyf:main"
 tyf-workbench = "tyf_workbench_live:main"
+tyf-review = "tyf_review:main"
+tyf-architecture-check = "tyf_architecture_contracts:main"
 tyf-graph = "tyf_graph_projection:main"
 tyf-concept-review = "tyf_concept_review:main"
 tyf-continuity-review = "tyf_continuity_review:main"
@@ -30,6 +32,9 @@ tyf-rc-doctor = "tyf_rc_doctor:main"
 [tool.setuptools]
 py-modules = [
   "tyf",
+  "tyf_architecture_contracts",
+  "tyf_workbench_slots",
+  "tyf_review",
   "tyf_workbench_v06",
   "tyf_workbench_live",
   "tyf_workbench_status",

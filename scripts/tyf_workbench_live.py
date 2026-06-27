@@ -20,6 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import tyf_recovery as recovery  # noqa: E402
+import tyf_workbench_slots as slots  # noqa: E402
 import tyf_workbench_v06 as wb  # noqa: E402
 import tyf_workbench_status as status_model  # noqa: E402
 
@@ -85,6 +86,7 @@ SCRIPT = r"""
       const copyBtn = document.getElementById('saveBrowserCopy');
       const packetBtn = document.getElementById('prepareConflictPacket');
       if (reloadBtn) reloadBtn.onclick = async () => {
+        if (!confirm('Replace the browser text with the current disk draft? Save your version as a copy first if unsure.')) return;
         try {
           const r = await postRecovery('/api/reload-disk', {path: d.path});
           draft.value = r.text || '';
@@ -119,7 +121,7 @@ SCRIPT = r"""
       const row = d ? (live.drafts || []).find(x => x.path === d.path) : null;
       const stale = !!(row && d && d.sha256 && row.sha256 && row.sha256 !== d.sha256);
       if (stale) {
-        document.getElementById('conflictBadge').innerHTML = `<div class="warn"><strong>Changed outside this window</strong></div><div class="meta">${esc(d.path)}</div><div style="margin-top:8px"><button id="reloadDiskDraft">Reload disk version</button> <button id="saveBrowserCopy">Save my version as copy</button> <button id="prepareConflictPacket">Prepare conflict packet</button></div>`;
+        document.getElementById('conflictBadge').innerHTML = `<div class="warn"><strong>Changed outside this window</strong></div><div class="meta">${esc(d.path)}</div><div style="margin-top:8px"><button id="saveBrowserCopy">Save my version as copy</button> <button id="prepareConflictPacket">Prepare conflict packet</button> <button id="reloadDiskDraft">Reload disk version</button></div>`;
         wireRecoveryButtons(d);
       }
       else if (d && row) document.getElementById('conflictBadge').innerHTML = `<div class="ok"><strong>Safe to save</strong></div><div class="meta">${esc(d.path)}</div>`;
@@ -150,13 +152,18 @@ SCRIPT = r"""
 
 
 def enhanced_html(data: Dict[str, Any]) -> str:
-    html = wb.surface_html(data)
-    html = html.replace("Gate packet from selection", "Prepare for manuscript review")
-    html = html.replace("Amanuensis context", "Share this moment")
-    html = html.replace("Footnote candidate", "Make footnote candidate")
-    html = html.replace("      <section>\n        <strong>Images</strong>", PANEL + "      <section>\n        <strong>Images</strong>")
-    html = html.replace("    document.getElementById('refreshData').addEventListener('click', reload);\n    render();", "    document.getElementById('refreshData').addEventListener('click', async () => { await reload(); await pollLiveStatus(); });\n" + SCRIPT + "\n    render();\n    connectLiveStatus();")
-    return html
+    return slots.apply_workbench_slots(
+        wb.surface_html(data),
+        slots.WorkbenchSlots(
+            aside_before_images=PANEL,
+            script_before_render=SCRIPT,
+            label_replacements=(
+                ("Gate packet from selection", "Prepare for manuscript review"),
+                ("Amanuensis context", "Share this moment"),
+                ("Footnote candidate", "Make footnote candidate"),
+            ),
+        ),
+    )
 
 
 class ThreadingServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
@@ -172,7 +179,7 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
     base = wb.make_handler(work_id, work_root, workspace, session_key)
 
     class Handler(base):
-        server_version = "TYFWorkbenchLive/0.3"
+        server_version = "TYFWorkbenchLive/0.4"
 
         def read_payload(self) -> Dict[str, Any]:
             size = int(self.headers.get("Content-Length", "0"))

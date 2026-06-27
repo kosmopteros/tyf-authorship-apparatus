@@ -67,7 +67,7 @@ Nodes include:
 - author notes
 - footnote candidates
 - Gate packets
-- JSONL ledgers/logs
+- JSONL ledgers/logs/record stores
 - JSONL records
 - derived term nodes
 
@@ -111,10 +111,11 @@ Classifications:
 
 - `hash-chain-ledger`: currently `.tyf/events.jsonl` when its sequence and hash chain verify
 - `broken-hash-chain-ledger`: event chain exists but does not verify
+- `mutable-record-store-jsonl`: JSONL-shaped record storage that may be rewritten, currently `knowledge-base/author-notes.jsonl`
 - `append-log-jsonl`: JSONL append logs without cryptographic chain semantics
 - `empty-jsonl`: placeholder or unused JSONL file
 
-This is intentionally blunt. A `.jsonl` extension alone does not make something a ledger.
+This is intentionally blunt. A `.jsonl` extension alone does not make something a ledger. In particular, `knowledge-base/author-notes.jsonl` is durable local record storage, but it is not append-only: note status updates can rewrite it. That is useful, but it is not a ledger.
 
 ## Answer to the storage question
 

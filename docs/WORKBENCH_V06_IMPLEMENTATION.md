@@ -2,6 +2,8 @@
 
 Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with MCP, hook, bridge, schema, and focused test scaffolds.
 
+See also: `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md` for the 12-lens external-style critique and convergence map.
+
 This document is the implementation bridge between `docs/WORKBENCH_TARGET_STATE.md` and runnable code. It chooses the smallest desk that solves the immediate authorship problem: the author can write inside TYF, across many draft units, while the manuscript remains protected by the Gate.
 
 ## Product judgement

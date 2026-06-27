@@ -1,6 +1,6 @@
 # Workbench v0.6 implementation plan
 
-Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`.
+Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with a first MCP bridge in `scripts/tyf_workbench_mcp.py`.
 
 This document is the implementation bridge between `docs/WORKBENCH_TARGET_STATE.md` and runnable code. It chooses the smallest desk that solves the immediate authorship problem: the author can write inside TYF, across many draft units, while the manuscript remains protected by the Gate.
 
@@ -15,7 +15,7 @@ The v0.6 slice chooses:
 - a small localhost server instead of a framework
 - draft writes only, with compare-and-swap hashes
 - manuscript preview only, with no manuscript write API
-- context packets for the amanuensis instead of embedded chat
+- context packets and MCP tools for the amanuensis instead of embedded chat
 
 This keeps the apparatus aligned with the existing TYF rule: the author is the source, the apparatus proposes and preserves, and `manuscript/` is written only through the controlled Gate.
 
@@ -70,6 +70,29 @@ python scripts/tyf_workbench_v06.py --refresh-map
 
 The script also writes static artifacts to `.review/surface/workbench-v06.html` and `.review/surface/workbench-v06-data.json`. Static HTML is useful for inspection, but draft saves and note creation require `--serve`.
 
+## MCP bridge
+
+The first MCP bridge is `scripts/tyf_workbench_mcp.py`.
+
+It is a stdio MCP server for Codex and other MCP clients. It exposes TYF operations, not raw filesystem operations:
+
+- `get_active_workbench_context`
+- `get_active_selection`
+- `read_unit_context`
+- `search_book_graph`
+- `list_author_notes`
+- `create_author_note`
+- `propose_footnote_from_note`
+- `prepare_gate_packet`
+- `refresh_book_graph`
+- `refresh_book_map`
+- `surface_current_conflicts`
+- `record_codex_turn_status`
+
+Configuration example: `docs/CODEX_MCP_CONFIG.sample.toml`.
+
+The MCP bridge lets Codex know what the author is touching without manual copy-paste, and lets Codex create notes, footnote candidates, and review packets without receiving a raw write-any-file tool. It still has no manuscript write API.
+
 ## Files created or used
 
 - `outline/book-map.yaml`
@@ -83,6 +106,8 @@ The script also writes static artifacts to `.review/surface/workbench-v06.html` 
 - `.review/surface/workbench-v06-data.json`
 - `.review/surface/active-context.md`
 - `.review/surface/active-context.json`
+- `.review/surface/book-graph-lite.json`
+- `.review/surface/codex-turn-status.json`
 - `.review/gate-packets/*.md`
 - `.review/gate-packets/*.json`
 - `.review/footnote-candidates/*.md`
@@ -125,17 +150,16 @@ Draft saves use compare-and-swap:
 
 ## What this does not do yet
 
-v0.6 intentionally does not implement:
+v0.6 still does not implement:
 
 - embedded Codex chat
-- MCP server tools
 - a persistent graph database
 - visual drag and drop chapter reordering
 - manuscript insertion
 - print or export layout
 - multi-user collaboration
 
-The correct next step is probably not to add chat immediately. The next step should be to make the context packet richer and let the external amanuensis consume it cleanly. Then MCP can expose the same operations when the local desk feels right.
+The correct next step is probably not to add chat immediately. The next step should be to make the Workbench refresh visibly from Codex turn status and conflicts, then add Codex hook templates. Browser-native app-server chat belongs after that.
 
 ## Success test
 
@@ -149,7 +173,7 @@ This slice passes the practical author test when the author can:
 6. leave a note that survives as JSONL
 7. create a footnote candidate from that note
 8. prepare a Gate packet from selected draft text
-9. export an active context packet for Codex
+9. expose active context to Codex through MCP
 10. continue writing without leaving the apparatus
 
 That is enough for the apparatus to stop being only a conversation with Codex and start becoming a real authorship desk.

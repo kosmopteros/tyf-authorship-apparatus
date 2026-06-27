@@ -1,6 +1,6 @@
 # Workbench v0.6 implementation plan
 
-Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with a first MCP bridge in `scripts/tyf_workbench_mcp.py`.
+Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with MCP, hook, bridge, schema, and focused test scaffolds.
 
 This document is the implementation bridge between `docs/WORKBENCH_TARGET_STATE.md` and runnable code. It chooses the smallest desk that solves the immediate authorship problem: the author can write inside TYF, across many draft units, while the manuscript remains protected by the Gate.
 
@@ -93,6 +93,17 @@ Configuration example: `docs/CODEX_MCP_CONFIG.sample.toml`.
 
 The MCP bridge lets Codex know what the author is touching without manual copy-paste, and lets Codex create notes, footnote candidates, and review packets without receiving a raw write-any-file tool. It still has no manuscript write API.
 
+## Codex visibility and bridge scaffolds
+
+Additional local bridge pieces now exist:
+
+- `scripts/tyf_codex_hook.py`: tolerant Codex hook recorder that writes status files only.
+- `docs/CODEX_HOOKS.sample.toml`: readable hook wiring sample.
+- `scripts/tyf_codex_bridge.py`: local `codex app-server` bridge scaffold over stdio.
+- `scripts/tyf_codex_schema.py`: helper for generating version-specific app-server schema compatibility artifacts.
+
+The app-server bridge is intentionally behind TYF rather than exposed directly to the browser. It builds input from the active Workbench selection, unit hashes, notes, related passages, and style sheet. It records events and turn status under `.review/surface/`. It does not expose a manuscript write route.
+
 ## Files created or used
 
 - `outline/book-map.yaml`
@@ -108,16 +119,23 @@ The MCP bridge lets Codex know what the author is touching without manual copy-p
 - `.review/surface/active-context.json`
 - `.review/surface/book-graph-lite.json`
 - `.review/surface/codex-turn-status.json`
+- `.review/surface/codex-turn-status.jsonl`
+- `.review/surface/codex-hooks.jsonl`
+- `.review/surface/codex-bridge-events.jsonl`
+- `.review/surface/codex-bridge-status.json`
+- `.review/surface/codex-app-server-compat.md`
+- `.review/surface/codex-app-server-compat.json`
 - `.review/gate-packets/*.md`
 - `.review/gate-packets/*.json`
 - `.review/footnote-candidates/*.md`
 - `.review/footnote-candidates/*.json`
 - `.tyf/workbench-state.json`
 - `.tyf/events.jsonl`
+- `.tyf/codex-app-server-schema/`
 
 ## Local server API
 
-The local server exposes only TYF-named safe operations.
+The local Workbench server exposes only TYF-named safe operations.
 
 - `GET /`
 - `GET /workbench-data.json`
@@ -133,7 +151,7 @@ There is no raw write-any-file route and no manuscript write route.
 
 ## Security and overwrite model
 
-The default host is `127.0.0.1`. Binding to a non-loopback host requires `--allow-remote`.
+The default Workbench host is `127.0.0.1`. Binding to a non-loopback host requires `--allow-remote`.
 
 Side-effecting POST requests require a per-session capability token embedded in the served page. This is not meant to be internet security. It is a local misuse guard so a random page cannot casually POST into the workbench without the session token.
 
@@ -152,14 +170,25 @@ Draft saves use compare-and-swap:
 
 v0.6 still does not implement:
 
-- embedded Codex chat
-- a persistent graph database
+- browser-native Codex chat UI
+- app-server approval mirroring in the browser
+- persistent semantic graph database
 - visual drag and drop chapter reordering
 - manuscript insertion
 - print or export layout
 - multi-user collaboration
+- direct `tyf workbench` command wiring
 
-The correct next step is probably not to add chat immediately. The next step should be to make the Workbench refresh visibly from Codex turn status and conflicts, then add Codex hook templates. Browser-native app-server chat belongs after that.
+The correct next step is to make the Workbench refresh visibly from Codex turn status and bridge status files, then validate the hook sample against a local Codex install. Browser-native app-server chat belongs after approval mirroring exists.
+
+## Tests
+
+The branch includes focused coverage for:
+
+- Workbench unit discovery, scaffold, CAS save, notes, footnotes, Gate packets, and context packets: `tests/test_workbench_v06.py`
+- MCP tool list, context, notes, footnotes, Gate packets, graph lite, status, and conflict detection: `tests/test_workbench_mcp.py`
+- Codex hook recorder status files: `tests/test_codex_hook_recorder.py`
+- Codex bridge context/status path: `tests/test_codex_bridge_context.py`
 
 ## Success test
 
@@ -174,6 +203,7 @@ This slice passes the practical author test when the author can:
 7. create a footnote candidate from that note
 8. prepare a Gate packet from selected draft text
 9. expose active context to Codex through MCP
-10. continue writing without leaving the apparatus
+10. record Codex status visibly in the Workbench file surface
+11. prepare a browser-chat turn through the local bridge without exposing manuscript writes
 
 That is enough for the apparatus to stop being only a conversation with Codex and start becoming a real authorship desk.

@@ -1,6 +1,6 @@
 # Workbench two-way machinery
 
-Status: design plus first MCP scaffold.
+Status: design plus first runnable scaffolds for Workbench, MCP, Codex bridge, hooks, and schema compatibility.
 
 This document specifies how the TYF Workbench, TYF MCP server, Codex hooks, and optional Codex app-server bridge should work together without turning TYF into a cloud product or a raw filesystem tool.
 
@@ -81,38 +81,46 @@ The first implementation is `scripts/tyf_workbench_mcp.py`. It is stdio-only by 
 
 Hooks are the quiet visibility lane. They should publish status into local files, not edit prose.
 
+The first recorder is `scripts/tyf_codex_hook.py`. It reads tolerant hook JSON from stdin and writes only status records under `.review/surface/`:
+
+- `.review/surface/codex-turn-status.json`
+- `.review/surface/codex-turn-status.jsonl`
+- `.review/surface/codex-hooks.jsonl`
+
 Recommended hook behavior:
 
-- `SessionStart`: run `tyf resume` or read `get_active_workbench_context` and surface that Codex is in a TYF workspace
+- `SessionStart`: surface that Codex has entered a TYF workspace
 - `UserPromptSubmit`: record prompt class and active Workbench state if relevant
 - `PostToolUse`: record changed paths and whether a Gate packet or review packet changed
 - `Stop`: record turn summary, pending decisions, and conflict notices
 
-Hooks should write through a helper or MCP tool such as `record_codex_turn_status`. They should not write `manuscript/`.
+Hooks should not write `manuscript/`.
 
 ### Codex app-server bridge
 
-Codex app-server is not a replacement for MCP. It is the optional v0.8 path for a browser-native amanuensis chat inside the Workbench.
+Codex app-server is not a replacement for MCP. It is the optional browser-native amanuensis chat path.
+
+The first local bridge is `scripts/tyf_codex_bridge.py`.
 
 Use it when the Workbench itself needs to:
 
 - start or resume a Codex thread
 - send active selection plus context into that thread
-- stream Codex events back into the browser
+- stream or record Codex events back into the desk
 - show tool calls, approval prompts, file changes, and turn status inside the desk
 
-The app-server bridge should be a local adapter:
+The bridge shape is:
 
 ```text
 Browser Workbench chat panel
   <-> TYF Codex bridge on localhost
-  <-> codex app-server over stdio or Unix socket
+  <-> codex app-server over stdio
   <-> Codex agent thread
   <-> TYF MCP server tools
   <-> workspace files
 ```
 
-The browser should never talk directly to `codex app-server` in WebSocket mode unless there is a strong reason. Keep a TYF bridge in between so TYF can:
+The browser should not talk directly to `codex app-server` in WebSocket mode by default. Keep a TYF bridge in between so TYF can:
 
 - inject active Workbench context
 - keep a local event ledger
@@ -120,6 +128,15 @@ The browser should never talk directly to `codex app-server` in WebSocket mode u
 - display permissions and tool calls plainly
 - keep the manuscript Gate boundary visible
 - support a fallback when Codex is not installed
+
+The bridge currently records app-server events to:
+
+- `.review/surface/codex-bridge-events.jsonl`
+- `.review/surface/codex-bridge-status.json`
+- `.review/surface/codex-turn-status.json`
+- `.review/surface/codex-turn-status.jsonl`
+
+It is still a scaffold, not a complete browser-native chat client.
 
 ## Two-way flows
 
@@ -164,18 +181,18 @@ The note is author material or amanuensis material. It is not a command to edit 
 ### Flow E: Codex turn status back to the browser
 
 1. Codex starts or completes a turn.
-2. Hook or MCP call records status through `record_codex_turn_status`.
+2. Hook, MCP call, or bridge event records status.
 3. TYF writes `.review/surface/codex-turn-status.json` and appends JSONL history.
-4. Workbench shows the last turn status and changed paths.
-5. If a changed draft hash conflicts with browser state, Workbench shows conflict before save.
+4. Workbench can poll this file and show the last turn status and changed paths.
+5. If a changed draft hash conflicts with browser state, Workbench should show conflict before save.
 
 ### Flow F: Browser-native chat through app-server
 
-This is v0.8, not required for v0.6.
+This is scaffolded, not complete.
 
-1. Author opens the Workbench chat panel.
+1. Author opens the future Workbench chat panel.
 2. Browser asks the TYF bridge to start or resume a Codex thread.
-3. Bridge launches `codex app-server` over stdio or connects to a Unix socket.
+3. Bridge launches `codex app-server` over stdio.
 4. Bridge sends `initialize`, then `initialized`.
 5. Bridge starts or resumes a thread.
 6. On each author question, bridge builds input from:
@@ -187,8 +204,8 @@ This is v0.8, not required for v0.6.
    - related local passages
    - MCP server availability
 7. Bridge sends `turn/start` to app-server.
-8. Bridge streams Codex notifications back to browser as Server-Sent Events.
-9. Browser renders agent messages, tool calls, approval needs, changed paths, and final status.
+8. Bridge records Codex notifications as local event/status files.
+9. Future browser UI renders agent messages, tool calls, approval needs, changed paths, and final status.
 10. Any file changes still happen through Codex permissions and TYF tools.
 
 ## Why MCP and app-server are both needed
@@ -222,23 +239,38 @@ default_tools_approval_mode = "prompt"
 
 Read-only context tools can be set to `approve`. Packet-writing or note-writing tools should stay `prompt` until usage proves they are calm.
 
-### App-server bridge later
+### Hooks
 
-Preferred local launch:
+Use `docs/CODEX_HOOKS.sample.toml` as a readable wiring sample. The exact hook config should be validated against the installed Codex version.
+
+### App-server bridge
+
+Run the local bridge from the TYF workspace:
+
+```bash
+python scripts/tyf_codex_bridge.py --workspace /absolute/path/to/your-tyf-book-workspace
+```
+
+The bridge launches this by default:
 
 ```bash
 codex app-server
 ```
 
-The bridge should use stdio first. Unix socket is also clean for a desktop-style app. WebSocket should stay loopback-only unless configured with explicit auth.
+Side-effecting bridge APIs are protected by a per-session `X-TYF-Bridge-Token`. Non-loopback binding requires `--allow-remote`.
 
-The bridge should generate and store version-specific schemas with:
+### Schema compatibility
+
+Use the helper after Codex upgrades:
 
 ```bash
-codex app-server generate-json-schema --out .tyf/codex-app-server-schema
+python scripts/tyf_codex_schema.py --workspace /absolute/path/to/your-tyf-book-workspace
 ```
 
-The generated schema is version-specific, so the bridge should treat it as a compatibility artifact, not as handwritten doctrine.
+It stores version-specific artifacts under `.tyf/codex-app-server-schema/` and writes:
+
+- `.review/surface/codex-app-server-compat.json`
+- `.review/surface/codex-app-server-compat.md`
 
 ## Trust boundary
 
@@ -261,20 +293,23 @@ Implemented now:
 - local Workbench v0.6 in `scripts/tyf_workbench_v06.py`
 - MCP stdio server in `scripts/tyf_workbench_mcp.py`
 - Codex MCP config sample in `docs/CODEX_MCP_CONFIG.sample.toml`
+- Codex hook recorder in `scripts/tyf_codex_hook.py`
+- Codex hooks sample in `docs/CODEX_HOOKS.sample.toml`
+- local app-server bridge scaffold in `scripts/tyf_codex_bridge.py`
+- schema compatibility helper in `scripts/tyf_codex_schema.py`
 - active context packet path in `.review/surface/active-context.md`
 - Codex turn status record path in `.review/surface/codex-turn-status.json`
+- focused tests for Workbench, MCP, hook recorder, and bridge context
 
-Still to implement:
+Still to implement before browser-native chat is complete:
 
-- Workbench live polling or SSE display for `codex-turn-status.json`
-- Codex hook templates that call `record_codex_turn_status`
-- browser-native chat panel
-- local TYF bridge to `codex app-server`
-- schema generation and compatibility checks for app-server
+- Workbench live polling or SSE display for Codex status files
 - approval UI mirroring for app-server events
+- local validation of exact hook config syntax against installed Codex
+- command wiring such as `tyf surface --v06` or `tyf workbench`
 
 ## Product decision
 
-Do not start with browser-native Codex chat. Start with MCP.
+Start with MCP as the usable path. Keep browser-native Codex chat behind the bridge until status polling, approval mirroring, and local hook validation are in place.
 
 The immediate author pain is not the lack of chat. It is that the book has no spatial body. MCP fixes the copy-paste problem while preserving the current Codex workflow. App-server becomes valuable after the desk itself is trustworthy enough to host the conversation.

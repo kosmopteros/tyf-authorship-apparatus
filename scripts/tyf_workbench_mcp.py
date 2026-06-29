@@ -95,8 +95,8 @@ def as_int(value: Any, default: int) -> int:
         return default
 
 
-def first_text(value: Any) -> str:
-    return wb.one_line(value, "")
+def first_text(value: Any, default: str = "") -> str:
+    return wb.one_line(value, default)
 
 
 class WorkbenchContext:

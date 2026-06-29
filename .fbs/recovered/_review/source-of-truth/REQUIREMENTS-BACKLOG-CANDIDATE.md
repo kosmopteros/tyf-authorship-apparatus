@@ -17,42 +17,50 @@ backlog items. It is not a SOLO requirements register yet.
 
 | ID | Requirement | Status | Confidence | Primary evidence |
 | --- | --- | --- | --- | --- |
-| R-001 | TYF should prefer deterministic checks and use model judgment only for issues that cannot be settled mechanically. | gap-needs-Be | 0.72 | docs/LEARN_PASS.md:13, scripts/tyf.py:145 |
-| R-002 | `tyf check` should hard-fail with exit code 1 when documentation or pack consistency drift is detected. | gap-needs-Be | 0.78 | skills/keeping-documentation-honest/SKILL.md:23, scripts/tyf.py:145 |
-| R-003 | Each `tyf notice` run should reconcile surfaced items against the content-addressed ledger. | gap-needs-Be | 0.74 | docs/ATTENTIVENESS.md:35, scripts/tyf.py:145 |
-| R-004 | After `tyf write`, the notice ledger should be updated so already-seen manuscript issues are not re-reported unless their context changes. | gap-needs-Be | 0.70 | docs/ATTENTIVENESS.md:36, scripts/tyf.py:145 |
-| R-005 | TYF's pressure scenarios should be run against real agent/subagent harnesses before the pack is described as production-bulletproof. | candidate-review | 0.75 | TYF-manifesto-and-architecture.md:288, scripts/tyf.py:145 |
-| R-006 | `tyf notice` should surface, without modifying files, gaps, trailing fragments, unsourced claims, stale style sheets, and unused registers. | gap-needs-Be | 0.82 | TYF-manifesto-and-architecture.md:254, scripts/tyf.py:145 |
-| R-007 | The manuscript revise/write boundary should require explicit author action through `tyf write --confirm`. | gap-needs-Be | 0.84 | TYF-manifesto-and-architecture.md:173, scripts/tyf.py:145 |
-| R-008 | A correctly installed harness should expose all sixteen TYF skills and route authorship requests through `using-tyf` first. | candidate-review | 0.68 | .opencode/INSTALL.md:13, scripts/tyf.py:145 |
-| R-009 | The `tyf` helper command surface should include init, status, new-work, open, mark-ready, audit, write --confirm, doctor, check, notice, dismiss, and reconcile. | gap-needs-Be | 0.80 | TYF-manifesto-and-architecture.md:236, scripts/tyf.py:145 |
-| R-010 | When `scripts/tyf.py` is copied outside the repo, `TYF_PACK_ROOT` should point back to the pack root so `tyf check` can inspect the correct files. | candidate-review | 0.76 | cowork/SETUP.md:13, scripts/tyf.py:145 |
-| R-011 | Installed harness verification should confirm all sixteen TYF skills are visible and authorship requests route through `using-tyf`. | candidate-review | 0.67 | docs/PORTABILITY.md:65, scripts/tyf.py:145 |
-| R-012 | Cowork install verification should confirm all sixteen skills are visible, `using-tyf` is the first authorship router, and manuscript writes are refused outside `tyf write`. | candidate-review | 0.72 | cowork/SETUP.md:37, scripts/tyf.py:145 |
-| R-013 | TYF should preserve project lineage and rationale so contributors can challenge accepted and rejected design decisions. | candidate-review | 0.62 | TYF-manifesto-and-architecture.md:53, scripts/tyf.py:145 |
-| R-014 | TYF should keep machine-only bookkeeping in `.tyf/ledger.db`, including notice statuses, dismissals, timestamps, and an append-only event log for init/write/mark-ready/dismiss/repair. | gap-needs-Be | 0.76 | TYF-manifesto-and-architecture.md:234, scripts/tyf.py:145 |
-| R-015 | `tyf init` and `tyf doctor --repair` should be idempotent, creating only missing workspace structure without clobbering existing authored files. | gap-needs-Be | 0.80 | tests/acceptance-and-edge-cases.md:116, scripts/tyf.py:145 |
-| R-016 | `tyf check` should exempt historical/validation files that intentionally preserve older command lists or examples. | gap-needs-Be | 0.66 | tests/acceptance-and-edge-cases.md:143, scripts/tyf.py:145 |
-| R-017 | TYF workspace operations should preserve per-work isolation. | gap-needs-Be | 0.70 | tests/acceptance-and-edge-cases.md:126, scripts/tyf.py:145 |
-| R-018 | When manuscript files and write logs disagree, `tyf doctor` should surface the inconsistency. | gap-needs-Be | 0.73 | tests/acceptance-and-edge-cases.md:106, scripts/tyf.py:145 |
-| R-019 | When TYF is uncertain about a write boundary, not writing should be the safe default. | gap-needs-Be | 0.69 | tests/acceptance-and-edge-cases.md:127, scripts/tyf.py:145 |
-| R-020 | TYF should resolve real paths and refuse writes outside the workspace root. | gap-needs-Be | 0.78 | tests/acceptance-and-edge-cases.md:125, scripts/tyf.py:145 |
-| R-021 | Workspace-affecting commands should scaffold or repair required structure before relying on it. | gap-needs-Be | 0.64 | tests/acceptance-and-edge-cases.md:119, scripts/tyf.py:145 |
-| R-022 | Source material areas should be treated as read-mostly, with writes reserved for explicit ingest or author-approved operations. | gap-needs-Be | 0.66 | tests/acceptance-and-edge-cases.md:128, scripts/tyf.py:145 |
-| R-023 | Harnesses with post-turn hooks may call `tyf notice --peek` or append intent capture to `.proposals/`, while TYF itself should not claim this portability universally. | candidate-review | 0.68 | docs/ATTENTIVENESS.md:37, scripts/tyf.py:145 |
-| R-024 | `tyf write` should require `--confirm` as the concrete signal of explicit author acceptance. | gap-needs-Be | 0.86 | cowork/SETUP.md:27, scripts/tyf.py:145 |
-| R-025 | The documentation-honesty check should run warn-only after mutating `tyf` commands and hard-fail when invoked as standalone `tyf check`. | gap-needs-Be | 0.74 | VALIDATION.md:6, scripts/tyf.py:145 |
-| R-026 | The existing validation evidence records an end-to-end POSIX exercise of core `tyf` helper commands, including write refusal without `--confirm` and success with it. | candidate-review | 0.70 | VALIDATION.md:13, scripts/tyf.py:145 |
-| R-027 | Validation evidence should demonstrate that introduced documentation drift is warned after mutating commands and fails standalone `tyf check`. | candidate-review | 0.72 | VALIDATION.md:6, scripts/tyf.py:145 |
+| R-001 | **Code first, model only where intelligence is required.** Every check that can be done deterministically already lives in `tyf notice`. | gap-needs-Be | 0.66 | docs/LEARN_PASS.md:13, scripts/tyf.py:883 |
+| R-002 | **Command surface is too fragmented.** Standalone commands are fine internally, but `tyf workbench` and `tyf review ...` should become canonical. | gap-needs-Be | 0.66 | docs/RC_ARCHITECTURE_RED_TEAM.md:230, scripts/tyf.py:883 |
+| R-003 | **Explicitly, hard-fail, as `tyf check`** (exit 1 on drift; | gap-needs-Be | 0.66 | skills/keeping-documentation-honest/SKILL.md:23, scripts/tyf.py:883 |
+| R-004 | **Frame-lock.** The work assumes its own frame and never tests it. | gap-needs-Be | 0.66 | skills/auditing-adversarially/SKILL.md:16, scripts/tyf.py:5057 |
+| R-005 | **Per-run (always).** Any time `tyf notice` runs, manually or on a schedule, it reconciles against the ledger. | gap-needs-Be | 0.66 | docs/ATTENTIVENESS.md:37, scripts/tyf.py:883 |
+| R-006 | **Per-write (wired now).** Every `tyf write` updates the ledger and reports only genuinely new or resurfaced items, so a manuscript write never nags about things already seen. | gap-needs-Be | 0.66 | docs/ATTENTIVENESS.md:38, scripts/tyf.py:883 |
+| R-007 | **Register inheritance semantics.** When a work overrides a workspace-level register, how does the override compose with the base: replace, merge, layer, or per-rule? `manifest.yaml` currently defaults to layer. | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:292, scripts/tyf.py:3927 |
+| R-008 | **The attentive amanuensis loop.** `tyf notice` surfaces, and never modifies: gaps left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, unused registers. | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:256, scripts/tyf.py:883 |
+| R-009 | **The controlled write.** Entering the Revise column requires proposal, audit, author review packet, explicit author decision, and `tyf write --decision <id>`. | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:173, scripts/tyf.py:883 |
+| R-010 | A runtime is a place TYF runs, never part of its doctrine. | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:248, scripts/tyf.py:883 |
+| R-011 | A second, opt-in semantic layer (the Learn pass, `docs/LEARN_PASS.md`) reads only the diff and asks a model the few questions code cannot answer; | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:256, scripts/tyf.py:6210 |
+| R-012 | A second, opt-in semantic layer (the Learn pass, see `docs/LEARN_PASS.md`) reads only the diff and asks a model the few questions code cannot answer, again surfacing only. | gap-needs-Be | 0.66 | skills/scheduling-ongoing-work/SKILL.md:35, scripts/tyf.py:6210 |
+| R-013 | Added tests that assert required storage classes exist and wired architecture checks into `tyf-rc-doctor`. | gap-needs-Be | 0.66 | docs/RC_ARCHITECTURE_CONTRACTS_3X.md:28, scripts/tyf.py:883 |
+| R-014 | An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`; | gap-needs-Be | 0.66 | README.md:162, scripts/tyf.py:6210 |
+| R-015 | Ask the agent: "List the TYF skills you can see." It should return all nineteen, and it should route any authorship request through `using-tyf` first. | gap-needs-Be | 0.66 | .opencode/INSTALL.md:14, scripts/tyf.py:883 |
+| R-016 | Be IDs must be unique | gap-needs-Be | 0.66 | .claude/commands/fbs-formulate.md:105, scripts/tyf.py:2236 |
+| R-017 | Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace yet, then run `tyf start` or `tyf start <path>` if a chat export, folder, old workspace, zip, or scaffold arrives. | gap-needs-Be | 0.66 | cowork/SETUP.md:25, scripts/tyf.py:883 |
+| R-018 | Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `surface`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`. | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:236, scripts/tyf.py:883 |
+| R-019 | Convergence:** Every next slice should be judged by time-to-writing and time-to-return-to-writing, not by architectural completeness. | gap-needs-Be | 0.66 | docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:152, scripts/tyf.py:6234 |
+| R-020 | Convergence:** The amanuensis path should default to reading the active context automatically and proposing next actions, not asking the author to explicitly generate context packets. | gap-needs-Be | 0.66 | docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:56, scripts/tyf.py:5057 |
+| R-021 | Convergence:** `tyf workbench` should become the canonical command. | gap-needs-Be | 0.66 | docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:132, scripts/tyf.py:883 |
+| R-022 | Current repo evidence: 197 tests pass in the stdlib helper/doc/install suite, including exported release-tree `tyf check`, installer smoke coverage, release manifest context-path validation, a reproducible first-sitting rehearsal from `examples/first-sitting-arrival/scaffold.txt`, existing-work recovery packets for formatted and illustrated arrivals, language-neutral structure records for non-English source, answered-prompt resume handling, source-grounded `tyf attend` attention packets with transparent local retrieval, external-feedback triage, continuing-work session packets, resume return-context recovery, read-only session-start and message-sent hook contexts, Codex and Claude hook manifests with TYF-identifying status messages, doctor repair-boundary coverage, diagnostic-isolation packets, typographer-redactor treatment packets for existing body prose, Draft Review Workbench generation with draft-save conflict protection, private-context-free author/root/runtime surfaces, machine-checked pressure-eval honesty, local-only hidden tooling learning packets, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold. | gap-needs-Be | 0.66 | README.md:174, scripts/tyf.py:883 |
+| R-023 | For a domain without git, this is more than superpowers offers, and the attentive-amanuensis loop (surface-only, never modifies, dismissed-with-resurface) has no superpowers equivalent. | gap-needs-Be | 0.66 | docs/COMPARISON_SUPERPOWERS.md:39, scripts/tyf.py:3927 |
+| R-024 | For the highest-stakes skills (`controlling-manuscript-writes`, `composing-as-amanuensis`, `auditing-adversarially`, `ingesting-sources`), turn these break cases into RED/GREEN pressure scenarios in `pressure-scenarios.md` and run them against a subagent: confirm the skill produces the "should" behavior, not the "break" behavior, under pressure. | gap-needs-Be | 0.66 | tests/acceptance-and-edge-cases.md:161, scripts/tyf.py:883 |
+| R-025 | From that it proposes, never applies, new entries: an anti-pattern, a register fence, a terminology rule, a new skill. | gap-needs-Be | 0.66 | skills/scheduling-ongoing-work/SKILL.md:18, scripts/tyf.py:883 |
+| R-026 | Hooks should not write `manuscript/`. | gap-needs-Be | 0.66 | docs/WORKBENCH_TWO_WAY_MACHINERY.md:99, scripts/tyf.py:883 |
+| R-027 | If a changed draft hash conflicts with browser state, Workbench should show conflict before save. | gap-needs-Be | 0.66 | docs/WORKBENCH_TWO_WAY_MACHINERY.md:189, scripts/tyf.py:883 |
+| R-028 | If stale, TYF returns a conflict. | gap-needs-Be | 0.66 | docs/WORKBENCH_TWO_WAY_MACHINERY.md:179, scripts/tyf.py:883 |
+| R-029 | If the return context is thin or the author needs a fresh sitting, run `tyf session` or `tyf session work --focus "<focus>"`, read `.review/current-session.md`, and offer one small next move plus a stop condition. | gap-needs-Be | 0.66 | skills/using-tyf/SKILL.md:36, scripts/tyf.py:883 |
+| R-030 | If you must copy it, set `TYF_PACK_ROOT` to this repo. | gap-needs-Be | 0.66 | cowork/SETUP.md:13, scripts/tyf.py:883 |
+| R-031 | It may guide a candidate treatment in `drafts/` or editorial proposals in `.review/`, but it never authorizes a manuscript write. | gap-needs-Be | 0.66 | skills/typographer-redactor/SKILL.md:28, scripts/tyf.py:883 |
+| R-032 | It never writes to `manuscript/`; | gap-needs-Be | 0.66 | README.md:156, scripts/tyf.py:883 |
+| R-033 | It runs automatically warn-only after every mutating `tyf` command and hard-fails (exit 1) as a standalone command. | gap-needs-Be | 0.66 | VALIDATION.md:6, scripts/tyf.py:883 |
+| R-034 | It should read the orientation packet before organizing anything, run `tyf structure work --source-ref <id>` for any minted text source fragment, show `.review/writing-runway.md` and `drafts/candidate-draft.md`, and tell you what files were created in plain language. | gap-needs-Be | 0.66 | cowork/SETUP.md:25, scripts/tyf.py:883 |
+| R-035 | It should return all nineteen and route any authorship request through `using-tyf` first. | gap-needs-Be | 0.66 | docs/PORTABILITY.md:103, scripts/tyf.py:883 |
+| R-036 | It should return all nineteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write --decision`. | gap-needs-Be | 0.66 | cowork/SETUP.md:39, scripts/tyf.py:883 |
+| R-037 | Lineage matters for an open-source project, both for credit and because every keep and reject below is a decision a contributor should be able to challenge. | gap-needs-Be | 0.66 | TYF-manifesto-and-architecture.md:53, scripts/tyf.py:2522 |
+| R-038 | Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace, then run `tyf start` with no title required. | gap-needs-Be | 0.66 | AGENTS.md:11, scripts/tyf.py:883 |
+| R-039 | MCP returns active unit, selected text, notes, style sheet, and related local passages. | gap-needs-Be | 0.66 | docs/WORKBENCH_TWO_WAY_MACHINERY.md:151, scripts/tyf.py:883 |
+| R-040 | Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`. | gap-needs-Be | 0.66 | author-context/AGENTS.md:22, scripts/tyf.py:883 |
 
 ## P0 Promotion Candidates
 
-1. R-002 `tyf check` should hard-fail with exit code 1 when documentation or pack consist
-2. R-005 TYF's pressure scenarios should be run against real agent/subagent harnesses bef
-3. R-006 `tyf notice` should surface, without modifying files, gaps, trailing fragments,
-4. R-007 The manuscript revise/write boundary should require explicit author action throu
-5. R-009 The `tyf` helper command surface should include init, status, new-work, open, ma
-6. R-010 When `scripts/tyf.py` is copied outside the repo, `TYF_PACK_ROOT` should point b
+No P0 candidates ranked; review the candidate table first.
 
 ## Rulings Needed Before Implementation Work
 
@@ -60,14 +68,14 @@ No contradiction-ruling-needed candidates were ranked.
 
 ## Backlog From Accepted Direction
 
-1. --confirm - Require explicit confirmation (the `--confirm` contract);
-2. all-or-nothing - **Partial acceptance** ("take 1 and 3, not 2"): apply exactly the accepted subset, never all-or-nothing.
-3. pass - scenario + source files and return `pass`/`fail`.
-4. stale - never write stale or empty content.
-5. cloud - Use cloud Routines for cadences that should run while the laptop is closed.
-6. consent - silence is never consent.
-7. tyf - It runs automatically warn-only after every mutating `tyf` command and hard-fails (exit 1) as a standalone command.
-8. using-tyf - It should return all sixteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write`.
+1. tyf - It runs automatically warn-only after every mutating `tyf` command and hard-fails (exit 1) as a standalone command.
+2. pass - scenario + source files and return `pass`/`fail`.
+3. .review/ - Should: write findings to `.review/` only;
+4. manuscript/ - Hooks should not write `manuscript/`.
+5. prompt - Packet-writing or note-writing tools should stay `prompt` until usage proves they are calm.
+6. ide - The same TYF tools should be available whether the author talks in the Codex CLI, IDE, or future Workbench chat.
+7. able - never able to silently publish into manuscript.
+8. init - Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `surface`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
 
 ## Suggested SOLO Promotion Shape
 

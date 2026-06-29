@@ -60,7 +60,7 @@ def read_json(path: Path) -> Optional[Dict[str, Any]]:
     try:
         data = json.loads(wb.read_text(path, ""))
     except json.JSONDecodeError:
-        return None
+        return None  # degradation: ok: malformed optional JSON contributes no graph record
     return data if isinstance(data, dict) else None
 
 

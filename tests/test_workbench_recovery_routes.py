@@ -15,8 +15,8 @@ SCRIPTS = ROOT / "scripts"
 def load_module(name):
     spec = importlib.util.spec_from_file_location(name, SCRIPTS / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
     sys.modules[name] = module
+    spec.loader.exec_module(module)
     return module
 
 

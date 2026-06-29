@@ -34,7 +34,7 @@ def resolve(workspace: Optional[str]) -> tuple[str, Path, Path]:
 
 def run_cmd(command: List[str], cwd: Path) -> Dict[str, object]:
     try:
-        completed = subprocess.run(command, cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+        completed = subprocess.run(command, cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)  # process-owner: reviewed: local Codex command list, no shell, capture-only validation
         return {"ok": completed.returncode == 0, "returncode": completed.returncode, "stdout": completed.stdout.strip(), "stderr": completed.stderr.strip(), "command": command}
     except OSError as exc:
         return {"ok": False, "returncode": None, "stdout": "", "stderr": str(exc), "command": command}

@@ -3463,11 +3463,17 @@ class DocCheck(unittest.TestCase):
     def test_release_status_counts_match_current_evidence(self):
         suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
         test_count = suite.countTestCases()
-        be_path = REPO / ".fbs" / "be" / "tyf_smoke.feature"
+        be_dir = REPO / ".fbs" / "be"
         be_count = None
-        if be_path.is_file():
-            be_text = be_path.read_text(encoding="utf-8")
-            be_count = sum(1 for line in be_text.splitlines() if line.lstrip().startswith("Scenario:"))
+        if be_dir.is_dir():
+            be_count = 0
+            for be_path in sorted(be_dir.glob("*.feature")):
+                be_text = be_path.read_text(encoding="utf-8")
+                be_count += sum(
+                    1
+                    for line in be_text.splitlines()
+                    if line.lstrip().startswith("Scenario:")
+                )
         targets = {
             "README.md": (REPO / "README.md").read_text(encoding="utf-8"),
             "VALIDATION.md": (REPO / "VALIDATION.md").read_text(encoding="utf-8"),

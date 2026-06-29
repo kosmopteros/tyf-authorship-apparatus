@@ -2,24 +2,61 @@
   "schema_version": 1,
   "inventory": {
     "source": "git",
-    "files_scanned": 53,
+    "files_scanned": 125,
     "max_files": null,
     "truncated": false,
     "counts": {
-      "src": 1,
-      "tests": 1,
-      "docs": 1
+      "src": 23,
+      "tests": 15,
+      "docs": 2
     },
     "unscanned_code": []
   },
   "selection": {
     "src": [
-      "scripts/tyf.py"
+      "scripts/tyf.py",
+      "scripts/tyf_architecture_contracts.py",
+      "scripts/tyf_codex_approvals.py",
+      "scripts/tyf_codex_bridge.py",
+      "scripts/tyf_codex_bridge_v07.py",
+      "scripts/tyf_codex_hook.py",
+      "scripts/tyf_codex_hook_validate.py",
+      "scripts/tyf_codex_schema.py",
+      "scripts/tyf_concept_review.py",
+      "scripts/tyf_continuity_decision.py",
+      "scripts/tyf_continuity_review.py",
+      "scripts/tyf_graph_projection.py",
+      "scripts/tyf_polish_review.py",
+      "scripts/tyf_pressure_eval.py",
+      "scripts/tyf_rc_doctor.py",
+      "scripts/tyf_recovery.py",
+      "scripts/tyf_review.py",
+      "scripts/tyf_workbench_live.py",
+      "scripts/tyf_workbench_mcp.py",
+      "scripts/tyf_workbench_slots.py",
+      "scripts/tyf_workbench_status.py",
+      "scripts/tyf_workbench_v06.py",
+      "scripts/validate_codex_plugin.py"
     ],
     "tests": [
-      "tests/test_tyf.py"
+      "tests/test_architecture_contracts.py",
+      "tests/test_codex_approvals.py",
+      "tests/test_codex_bridge_context.py",
+      "tests/test_codex_hook_recorder.py",
+      "tests/test_concept_review.py",
+      "tests/test_continuity_review.py",
+      "tests/test_graph_projection.py",
+      "tests/test_independent_oracles.py",
+      "tests/test_polish_and_decisions.py",
+      "tests/test_rc_recovery_doctor.py",
+      "tests/test_tyf.py",
+      "tests/test_workbench_mcp.py",
+      "tests/test_workbench_recovery_routes.py",
+      "tests/test_workbench_status.py",
+      "tests/test_workbench_v06.py"
     ],
     "docs": [
+      "CHANGELOG.md",
       "README.md"
     ]
   },

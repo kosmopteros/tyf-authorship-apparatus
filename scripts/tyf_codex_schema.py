@@ -34,7 +34,7 @@ def resolve(workspace: Optional[str]) -> tuple[str, Path, Path]:
 
 def run_cmd(command: List[str], cwd: Path) -> dict:
     try:
-        completed = subprocess.run(command, cwd=str(cwd), text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)
+        completed = subprocess.run(command, cwd=str(cwd), text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)  # process-owner: reviewed: local Codex command list, no shell, schema generation only
         return {
             "ok": completed.returncode == 0,
             "returncode": completed.returncode,

@@ -14,26 +14,19 @@ evidence, and a green gate.
 
 ## Inferred Product Intent
 
-- confidence=0.72 source=docs/LEARN_PASS.md:13, scripts/tyf.py:145 TYF should prefer deterministic checks and use model judgment only for issues that cannot be settled mechanically.
-- confidence=0.78 source=skills/keeping-documentation-honest/SKILL.md:23, scripts/tyf.py:145 `tyf check` should hard-fail with exit code 1 when documentation or pack consistency drift is detected.
-- confidence=0.74 source=docs/ATTENTIVENESS.md:35, scripts/tyf.py:145 Each `tyf notice` run should reconcile surfaced items against the content-addressed ledger.
-- confidence=0.70 source=docs/ATTENTIVENESS.md:36, scripts/tyf.py:145 After `tyf write`, the notice ledger should be updated so already-seen manuscript issues are not re-reported unless their context changes.
-- confidence=0.82 source=TYF-manifesto-and-architecture.md:254, scripts/tyf.py:145 `tyf notice` should surface, without modifying files, gaps, trailing fragments, unsourced claims, stale style sheets, and unused registers.
+- confidence=0.66 source=docs/LEARN_PASS.md:13, scripts/tyf.py:883 **Code first, model only where intelligence is required.** Every check that can be done deterministically already lives in `tyf notice`.
+- confidence=0.66 source=docs/RC_ARCHITECTURE_RED_TEAM.md:230, scripts/tyf.py:883 **Command surface is too fragmented.** Standalone commands are fine internally, but `tyf workbench` and `tyf review ...` should become canonical.
+- confidence=0.66 source=skills/keeping-documentation-honest/SKILL.md:23, scripts/tyf.py:883 **Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;
+- confidence=0.66 source=skills/auditing-adversarially/SKILL.md:16, scripts/tyf.py:5057 **Frame-lock.** The work assumes its own frame and never tests it.
+- confidence=0.66 source=docs/ATTENTIVENESS.md:37, scripts/tyf.py:883 **Per-run (always).** Any time `tyf notice` runs, manually or on a schedule, it reconciles against the ledger.
 
 ## Observed Structure
 
-- Repo graph observed 114 nodes and 385 edges.
-- Recovery summary: docs: 46 (33 intent / 11 assessment / 2 noise, 0 legacy), 38 orphan(s), 0 with broken link(s), 4 discrepancy(ies); 212 requirement + 18 recommendation hypotheses; 0 TODO/FIXME; 0 undocumented module(s), 0 drift candidate(s), 6 large function(s); 4 prioritised Be gap(s)
+- Repo graph observed 743 nodes and 8786 edges.
+- Recovery summary: docs: 80 (50 intent / 27 assessment / 3 noise, 0 legacy), 70 orphan(s), 0 with broken link(s), 13 discrepancy(ies); 376 requirement + 80 recommendation hypotheses; 0 TODO/FIXME; 4 undocumented module(s), 0 drift candidate(s), 68 large function(s); 14 prioritised Be gap(s)
 
 ## Candidate Architecture Claims
 
-- confidence=0.68 source=.opencode/INSTALL.md:13, scripts/tyf.py:145 A correctly installed harness should expose all sixteen TYF skills and route authorship requests through `using-tyf` first.
-- confidence=0.80 source=TYF-manifesto-and-architecture.md:236, scripts/tyf.py:145 The `tyf` helper command surface should include init, status, new-work, open, mark-ready, audit, write --confirm, doctor, check, notice, dismiss, and reconcile.
-- confidence=0.76 source=cowork/SETUP.md:13, scripts/tyf.py:145 When `scripts/tyf.py` is copied outside the repo, `TYF_PACK_ROOT` should point back to the pack root so `tyf check` can inspect the correct files.
-- confidence=0.67 source=docs/PORTABILITY.md:65, scripts/tyf.py:145 Installed harness verification should confirm all sixteen TYF skills are visible and authorship requests route through `using-tyf`.
-- confidence=0.72 source=cowork/SETUP.md:37, scripts/tyf.py:145 Cowork install verification should confirm all sixteen skills are visible, `using-tyf` is the first authorship router, and manuscript writes are refused outside `tyf write`.
-- confidence=0.66 source=tests/acceptance-and-edge-cases.md:143, scripts/tyf.py:145 `tyf check` should exempt historical/validation files that intentionally preserve older command lists or examples.
-- confidence=0.64 source=tests/acceptance-and-edge-cases.md:119, scripts/tyf.py:145 Workspace-affecting commands should scaffold or repair required structure before relying on it.
 
 ## Contradictions And Rulings
 

@@ -4,53 +4,56 @@ Review-only advisory artifact. No requirements were promoted, marked done, or ac
 
 - truth=observed source=recovery-source `C:\Users\maste\Documents\TYF`
 - truth=observed source=recovery-output `C:\Users\maste\Documents\TYF\.fbs\recovered`
-- truth=observed source=doc-archaeology `docs: 46 (33 intent / 11 assessment / 2 noise, 0 legacy), 38 orphan(s), 0 with broken link(s), 4 discrepancy(ies); 212 requirement + 18 recommendation hypotheses; 0 TODO/FIXME; 0 undocumented module(s), 0 drift candidate(s), 6 large function(s); 4 prioritised Be gap(s)`
+- truth=observed source=doc-archaeology `docs: 80 (50 intent / 27 assessment / 3 noise, 0 legacy), 70 orphan(s), 0 with broken link(s), 13 discrepancy(ies); 376 requirement + 80 recommendation hypotheses; 0 TODO/FIXME; 4 undocumented module(s), 0 drift candidate(s), 68 large function(s); 14 prioritised Be gap(s)`
 
 ## Inferred Repo Intent
 
-- truth=inferred confidence=0.72 source=docs/LEARN_PASS.md:13,scripts/tyf.py:145 `TYF should prefer deterministic checks and use model judgment only for issues that cannot be settled mechanically.`
-- truth=inferred confidence=0.78 source=skills/keeping-documentation-honest/SKILL.md:23,scripts/tyf.py:145 ``tyf check` should hard-fail with exit code 1 when documentation or pack consistency drift is detected.`
-- truth=inferred confidence=0.74 source=docs/ATTENTIVENESS.md:35,scripts/tyf.py:145 `Each `tyf notice` run should reconcile surfaced items against the content-addressed ledger.`
+- truth=inferred confidence=0.66 source=docs/LEARN_PASS.md:13,scripts/tyf.py:883 `**Code first, model only where intelligence is required.** Every check that can be done deterministically already lives in `tyf notice`.`
+- truth=inferred confidence=0.66 source=docs/RC_ARCHITECTURE_RED_TEAM.md:230,scripts/tyf.py:883 `**Command surface is too fragmented.** Standalone commands are fine internally, but `tyf workbench` and `tyf review ...` should become canonical.`
+- truth=inferred confidence=0.66 source=skills/keeping-documentation-honest/SKILL.md:23,scripts/tyf.py:883 `**Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;`
 
 ## Evidence-Backed Strengths
 
-- truth=observed source=repo-graph nodes=114 edges=385
-- truth=inferred confidence=0.72 kind=recovered-intent source=docs/LEARN_PASS.md:13,scripts/tyf.py:145 `TYF should prefer deterministic checks and use model judgment only for issues th`
-- truth=inferred confidence=0.78 kind=recovered-intent source=skills/keeping-documentation-honest/SKILL.md:23,scripts/tyf.py:145 ``tyf check` should hard-fail with exit code 1 when documentation or pack consist`
-- truth=inferred confidence=0.74 kind=recovered-intent source=docs/ATTENTIVENESS.md:35,scripts/tyf.py:145 `Each `tyf notice` run should reconcile surfaced items against the content-addres`
-- truth=inferred confidence=0.70 kind=recovered-intent source=docs/ATTENTIVENESS.md:36,scripts/tyf.py:145 `After `tyf write`, the notice ledger should be updated so already-seen manuscrip`
+- truth=observed source=repo-graph nodes=743 edges=8786
+- truth=inferred confidence=0.66 kind=recovered-intent source=docs/LEARN_PASS.md:13,scripts/tyf.py:883 `**Code first, model only where intelligence is required.** Every check that can `
+- truth=inferred confidence=0.66 kind=recovered-intent source=docs/RC_ARCHITECTURE_RED_TEAM.md:230,scripts/tyf.py:883 `**Command surface is too fragmented.** Standalone commands are fine internally, `
+- truth=inferred confidence=0.66 kind=recovered-intent source=skills/keeping-documentation-honest/SKILL.md:23,scripts/tyf.py:883 `**Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;`
+- truth=inferred confidence=0.66 kind=recovered-intent source=skills/auditing-adversarially/SKILL.md:16,scripts/tyf.py:5057 `**Frame-lock.** The work assumes its own frame and never tests it`
+- truth=inferred confidence=0.66 kind=recovered-intent source=docs/ATTENTIVENESS.md:37,scripts/tyf.py:883 `**Per-run (always).** Any time `tyf notice` runs, manually or on a schedule, it `
 
 ## Gaps And Risks
 
-- truth=observed source=doc-inventory 38 orphan doc(s) need review
-- truth=observed source=cowork/SETUP.md,docs/ATTENTIVENESS.md discrepancy `tyf write`: conflicting polarity (affirm vs negate)
+- truth=observed source=doc-inventory 70 orphan doc(s) need review
+- truth=observed source=.opencode/INSTALL.md,AGENTS.md,CLAUDE.md,GEMINI.md,cowork/SETUP.md,docs/PORTABILITY.md discrepancy `using-tyf`: conflicting polarity (affirm vs negate)
+- truth=observed source=author-context/AGENTS.md,author-context/CLAUDE.md,author-context/GEMINI.md,cowork/PROJECT_INSTRUCTIONS.md,skills/using-tyf/SKILL.md discrepancy `drafts/candidate-draft.md`: conflicting polarity (affirm vs negate)
 - truth=observed source=TYF-manifesto-and-architecture.md,docs/ATTENTIVENESS.md,docs/LEARN_PASS.md discrepancy `tyf notice`: conflicting polarity (affirm vs negate)
-- truth=observed source=README.md,tests/acceptance-and-edge-cases.md discrepancy `conflict`: conflicting polarity (affirm vs negate)
-- truth=observed source=skills/editing-faithfully/SKILL.md,skills/managing-voice/SKILL.md,tests/acceptance-and-edge-cases.md discrepancy `controlling-manuscript-writes`: conflicting polarity (affirm vs negate)
-- truth=observed source=code-scan 3 god-object candidate(s)
-- truth=missing-evidence source=skills/controlling-manuscript-writes/SKILL.md:59 gap=unmapped `--confirm` - Require explicit confirmation (the `--confirm` contract);
-- truth=missing-evidence source=skills/controlling-manuscript-writes/SKILL.md:58 gap=unmapped `all-or-nothing` - **Partial acceptance** ("take 1 and 3, not 2"): apply exactly the accepted subset, never all-or-nothing.
+- truth=observed source=docs/RC_ARCHITECTURE_RED_TEAM.md,docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md,docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md discrepancy `tyf workbench`: conflicting values: tyf review ..., tyf surface --v06
+- truth=observed source=docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md,docs/WORKBENCH_TWO_WAY_MACHINERY.md discrepancy `codex app-server`: conflicting polarity (affirm vs negate)
+- truth=observed source=code-scan 4 undocumented module(s)
+- truth=observed source=code-scan 6 god-object candidate(s)
+- truth=missing-evidence source=VALIDATION.md:6 gap=unmapped `tyf` - It runs automatically warn-only after every mutating `tyf` command and hard-fails (exit 1) as a standalone command.
 - truth=missing-evidence source=.claude/commands/fbs-formulate.md:78 gap=unmapped `pass` - scenario + source files and return `pass`/`fail`.
-- truth=missing-evidence source=skills/controlling-manuscript-writes/SKILL.md:60 gap=unmapped `stale` - never write stale or empty content.
-- truth=missing-evidence source=cowork/SCHEDULED_TASKS.md:3 gap=unmapped `cloud` - Use cloud Routines for cadences that should run while the laptop is closed.
+- truth=missing-evidence source=tests/acceptance-and-edge-cases.md:153 gap=unmapped `.review/` - Should: write findings to `.review/` only;
+- truth=missing-evidence source=docs/WORKBENCH_TWO_WAY_MACHINERY.md:99 gap=unmapped `manuscript/` - Hooks should not write `manuscript/`.
+- truth=missing-evidence source=docs/WORKBENCH_TWO_WAY_MACHINERY.md:242 gap=unmapped `prompt` - Packet-writing or note-writing tools should stay `prompt` until usage proves they are calm.
 
 ## Recommended Review Queue
 
-- truth=missing-evidence source=skills/controlling-manuscript-writes/SKILL.md:59 review `--confirm` (unmapped)
-- truth=missing-evidence source=skills/controlling-manuscript-writes/SKILL.md:58 review `all-or-nothing` (unmapped)
+- truth=missing-evidence source=VALIDATION.md:6 review `tyf` (unmapped)
 - truth=missing-evidence source=.claude/commands/fbs-formulate.md:78 review `pass` (unmapped)
-- truth=missing-evidence source=skills/controlling-manuscript-writes/SKILL.md:60 review `stale` (unmapped)
-- truth=missing-evidence source=cowork/SCHEDULED_TASKS.md:3 review `cloud` (unmapped)
+- truth=missing-evidence source=tests/acceptance-and-edge-cases.md:153 review `.review/` (unmapped)
+- truth=missing-evidence source=docs/WORKBENCH_TWO_WAY_MACHINERY.md:99 review `manuscript/` (unmapped)
+- truth=missing-evidence source=docs/WORKBENCH_TWO_WAY_MACHINERY.md:242 review `prompt` (unmapped)
 
 ## Product Red-Team
 
-- truth=speculative source=skills/controlling-manuscript-writes/SKILL.md:59 Could `--confirm` be an overclaimed promise without executable evidence?
-- truth=speculative source=skills/controlling-manuscript-writes/SKILL.md:58 Could `all-or-nothing` be an overclaimed promise without executable evidence?
+- truth=speculative source=VALIDATION.md:6 Could `tyf` be an overclaimed promise without executable evidence?
 - truth=speculative source=.claude/commands/fbs-formulate.md:78 Could `pass` be an overclaimed promise without executable evidence?
-- truth=speculative source=scripts/tyf.py:354 Could `gather_notices` concentrate too much behaviour for safe agent iteration?
-- truth=speculative source=docs/LEARN_PASS.md:13,scripts/tyf.py:145 What would falsify `TYF should prefer deterministic checks and use model judgment only for issues th`? counter=doc-side intent has no recovered behaviour cluster
-- truth=speculative source=skills/keeping-documentation-honest/SKILL.md:23,scripts/tyf.py:145 What would falsify ``tyf check` should hard-fail with exit code 1 when documentation or pack consist`? counter=doc-side intent has no recovered behaviour cluster
-- truth=speculative source=docs/ATTENTIVENESS.md:35,scripts/tyf.py:145 What would falsify `Each `tyf notice` run should reconcile surfaced items against the content-addres`? counter=doc-side intent has no recovered behaviour cluster
+- truth=speculative source=tests/acceptance-and-edge-cases.md:153 Could `.review/` be an overclaimed promise without executable evidence?
+- truth=speculative source=scripts/tyf.py:683 Could `gather_notices` concentrate too much behaviour for safe agent iteration?
+- truth=speculative source=docs/LEARN_PASS.md:13,scripts/tyf.py:883 What would falsify `**Code first, model only where intelligence is required.** Every check that can `? counter=doc-side intent has no recovered behaviour cluster
+- truth=speculative source=docs/RC_ARCHITECTURE_RED_TEAM.md:230,scripts/tyf.py:883 What would falsify `**Command surface is too fragmented.** Standalone commands are fine internally, `? counter=doc-side intent has no recovered behaviour cluster
+- truth=speculative source=skills/keeping-documentation-honest/SKILL.md:23,scripts/tyf.py:883 What would falsify `**Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;`? counter=doc-side intent has no recovered behaviour cluster
 
 ## Truth Boundary
 

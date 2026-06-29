@@ -8,9 +8,9 @@ scanner; they are guard rails for the local single-author architecture.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 from pathlib import Path
-import re
 import sys
 from typing import Dict, List, Optional
 
@@ -61,6 +61,8 @@ def script_files() -> List[Path]:
 def forbidden_route_hits(root: Path = PACK_ROOT) -> List[Dict[str, str]]:
     hits: List[Dict[str, str]] = []
     for path in sorted((root / "scripts").glob("tyf*.py")):
+        if path.name == Path(__file__).name:
+            continue
         text = path.read_text(encoding="utf-8", errors="replace")
         for marker in FORBIDDEN_MANUSCRIPT_ROUTE_PATTERNS:
             if marker in text:
@@ -68,22 +70,84 @@ def forbidden_route_hits(root: Path = PACK_ROOT) -> List[Dict[str, str]]:
     return hits
 
 
+def _call_name(node: ast.Call) -> str:
+    func = node.func
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    return ""
+
+
+def _literal_path_mentions_manuscript(node: ast.AST) -> bool:
+    """Return true when an expression visibly names manuscript as a path part."""
+    for child in ast.walk(node):
+        if isinstance(child, ast.Constant) and isinstance(child.value, str):
+            parts = [part for part in child.value.replace("\\", "/").split("/") if part]
+            if "manuscript" in parts:
+                return True
+    return False
+
+
+class ManuscriptWriteVisitor(ast.NodeVisitor):
+    def __init__(self, root: Path, path: Path, source: str) -> None:
+        self.root = root
+        self.path = path
+        self.lines = source.splitlines()
+        self.function_stack: List[str] = []
+        self.hits: List[Dict[str, str]] = []
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self.function_stack.append(node.name)
+        self.generic_visit(node)
+        self.function_stack.pop()
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self.function_stack.append(node.name)
+        self.generic_visit(node)
+        self.function_stack.pop()
+
+    def visit_Call(self, node: ast.Call) -> None:
+        name = _call_name(node)
+        target: Optional[ast.AST] = None
+        if isinstance(node.func, ast.Attribute) and name in {"write_text", "write_bytes", "open"}:
+            target = node.func.value
+        elif isinstance(node.func, ast.Name) and name in {"atomic_write", "write", "append", "open"} and node.args:
+            target = node.args[0]
+
+        current_func = self.function_stack[-1] if self.function_stack else ""
+        if (
+            target is not None
+            and current_func not in ALLOWED_MANUSCRIPT_WRITE_FUNCTIONS
+            and _literal_path_mentions_manuscript(target)
+        ):
+            line = self.lines[node.lineno - 1].strip() if 0 < node.lineno <= len(self.lines) else ""
+            self.hits.append({
+                "path": self.path.relative_to(self.root).as_posix(),
+                "line": str(node.lineno),
+                "function": current_func,
+                "text": line[:200],
+            })
+        self.generic_visit(node)
+
+
 def suspicious_direct_manuscript_writes(root: Path = PACK_ROOT) -> List[Dict[str, str]]:
     """Find obvious direct writes to manuscript/ outside known Gate helpers.
 
-    This is a conservative string-level guard. It is meant to catch accidental
-    new surfaces, not prove full semantic safety.
+    This is a conservative AST guard. It is meant to catch accidental new
+    surfaces, not prove full semantic safety.
     """
     hits: List[Dict[str, str]] = []
-    write_re = re.compile(r"(atomic_write|write|append|open)\s*\([^\n]*(manuscript/|['\"]manuscript['\"])")
-    current_func = ""
     for path in sorted((root / "scripts").glob("tyf*.py")):
-        for line_no, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1):
-            m = re.match(r"def\s+([A-Za-z0-9_]+)\s*\(", line)
-            if m:
-                current_func = m.group(1)
-            if write_re.search(line) and current_func not in ALLOWED_MANUSCRIPT_WRITE_FUNCTIONS:
-                hits.append({"path": path.relative_to(root).as_posix(), "line": str(line_no), "function": current_func, "text": line.strip()[:200]})
+        source = path.read_text(encoding="utf-8", errors="replace")
+        try:
+            tree = ast.parse(source, filename=str(path))
+        except SyntaxError as exc:
+            hits.append({"path": path.relative_to(root).as_posix(), "line": str(exc.lineno or 0), "function": "", "text": f"syntax error: {exc.msg}"})
+            continue
+        visitor = ManuscriptWriteVisitor(root, path, source)
+        visitor.visit(tree)
+        hits.extend(visitor.hits)
     return hits
 
 

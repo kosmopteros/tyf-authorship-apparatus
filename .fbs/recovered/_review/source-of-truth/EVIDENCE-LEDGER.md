@@ -9,12 +9,12 @@ and how to interpret confidence labels.
 
 - Source: `C:\Users\maste\Documents\TYF`
 - Output: `C:\Users\maste\Documents\TYF\.fbs\recovered`
-- Summary: docs: 46 (33 intent / 11 assessment / 2 noise, 0 legacy), 38 orphan(s), 0 with broken link(s), 4 discrepancy(ies); 212 requirement + 18 recommendation hypotheses; 0 TODO/FIXME; 0 undocumented module(s), 0 drift candidate(s), 6 large function(s); 4 prioritised Be gap(s)
-- Candidates: 27
-- Docs scanned: 46
+- Summary: docs: 80 (50 intent / 27 assessment / 3 noise, 0 legacy), 70 orphan(s), 0 with broken link(s), 13 discrepancy(ies); 376 requirement + 80 recommendation hypotheses; 0 TODO/FIXME; 4 undocumented module(s), 0 drift candidate(s), 68 large function(s); 14 prioritised Be gap(s)
+- Candidates: 40
+- Docs scanned: 80
 - Legacy docs: 0
-- Discrepancies: 4
-- Repo graph: 114 nodes, 385 edges.
+- Discrepancies: 13
+- Repo graph: 743 nodes, 8786 edges.
 
 ## Public Synthesis Stages
 
@@ -54,8 +54,8 @@ Stage 6: documentation cleanup and disposition.
 
 ## Product Red-Team
 
-- Could `TYF should prefer deterministic checks and use model judgment only for issues th` be overclaimed from docs/LEARN_PASS.md:13, scripts/tyf.py:145?
-- Could ``tyf check` should hard-fail with exit code 1 when documentation or pack consist` be overclaimed from skills/keeping-documentation-honest/SKILL.md:23, scripts/tyf.py:145?
-- Could `Each `tyf notice` run should reconcile surfaced items against the content-addres` be overclaimed from docs/ATTENTIVENESS.md:35, scripts/tyf.py:145?
-- Could `After `tyf write`, the notice ledger should be updated so already-seen manuscrip` be overclaimed from docs/ATTENTIVENESS.md:36, scripts/tyf.py:145?
-- Could `TYF's pressure scenarios should be run against real agent/subagent harnesses bef` be overclaimed from TYF-manifesto-and-architecture.md:288, scripts/tyf.py:145?
+- Could `**Code first, model only where intelligence is required.** Every check that can ` be overclaimed from docs/LEARN_PASS.md:13, scripts/tyf.py:883?
+- Could `**Command surface is too fragmented.** Standalone commands are fine internally, ` be overclaimed from docs/RC_ARCHITECTURE_RED_TEAM.md:230, scripts/tyf.py:883?
+- Could `**Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;` be overclaimed from skills/keeping-documentation-honest/SKILL.md:23, scripts/tyf.py:883?
+- Could `**Frame-lock.** The work assumes its own frame and never tests it` be overclaimed from skills/auditing-adversarially/SKILL.md:16, scripts/tyf.py:5057?
+- Could `**Per-run (always).** Any time `tyf notice` runs, manually or on a schedule, it ` be overclaimed from docs/ATTENTIVENESS.md:37, scripts/tyf.py:883?

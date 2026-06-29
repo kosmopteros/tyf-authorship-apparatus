@@ -2,2056 +2,3595 @@
 
 Review-only advisory artifact. No requirements were promoted into the state of record.
 
-## TYF should prefer deterministic checks and use model judgment only for issues th
+## **Code first, model only where intelligence is required.** Every check that can
 
 - id: `cand:9c3a917fd65e`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.720`
-- statement: TYF should prefer deterministic checks and use model judgment only for issues that cannot be settled mechanically.
-- subject hints: tyf notice, deterministic-first, model boundary
+- confidence: `0.660`
+- statement: **Code first, model only where intelligence is required.** Every check that can be done deterministically already lives in `tyf notice`.
+- subject hints: tyf notice
 
 Source pointers:
 - docs/LEARN_PASS.md:13
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
 - doc hypothesis: docs/LEARN_PASS.md:13
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Supported by LEARN_PASS and helper wiring for notice/check; still needs executable behaviour coverage for the broader model-boundary claim.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## `tyf check` should hard-fail with exit code 1 when documentation or pack consist
+## **Command surface is too fragmented.** Standalone commands are fine internally,
+
+- id: `cand:ff60b44e301b`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: **Command surface is too fragmented.** Standalone commands are fine internally, but `tyf workbench` and `tyf review ...` should become canonical.
+- subject hints: tyf workbench, tyf review ...
+
+Source pointers:
+- docs/RC_ARCHITECTURE_RED_TEAM.md:230
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: docs/RC_ARCHITECTURE_RED_TEAM.md:230
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## **Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;
 
 - id: `cand:5bff1f60cf12`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.780`
-- statement: `tyf check` should hard-fail with exit code 1 when documentation or pack consistency drift is detected.
-- subject hints: tyf check, 1, doc honesty, exit code
+- confidence: `0.660`
+- statement: **Explicitly, hard-fail, as `tyf check`** (exit 1 on drift;
+- subject hints: tyf check, 1
 
 Source pointers:
 - skills/keeping-documentation-honest/SKILL.md:23
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
 - doc hypothesis: skills/keeping-documentation-honest/SKILL.md:23
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Multiple docs state this as command contract and the helper exposes check/doc-hook paths; statement was truncated and should be normalized before promotion.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## Each `tyf notice` run should reconcile surfaced items against the content-addres
+## **Frame-lock.** The work assumes its own frame and never tests it
+
+- id: `cand:49883f585b18`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: **Frame-lock.** The work assumes its own frame and never tests it.
+- subject hints: frame-lock
+
+Source pointers:
+- skills/auditing-adversarially/SKILL.md:16
+- scripts/tyf.py:5057
+- scripts/tyf.py:5227
+- scripts/tyf.py:3927
+- scripts/tyf.py:2094
+- scripts/tyf.py:5466
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:1629
+- scripts/tyf.py:3106
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:4295
+- scripts/tyf.py:2995
+- scripts/tyf.py:1968
+- scripts/tyf.py:5307
+- scripts/tyf.py:670
+- scripts/tyf.py:2368
+- scripts/tyf.py:4919
+- scripts/tyf.py:249
+- scripts/tyf.py:5243
+- scripts/tyf.py:5261
+- scripts/tyf.py:5044
+- scripts/tyf.py:296
+- scripts/tyf.py:4907
+- scripts/tyf.py:5811
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4376
+- scripts/tyf.py:3288
+- scripts/tyf.py:3501
+- scripts/tyf.py:3560
+- scripts/tyf.py:3477
+- scripts/tyf.py:3453
+- scripts/tyf.py:3429
+- scripts/tyf.py:3257
+- scripts/tyf.py:5219
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:302
+- scripts/tyf.py:2251
+- scripts/tyf.py:5522
+- scripts/tyf.py:5394
+- scripts/tyf.py:1733
+- scripts/tyf.py:4079
+- scripts/tyf.py:2596
+- scripts/tyf.py:3865
+- scripts/tyf.py:181
+- scripts/tyf.py:5693
+- scripts/tyf.py:2767
+- scripts/tyf.py:2794
+- scripts/tyf.py:3153
+- scripts/tyf.py:5862
+- scripts/tyf.py:2914
+- scripts/tyf.py:4871
+- scripts/tyf.py:4742
+- scripts/tyf.py:5327
+- scripts/tyf.py:4816
+- scripts/tyf.py:3046
+- scripts/tyf.py:4758
+- scripts/tyf.py:2685
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:145
+- scripts/tyf.py:155
+- scripts/tyf.py:158
+- scripts/tyf_workbench_v06.py:42
+Supporting evidence:
+- doc hypothesis: skills/auditing-adversarially/SKILL.md:16
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- (none)
+
+## **Per-run (always).** Any time `tyf notice` runs, manually or on a schedule, it
 
 - id: `cand:76e6a6357c36`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.740`
-- statement: Each `tyf notice` run should reconcile surfaced items against the content-addressed ledger.
-- subject hints: tyf notice, ledger, per-run
+- confidence: `0.660`
+- statement: **Per-run (always).** Any time `tyf notice` runs, manually or on a schedule, it reconciles against the ledger.
+- subject hints: tyf notice
 
 Source pointers:
-- docs/ATTENTIVENESS.md:35
+- docs/ATTENTIVENESS.md:37
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
-- doc hypothesis: docs/ATTENTIVENESS.md:35
+- doc hypothesis: docs/ATTENTIVENESS.md:37
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: ATTENTIVENESS states the per-run ledger behaviour and the helper contains ledger/database paths; behaviour coverage should prove dedupe/resurface semantics.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## After `tyf write`, the notice ledger should be updated so already-seen manuscrip
+## **Per-write (wired now).** Every `tyf write` updates the ledger and reports only
 
 - id: `cand:8e0d2aa87326`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.700`
-- statement: After `tyf write`, the notice ledger should be updated so already-seen manuscript issues are not re-reported unless their context changes.
-- subject hints: tyf write, ledger, notice dedupe
+- confidence: `0.660`
+- statement: **Per-write (wired now).** Every `tyf write` updates the ledger and reports only genuinely new or resurfaced items, so a manuscript write never nags about things already seen.
+- subject hints: tyf write
 
 Source pointers:
-- docs/ATTENTIVENESS.md:36
+- docs/ATTENTIVENESS.md:38
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
-- doc hypothesis: docs/ATTENTIVENESS.md:36
+- doc hypothesis: docs/ATTENTIVENESS.md:38
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: ATTENTIVENESS calls this wired now, but recovery did not map a behaviour cluster; keep as intent until a write/notice test covers it.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## TYF's pressure scenarios should be run against real agent/subagent harnesses bef
+## **Register inheritance semantics.** When a work overrides a workspace-level regi
 
-- id: `cand:a01b9381a159`
-- kind: `advisory-recommendation`
+- id: `cand:7bb9446e622e`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.750`
-- statement: TYF's pressure scenarios should be run against real agent/subagent harnesses before the pack is described as production-bulletproof.
-- subject hints: tests/, pressure scenarios, agent validation
+- confidence: `0.660`
+- statement: **Register inheritance semantics.** When a work overrides a workspace-level register, how does the override compose with the base: replace, merge, layer, or per-rule? `manifest.yaml` currently defaults to layer.
+- subject hints: manifest.yaml
 
 Source pointers:
-- TYF-manifesto-and-architecture.md:288
+- TYF-manifesto-and-architecture.md:292
+- scripts/tyf.py:3927
+- scripts/tyf.py:1629
+- scripts/tyf.py:1788
+- scripts/tyf.py:191
+- scripts/tyf.py:4493
+- scripts/tyf.py:310
+- scripts/tyf.py:3501
+- scripts/tyf.py:1566
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:2596
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:2670
+- scripts/tyf.py:3153
+- scripts/tyf.py:4742
+- scripts/tyf.py:4816
+- scripts/tyf.py:3046
+- scripts/tyf.py:4758
+- scripts/tyf.py:3338
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1003
-- scripts/tyf.py:110
-- scripts/tyf.py:853
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:487
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:106
+- scripts/tyf_workbench_v06.py:172
+- scripts/tyf_workbench_v06.py:798
+- scripts/tyf_workbench_v06.py:114
+- scripts/tyf_workbench_v06.py:331
+- scripts/tyf_workbench_v06.py:50
+- scripts/tyf_workbench_v06.py:335
 Supporting evidence:
-- doc hypothesis: TYF-manifesto-and-architecture.md:288
+- doc hypothesis: TYF-manifesto-and-architecture.md:292
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: The architecture doc explicitly names the testing gap; it is validation work rather than a runtime capability.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- up: module:tests.test_tyf -> doc:VALIDATION.md
+- down: function:run -> function:ensure_workspace -> function:ensure_workbench_shape -> function:write_book_map -> function:quote_yaml
+- up: function:load_flat_yaml -> function:collect_data -> function:run
 
-## `tyf notice` should surface, without modifying files, gaps, trailing fragments,
+## **The attentive amanuensis loop.** `tyf notice` surfaces, and never modifies: ga
 
 - id: `cand:0c260dc69ad0`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.820`
-- statement: `tyf notice` should surface, without modifying files, gaps, trailing fragments, unsourced claims, stale style sheets, and unused registers.
-- subject hints: tyf notice, read-only, attentiveness
+- confidence: `0.660`
+- statement: **The attentive amanuensis loop.** `tyf notice` surfaces, and never modifies: gaps left to fill, lines that trail off, claims with no source, a style sheet lagging its manuscript, unused registers.
+- subject hints: tyf notice
 
 Source pointers:
-- TYF-manifesto-and-architecture.md:254
+- TYF-manifesto-and-architecture.md:256
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
-- doc hypothesis: TYF-manifesto-and-architecture.md:254
+- doc hypothesis: TYF-manifesto-and-architecture.md:256
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: This is a central README/manifesto claim and maps to helper notice scanning; each notice class should have behaviour coverage.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## The manuscript revise/write boundary should require explicit author action throu
+## **The controlled write.** Entering the Revise column requires proposal, audit, a
 
-- id: `cand:b11c16782e4f`
+- id: `cand:f6df7ef6d1b1`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.840`
-- statement: The manuscript revise/write boundary should require explicit author action through `tyf write --confirm`.
-- subject hints: tyf write --confirm, controlled write, author consent
+- confidence: `0.660`
+- statement: **The controlled write.** Entering the Revise column requires proposal, audit, author review packet, explicit author decision, and `tyf write --decision <id>`.
+- subject hints: tyf write --decision <id>
 
 Source pointers:
 - TYF-manifesto-and-architecture.md:173
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
 - doc hypothesis: TYF-manifesto-and-architecture.md:173
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Controlled write is a core TYF commitment across docs and helper command surface; keep as a top-level requirement with executable refusal/confirm checks.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## A correctly installed harness should expose all sixteen TYF skills and route aut
+## A runtime is a place TYF runs, never part of its doctrine
 
-- id: `cand:3e4fdf4948b7`
-- kind: `affordance`
+- id: `cand:5499325b8d27`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.680`
-- statement: A correctly installed harness should expose all sixteen TYF skills and route authorship requests through `using-tyf` first.
-- subject hints: using-tyf, install verification, skills
+- confidence: `0.660`
+- statement: A runtime is a place TYF runs, never part of its doctrine.
+- subject hints: doctrine
 
 Source pointers:
-- .opencode/INSTALL.md:13
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- TYF-manifesto-and-architecture.md:248
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
+- scripts/tyf_continuity_review.py:232
+- scripts/tyf_continuity_review.py:92
+- scripts/tyf_continuity_review.py:125
+- scripts/tyf_continuity_review.py:207
+- scripts/tyf_polish_review.py:60
 Supporting evidence:
-- doc hypothesis: .opencode/INSTALL.md:13
+- doc hypothesis: TYF-manifesto-and-architecture.md:248
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: This is an install-verification affordance from OpenCode docs; merge with duplicate harness-verification candidates before promotion.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- up: function:review_doctrine_implementation -> function:build_review -> function:write_outputs -> function:run
 
-## The `tyf` helper command surface should include init, status, new-work, open, ma
+## A second, opt-in semantic layer (the Learn pass, `docs/LEARN_PASS.md`) reads onl
 
-- id: `cand:de8bae2ee406`
-- kind: `inferred-capability`
+- id: `cand:9e4070e3cb85`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.800`
-- statement: The `tyf` helper command surface should include init, status, new-work, open, mark-ready, audit, write --confirm, doctor, check, notice, dismiss, and reconcile.
-- subject hints: init, status, CLI, command surface
+- confidence: `0.660`
+- statement: A second, opt-in semantic layer (the Learn pass, `docs/LEARN_PASS.md`) reads only the diff and asks a model the few questions code cannot answer;
+- subject hints: docs/LEARN_PASS.md
+
+Source pointers:
+- TYF-manifesto-and-architecture.md:256
+- scripts/tyf.py:6210
+- scripts/tyf.py:1070
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:1090
+- scripts/tyf.py:4295
+- scripts/tyf.py:1022
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:191
+- scripts/tyf.py:867
+- scripts/tyf.py:1177
+- scripts/tyf.py:201
+- scripts/tyf.py:6224
+- scripts/tyf.py:849
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5626
+- scripts/tyf.py:5693
+- scripts/tyf.py:2670
+- scripts/tyf.py:5583
+- scripts/tyf.py:1841
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:2794
+- scripts/tyf.py:3153
+- scripts/tyf.py:2914
+- scripts/tyf.py:1199
+- scripts/tyf.py:4871
+- scripts/tyf.py:1556
+- scripts/tyf.py:4742
+- scripts/tyf.py:5327
+- scripts/tyf.py:4666
+- scripts/tyf.py:4816
+- scripts/tyf.py:5489
+- scripts/tyf.py:3046
+- scripts/tyf.py:4696
+- scripts/tyf.py:1857
+- scripts/tyf.py:4758
+- scripts/tyf.py:2685
+- scripts/tyf.py:3876
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:145
+- scripts/tyf.py:6234
+- scripts/tyf.py:106
+Supporting evidence:
+- doc hypothesis: TYF-manifesto-and-architecture.md:256
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_run_hidden_learn_command
+- up: function:_run_hidden_learn_command -> function:main
+
+## A second, opt-in semantic layer (the Learn pass, see `docs/LEARN_PASS.md`) reads
+
+- id: `cand:51773e55b662`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: A second, opt-in semantic layer (the Learn pass, see `docs/LEARN_PASS.md`) reads only the diff and asks a model the few questions code cannot answer, again surfacing only.
+- subject hints: docs/LEARN_PASS.md
+
+Source pointers:
+- skills/scheduling-ongoing-work/SKILL.md:35
+- scripts/tyf.py:6210
+- scripts/tyf.py:1070
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:1090
+- scripts/tyf.py:4295
+- scripts/tyf.py:1022
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:191
+- scripts/tyf.py:867
+- scripts/tyf.py:1177
+- scripts/tyf.py:201
+- scripts/tyf.py:6224
+- scripts/tyf.py:849
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5626
+- scripts/tyf.py:5693
+- scripts/tyf.py:2670
+- scripts/tyf.py:5583
+- scripts/tyf.py:1841
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:2794
+- scripts/tyf.py:3153
+- scripts/tyf.py:2914
+- scripts/tyf.py:1199
+- scripts/tyf.py:4871
+- scripts/tyf.py:1556
+- scripts/tyf.py:4742
+- scripts/tyf.py:5327
+- scripts/tyf.py:4666
+- scripts/tyf.py:4816
+- scripts/tyf.py:5489
+- scripts/tyf.py:3046
+- scripts/tyf.py:4696
+- scripts/tyf.py:1857
+- scripts/tyf.py:4758
+- scripts/tyf.py:2685
+- scripts/tyf.py:3876
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:145
+- scripts/tyf.py:6234
+- scripts/tyf.py:106
+Supporting evidence:
+- doc hypothesis: skills/scheduling-ongoing-work/SKILL.md:35
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_run_hidden_learn_command
+- up: function:_run_hidden_learn_command -> function:main
+
+## Added tests that assert required storage classes exist and wired architecture ch
+
+- id: `cand:36643084fc37`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Added tests that assert required storage classes exist and wired architecture checks into `tyf-rc-doctor`.
+- subject hints: tyf-rc-doctor
+
+Source pointers:
+- docs/RC_ARCHITECTURE_CONTRACTS_3X.md:28
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: docs/RC_ARCHITECTURE_CONTRACTS_3X.md:28
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## An opt-in semantic layer that reads the diff and asks a model the few questions
+
+- id: `cand:56d28475e035`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: An opt-in semantic layer that reads the diff and asks a model the few questions code cannot answer is specified, unwired, in `docs/LEARN_PASS.md`;
+- subject hints: docs/LEARN_PASS.md
+
+Source pointers:
+- README.md:162
+- scripts/tyf.py:6210
+- scripts/tyf.py:1070
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:1090
+- scripts/tyf.py:4295
+- scripts/tyf.py:1022
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:191
+- scripts/tyf.py:867
+- scripts/tyf.py:1177
+- scripts/tyf.py:201
+- scripts/tyf.py:6224
+- scripts/tyf.py:849
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5626
+- scripts/tyf.py:5693
+- scripts/tyf.py:2670
+- scripts/tyf.py:5583
+- scripts/tyf.py:1841
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:2794
+- scripts/tyf.py:3153
+- scripts/tyf.py:2914
+- scripts/tyf.py:1199
+- scripts/tyf.py:4871
+- scripts/tyf.py:1556
+- scripts/tyf.py:4742
+- scripts/tyf.py:5327
+- scripts/tyf.py:4666
+- scripts/tyf.py:4816
+- scripts/tyf.py:5489
+- scripts/tyf.py:3046
+- scripts/tyf.py:4696
+- scripts/tyf.py:1857
+- scripts/tyf.py:4758
+- scripts/tyf.py:2685
+- scripts/tyf.py:3876
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:145
+- scripts/tyf.py:6234
+- scripts/tyf.py:106
+Supporting evidence:
+- doc hypothesis: README.md:162
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_run_hidden_learn_command
+- up: function:_run_hidden_learn_command -> function:main
+
+## Ask the agent: "List the TYF skills you can see." It should return all nineteen,
+
+- id: `cand:093e467ee4fb`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Ask the agent: "List the TYF skills you can see." It should return all nineteen, and it should route any authorship request through `using-tyf` first.
+- subject hints: using-tyf
+
+Source pointers:
+- .opencode/INSTALL.md:14
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: .opencode/INSTALL.md:14
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## Be IDs must be unique
+
+- id: `cand:66778ef32a6f`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Be IDs must be unique
+- subject hints: unique
+
+Source pointers:
+- .claude/commands/fbs-formulate.md:105
+- scripts/tyf.py:2236
+- scripts/tyf.py:2094
+- scripts/tyf.py:2224
+- scripts/tyf.py:5085
+- scripts/tyf.py:1080
+- scripts/tyf.py:270
+- scripts/tyf.py:1788
+- scripts/tyf.py:2123
+- scripts/tyf.py:2061
+- scripts/tyf.py:2183
+- scripts/tyf.py:1968
+- scripts/tyf.py:4795
+- scripts/tyf.py:670
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:2317
+- scripts/tyf.py:296
+- scripts/tyf.py:201
+- scripts/tyf.py:2013
+- scripts/tyf.py:2081
+- scripts/tyf.py:5811
+- scripts/tyf.py:211
+- scripts/tyf.py:310
+- scripts/tyf.py:1902
+- scripts/tyf.py:5369
+- scripts/tyf.py:5382
+- scripts/tyf.py:3288
+- scripts/tyf.py:3501
+- scripts/tyf.py:3560
+- scripts/tyf.py:3477
+- scripts/tyf.py:3538
+- scripts/tyf.py:3466
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:234
+- scripts/tyf.py:2251
+- scripts/tyf.py:2596
+- scripts/tyf.py:4914
+- scripts/tyf.py:3865
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:5626
+- scripts/tyf.py:5693
+- scripts/tyf.py:2794
+- scripts/tyf.py:3153
+- scripts/tyf.py:5862
+- scripts/tyf.py:2914
+- scripts/tyf.py:3046
+- scripts/tyf.py:2685
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:953
+- scripts/tyf.py:158
+- scripts/tyf_codex_hook_validate.py:43
+- scripts/tyf_codex_schema.py:49
+- scripts/tyf_concept_review.py:289
+- scripts/tyf_continuity_review.py:269
+- scripts/tyf_graph_projection.py:351
+- scripts/tyf_polish_review.py:172
+- scripts/tyf_rc_doctor.py:127
+- scripts/tyf_recovery.py:49
+- scripts/tyf_recovery.py:63
+- scripts/tyf_workbench_live.py:241
+- scripts/tyf_workbench_v06.py:57
+- scripts/tyf_workbench_v06.py:714
+- scripts/tyf_workbench_v06.py:590
+- scripts/tyf_workbench_v06.py:307
+- scripts/tyf_workbench_v06.py:240
+- scripts/tyf_workbench_v06.py:512
+- scripts/tyf_workbench_v06.py:609
+- scripts/tyf_workbench_v06.py:568
+- scripts/tyf_workbench_v06.py:460
+- scripts/tyf_workbench_v06.py:335
+- scripts/tyf_workbench_v06.py:448
+- scripts/tyf_workbench_v06.py:1050
+Supporting evidence:
+- doc hypothesis: .claude/commands/fbs-formulate.md:105
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- (none)
+
+## Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace
+
+- id: `cand:df4d02876713`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Claude should load `using-tyf`, run `tyf init` if the folder is not a workspace yet, then run `tyf start` or `tyf start <path>` if a chat export, folder, old workspace, zip, or scaffold arrives.
+- subject hints: using-tyf, tyf init
+
+Source pointers:
+- cowork/SETUP.md:25
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: cowork/SETUP.md:25
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## Commands include `init` (idempotent: creates only missing structure, never clobb
+
+- id: `cand:6b9cfa7b92b7`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `surface`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`.
+- subject hints: init, start
 
 Source pointers:
 - TYF-manifesto-and-architecture.md:236
+- scripts/tyf.py:883
+- scripts/tyf.py:934
+- scripts/tyf.py:4295
+- scripts/tyf.py:1427
+- scripts/tyf.py:1505
+- scripts/tyf.py:3560
+- scripts/tyf.py:3538
+- scripts/tyf.py:181
+- scripts/tyf.py:5626
+- scripts/tyf.py:5693
+- scripts/tyf.py:2670
+- scripts/tyf.py:5583
+- scripts/tyf.py:1841
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:2794
+- scripts/tyf.py:3153
+- scripts/tyf.py:5862
+- scripts/tyf.py:2914
+- scripts/tyf.py:1536
+- scripts/tyf.py:4871
+- scripts/tyf.py:1556
+- scripts/tyf.py:5327
+- scripts/tyf.py:5489
+- scripts/tyf.py:3046
+- scripts/tyf.py:4696
+- scripts/tyf.py:1857
+- scripts/tyf.py:2685
+- scripts/tyf.py:3876
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:1322
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:102
-- scripts/tyf.py:105
+- scripts/tyf.py:953
+- scripts/tyf.py:155
+- scripts/tyf.py:158
+- scripts/tyf_codex_approvals.py:94
+- scripts/tyf_codex_bridge.py:38
+- scripts/tyf_codex_bridge.py:65
+- scripts/tyf_codex_bridge.py:80
+- scripts/tyf_codex_hook.py:66
+- scripts/tyf_codex_hook_validate.py:43
+- scripts/tyf_codex_schema.py:49
+- scripts/tyf_continuity_decision.py:48
+- scripts/tyf_graph_projection.py:351
+- scripts/tyf_recovery.py:49
+- scripts/tyf_recovery.py:63
+- scripts/tyf_workbench_live.py:241
+- scripts/tyf_workbench_mcp.py:445
+- scripts/tyf_workbench_mcp.py:398
+- scripts/tyf_workbench_v06.py:74
+- scripts/tyf_workbench_v06.py:476
+- scripts/tyf_workbench_v06.py:714
+- scripts/tyf_workbench_v06.py:590
+- scripts/tyf_workbench_v06.py:201
+- scripts/tyf_workbench_v06.py:512
+- scripts/tyf_workbench_v06.py:609
+- scripts/tyf_workbench_v06.py:220
+- scripts/tyf_workbench_v06.py:42
+- scripts/tyf_workbench_v06.py:89
+- scripts/tyf_workbench_v06.py:207
+- scripts/tyf_workbench_v06.py:1151
+- scripts/tyf_workbench_v06.py:568
+- tests/test_tyf.py:103
 Supporting evidence:
 - doc hypothesis: TYF-manifesto-and-architecture.md:236
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Documented command list matches public CLI shape but should be reconciled with current README because `update` is also documented elsewhere.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: doc:INSTALL.md -> module:scripts.tyf -> function:cmd_init
-- up: function:cmd_init -> module:scripts.tyf -> doc:INSTALL.md
+- (none)
 
-## When `scripts/tyf.py` is copied outside the repo, `TYF_PACK_ROOT` should point b
+## Convergence:** Every next slice should be judged by time-to-writing and time-to-
+
+- id: `cand:ce9aac08fda0`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Convergence:** Every next slice should be judged by time-to-writing and time-to-return-to-writing, not by architectural completeness.
+- subject hints: time-to-writing
+
+Source pointers:
+- docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:152
+- scripts/tyf.py:6234
+- scripts/tyf.py:155
+- scripts/tyf_architecture_contracts.py:113
+- scripts/tyf_codex_approvals.py:171
+- scripts/tyf_codex_approvals.py:28
+- scripts/tyf_codex_bridge.py:434
+- scripts/tyf_codex_bridge_v07.py:74
+- scripts/tyf_codex_hook.py:103
+- scripts/tyf_codex_hook_validate.py:94
+- scripts/tyf_codex_schema.py:126
+- scripts/tyf_concept_review.py:326
+- scripts/tyf_continuity_decision.py:93
+- scripts/tyf_continuity_review.py:312
+- scripts/tyf_graph_projection.py:420
+- scripts/tyf_graph_projection.py:87
+- scripts/tyf_polish_review.py:215
+- scripts/tyf_pressure_eval.py:198
+- scripts/tyf_rc_doctor.py:178
+- scripts/tyf_recovery.py:160
+- scripts/tyf_review.py:52
+- scripts/tyf_workbench_live.py:278
+- scripts/tyf_workbench_mcp.py:684
+- scripts/tyf_workbench_status.py:137
+- scripts/tyf_workbench_status.py:40
+- scripts/tyf_workbench_v06.py:1189
+- scripts/tyf_workbench_v06.py:42
+- scripts/validate_codex_plugin.py:143
+- tests/test_independent_oracles.py:155
+- tests/test_independent_oracles.py:426
+- tests/test_independent_oracles.py:305
+- tests/test_independent_oracles.py:502
+- tests/test_independent_oracles.py:539
+- tests/test_independent_oracles.py:463
+- tests/test_independent_oracles.py:84
+- tests/test_independent_oracles.py:33
+- tests/test_independent_oracles.py:394
+- tests/test_independent_oracles.py:416
+- tests/test_independent_oracles.py:293
+- tests/test_independent_oracles.py:239
+- tests/test_independent_oracles.py:627
+- tests/test_independent_oracles.py:354
+- tests/test_independent_oracles.py:135
+- tests/test_independent_oracles.py:257
+- tests/test_independent_oracles.py:576
+- tests/test_independent_oracles.py:208
+- tests/test_independent_oracles.py:654
+- tests/test_independent_oracles.py:21
+Supporting evidence:
+- doc hypothesis: docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:152
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- (none)
+
+## Convergence:** The amanuensis path should default to reading the active context
+
+- id: `cand:b730a8cdc6a2`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Convergence:** The amanuensis path should default to reading the active context automatically and proposing next actions, not asking the author to explicitly generate context packets.
+- subject hints: generate
+
+Source pointers:
+- docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:56
+- scripts/tyf.py:5057
+- scripts/tyf.py:3927
+- scripts/tyf.py:2236
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:2224
+- scripts/tyf.py:2539
+- scripts/tyf.py:5466
+- scripts/tyf.py:5085
+- scripts/tyf.py:1006
+- scripts/tyf.py:1629
+- scripts/tyf.py:6148
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:2431
+- scripts/tyf.py:2393
+- scripts/tyf.py:2553
+- scripts/tyf.py:995
+- scripts/tyf.py:6174
+- scripts/tyf.py:4569
+- scripts/tyf.py:6057
+- scripts/tyf.py:6066
+- scripts/tyf.py:5297
+- scripts/tyf.py:1968
+- scripts/tyf.py:310
+- scripts/tyf.py:3560
+- scripts/tyf.py:3538
+- scripts/tyf.py:1566
+- scripts/tyf.py:2251
+- scripts/tyf.py:2596
+- scripts/tyf.py:4914
+- scripts/tyf.py:3865
+- scripts/tyf.py:164
+- scripts/tyf.py:3153
+- scripts/tyf.py:2914
+- scripts/tyf.py:3046
+- scripts/tyf.py:3338
+- scripts/tyf.py:5725
+- scripts/tyf.py:145
+- scripts/tyf.py:953
+- scripts/tyf.py:155
+- scripts/tyf.py:158
+- scripts/tyf_codex_hook_validate.py:35
+- scripts/tyf_codex_hook_validate.py:43
+- scripts/tyf_codex_schema.py:49
+- scripts/tyf_codex_schema.py:115
+- scripts/tyf_codex_schema.py:35
+- scripts/tyf_concept_review.py:289
+- scripts/tyf_continuity_review.py:269
+- scripts/tyf_graph_projection.py:351
+- scripts/tyf_polish_review.py:172
+- scripts/tyf_rc_doctor.py:127
+- scripts/tyf_recovery.py:49
+- scripts/tyf_recovery.py:63
+- scripts/tyf_workbench_live.py:241
+- scripts/tyf_workbench_v06.py:57
+- scripts/tyf_workbench_v06.py:714
+- scripts/tyf_workbench_v06.py:590
+- scripts/tyf_workbench_v06.py:307
+- scripts/tyf_workbench_v06.py:240
+- scripts/tyf_workbench_v06.py:512
+- scripts/tyf_workbench_v06.py:609
+- scripts/tyf_workbench_v06.py:220
+- scripts/tyf_workbench_v06.py:42
+- scripts/tyf_workbench_v06.py:568
+- scripts/tyf_workbench_v06.py:460
+- scripts/tyf_workbench_v06.py:335
+- scripts/tyf_workbench_v06.py:448
+- scripts/tyf_workbench_v06.py:1050
+Supporting evidence:
+- doc hypothesis: docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:56
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:run -> function:generate_schema
+- up: function:generate_schema -> function:run
+
+## Convergence:** `tyf workbench` should become the canonical command
+
+- id: `cand:58b47d2ac5d9`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Convergence:** `tyf workbench` should become the canonical command.
+- subject hints: tyf workbench
+
+Source pointers:
+- docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:132
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: docs/WORKBENCH_ADVERSARIAL_PRODUCT_CRITIQUE_POST_PR5.md:132
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## Current repo evidence: 197 tests pass in the stdlib helper/doc/install suite, in
+
+- id: `cand:32eddde7d1f7`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Current repo evidence: 197 tests pass in the stdlib helper/doc/install suite, including exported release-tree `tyf check`, installer smoke coverage, release manifest context-path validation, a reproducible first-sitting rehearsal from `examples/first-sitting-arrival/scaffold.txt`, existing-work recovery packets for formatted and illustrated arrivals, language-neutral structure records for non-English source, answered-prompt resume handling, source-grounded `tyf attend` attention packets with transparent local retrieval, external-feedback triage, continuing-work session packets, resume return-context recovery, read-only session-start and message-sent hook contexts, Codex and Claude hook manifests with TYF-identifying status messages, doctor repair-boundary coverage, diagnostic-isolation packets, typographer-redactor treatment packets for existing body prose, Draft Review Workbench generation with draft-save conflict protection, private-context-free author/root/runtime surfaces, machine-checked pressure-eval honesty, local-only hidden tooling learning packets, and a fresh exported Codex install opening a separate book workspace from an arrival scaffold.
+- subject hints: tyf check, examples/first-sitting-arrival/scaffold.txt
+
+Source pointers:
+- README.md:174
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: README.md:174
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## For a domain without git, this is more than superpowers offers, and the attentiv
+
+- id: `cand:b8c912ee0259`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: For a domain without git, this is more than superpowers offers, and the attentive-amanuensis loop (surface-only, never modifies, dismissed-with-resurface) has no superpowers equivalent.
+- subject hints: surface-only
+
+Source pointers:
+- docs/COMPARISON_SUPERPOWERS.md:39
+- scripts/tyf.py:3927
+- scripts/tyf.py:3236
+- scripts/tyf.py:270
+- scripts/tyf.py:1629
+- scripts/tyf.py:262
+- scripts/tyf.py:191
+- scripts/tyf.py:670
+- scripts/tyf.py:4895
+- scripts/tyf.py:249
+- scripts/tyf.py:296
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:3501
+- scripts/tyf.py:3560
+- scripts/tyf.py:3800
+- scripts/tyf.py:3618
+- scripts/tyf.py:3477
+- scripts/tyf.py:3453
+- scripts/tyf.py:3538
+- scripts/tyf.py:3429
+- scripts/tyf.py:3466
+- scripts/tyf.py:3449
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:234
+- scripts/tyf.py:4914
+- scripts/tyf.py:3865
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:3876
+- scripts/tyf.py:145
+- scripts/tyf.py:953
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:158
+- scripts/tyf_codex_approvals.py:42
+- scripts/tyf_codex_approvals.py:46
+- scripts/tyf_codex_approvals.py:36
+- scripts/tyf_workbench_mcp.py:98
+- scripts/tyf_workbench_mcp.py:46
+- scripts/tyf_workbench_mcp.py:405
+- scripts/tyf_workbench_status.py:40
+- scripts/tyf_workbench_v06.py:57
+- scripts/tyf_workbench_v06.py:220
+- scripts/tyf_workbench_v06.py:42
+- scripts/tyf_workbench_v06.py:50
+- scripts/tyf_workbench_v06.py:152
+- scripts/tyf_workbench_v06.py:80
+- scripts/tyf_workbench_v06.py:1045
+- scripts/tyf_workbench_v06.py:1050
+Supporting evidence:
+- doc hypothesis: docs/COMPARISON_SUPERPOWERS.md:39
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:run -> function:decide -> function:current_path -> function:surface_dir
+- up: function:surface_dir -> module:scripts.tyf_codex_approvals -> doc:WORKBENCH_NEXT_SLICE_REVIEW.md
+
+## For the highest-stakes skills (`controlling-manuscript-writes`, `composing-as-am
+
+- id: `cand:81a5550c1e08`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: For the highest-stakes skills (`controlling-manuscript-writes`, `composing-as-amanuensis`, `auditing-adversarially`, `ingesting-sources`), turn these break cases into RED/GREEN pressure scenarios in `pressure-scenarios.md` and run them against a subagent: confirm the skill produces the "should" behavior, not the "break" behavior, under pressure.
+- subject hints: controlling-manuscript-writes, composing-as-amanuensis
+
+Source pointers:
+- tests/acceptance-and-edge-cases.md:161
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
+- scripts/tyf.py:106
+- scripts/tyf_architecture_contracts.py:90
+- scripts/tyf_architecture_contracts.py:71
+- scripts/tyf_rc_doctor.py:73
+- scripts/tyf_workbench_v06.py:50
+Supporting evidence:
+- doc hypothesis: tests/acceptance-and-edge-cases.md:161
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:run -> function:suspicious_direct_manuscript_writes
+- up: function:suspicious_direct_manuscript_writes -> function:run
+
+## From that it proposes, never applies, new entries: an anti-pattern, a register f
+
+- id: `cand:4b8e111d8554`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: From that it proposes, never applies, new entries: an anti-pattern, a register fence, a terminology rule, a new skill.
+- subject hints: entries
+
+Source pointers:
+- skills/scheduling-ongoing-work/SKILL.md:18
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:4295
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+Supporting evidence:
+- doc hypothesis: skills/scheduling-ongoing-work/SKILL.md:18
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- (none)
+
+## Hooks should not write `manuscript/`
+
+- id: `cand:860605f39e00`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: Hooks should not write `manuscript/`.
+- subject hints: manuscript/
+
+Source pointers:
+- docs/WORKBENCH_TWO_WAY_MACHINERY.md:99
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
+- scripts/tyf.py:106
+- scripts/tyf_architecture_contracts.py:90
+- scripts/tyf_architecture_contracts.py:71
+- scripts/tyf_rc_doctor.py:73
+- scripts/tyf_workbench_v06.py:50
+Supporting evidence:
+- doc hypothesis: docs/WORKBENCH_TWO_WAY_MACHINERY.md:99
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:run -> function:suspicious_direct_manuscript_writes
+- up: function:suspicious_direct_manuscript_writes -> function:run
+
+## If a changed draft hash conflicts with browser state, Workbench should show conf
+
+- id: `cand:102eafdeb410`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: If a changed draft hash conflicts with browser state, Workbench should show conflict before save.
+- subject hints: conflicts
+
+Source pointers:
+- docs/WORKBENCH_TWO_WAY_MACHINERY.md:189
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:145
+- scripts/tyf_workbench_mcp.py:98
+- scripts/tyf_workbench_mcp.py:46
+- scripts/tyf_workbench_mcp.py:405
+- scripts/tyf_workbench_v06.py:50
+- scripts/tyf_workbench_v06.py:152
+- scripts/tyf_workbench_v06.py:80
+Supporting evidence:
+- doc hypothesis: docs/WORKBENCH_TWO_WAY_MACHINERY.md:189
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- up: function:tool_surface_current_conflicts -> module:scripts.tyf_workbench_mcp -> doc:WORKBENCH_PROTOTYPE_REVIEW.md
+
+## If stale, TYF returns a conflict
+
+- id: `cand:472e67375542`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: If stale, TYF returns a conflict.
+- subject hints: stale
+
+Source pointers:
+- docs/WORKBENCH_TWO_WAY_MACHINERY.md:179
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
+- scripts/tyf.py:145
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf_workbench_status.py:102
+- scripts/tyf_workbench_status.py:115
+Supporting evidence:
+- doc hypothesis: docs/WORKBENCH_TWO_WAY_MACHINERY.md:179
+- non-test graph wiring reaches related structure
+- public/docs/route/command surface reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- up: function:stale_drafts_from_loaded -> module:scripts.tyf_workbench_status -> doc:WORKBENCH_NEXT_SLICE_REVIEW.md
+
+## If the return context is thin or the author needs a fresh sitting, run `tyf sess
+
+- id: `cand:cc5a12ad1aac`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: If the return context is thin or the author needs a fresh sitting, run `tyf session` or `tyf session work --focus "<focus>"`, read `.review/current-session.md`, and offer one small next move plus a stop condition.
+- subject hints: tyf session, tyf session work --focus "<focus>"
+
+Source pointers:
+- skills/using-tyf/SKILL.md:36
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: skills/using-tyf/SKILL.md:36
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## If you must copy it, set `TYF_PACK_ROOT` to this repo
 
 - id: `cand:e56d150893d7`
-- kind: `affordance`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.760`
-- statement: When `scripts/tyf.py` is copied outside the repo, `TYF_PACK_ROOT` should point back to the pack root so `tyf check` can inspect the correct files.
-- subject hints: TYF_PACK_ROOT, install
+- confidence: `0.660`
+- statement: If you must copy it, set `TYF_PACK_ROOT` to this repo.
+- subject hints: TYF_PACK_ROOT
 
 Source pointers:
 - cowork/SETUP.md:13
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
 - doc hypothesis: cowork/SETUP.md:13
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Cowork setup documents this operational fallback and helper code has pack-root logic; likely suitable as install documentation, not core product intent.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## Installed harness verification should confirm all sixteen TYF skills are visible
+## It may guide a candidate treatment in `drafts/` or editorial proposals in `.revi
 
-- id: `cand:049d5a36fd33`
-- kind: `affordance`
+- id: `cand:e9500bd1cbc5`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.670`
-- statement: Installed harness verification should confirm all sixteen TYF skills are visible and authorship requests route through `using-tyf`.
-- subject hints: using-tyf, install verification
+- confidence: `0.660`
+- statement: It may guide a candidate treatment in `drafts/` or editorial proposals in `.review/`, but it never authorizes a manuscript write.
+- subject hints: drafts/, .review/
 
 Source pointers:
-- docs/PORTABILITY.md:65
+- skills/typographer-redactor/SKILL.md:28
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf_workbench_status.py:102
+- scripts/tyf_workbench_status.py:115
 Supporting evidence:
-- doc hypothesis: docs/PORTABILITY.md:65
+- doc hypothesis: skills/typographer-redactor/SKILL.md:28
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Duplicate of other harness-verification candidates from portability docs; consolidate rather than promote separately.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- up: function:stale_drafts_from_loaded -> module:scripts.tyf_workbench_status -> doc:WORKBENCH_NEXT_SLICE_REVIEW.md
 
-## Cowork install verification should confirm all sixteen skills are visible, `usin
+## It never writes to `manuscript/`;
 
-- id: `cand:2186380d665b`
-- kind: `affordance`
+- id: `cand:94644d15fcc5`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.720`
-- statement: Cowork install verification should confirm all sixteen skills are visible, `using-tyf` is the first authorship router, and manuscript writes are refused outside `tyf write`.
-- subject hints: using-tyf, manuscript/, Cowork, install verification, manuscript
+- confidence: `0.660`
+- statement: It never writes to `manuscript/`;
+- subject hints: manuscript/
 
 Source pointers:
-- cowork/SETUP.md:37
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- README.md:156
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf.py:1358
+- scripts/tyf.py:106
+- scripts/tyf_architecture_contracts.py:90
+- scripts/tyf_architecture_contracts.py:71
+- scripts/tyf_rc_doctor.py:73
+- scripts/tyf_workbench_v06.py:50
 Supporting evidence:
-- doc hypothesis: cowork/SETUP.md:37
+- doc hypothesis: README.md:156
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Cowork setup adds the manuscript refusal clause; promote only if harness-specific verification requirements are tracked.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:run -> function:suspicious_direct_manuscript_writes
+- up: function:suspicious_direct_manuscript_writes -> function:run
 
-## TYF should preserve project lineage and rationale so contributors can challenge
+## It runs automatically warn-only after every mutating `tyf` command and hard-fail
+
+- id: `cand:270a45dea71e`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: It runs automatically warn-only after every mutating `tyf` command and hard-fails (exit 1) as a standalone command.
+- subject hints: tyf, 1
+
+Source pointers:
+- VALIDATION.md:6
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: VALIDATION.md:6
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## It should read the orientation packet before organizing anything, run `tyf struc
+
+- id: `cand:7d6b4fec9ed3`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: It should read the orientation packet before organizing anything, run `tyf structure work --source-ref <id>` for any minted text source fragment, show `.review/writing-runway.md` and `drafts/candidate-draft.md`, and tell you what files were created in plain language.
+- subject hints: tyf structure work --source-ref <id>, .review/writing-runway.md
+
+Source pointers:
+- cowork/SETUP.md:25
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: cowork/SETUP.md:25
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## It should return all nineteen and route any authorship request through `using-ty
+
+- id: `cand:49fb67841dd3`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: It should return all nineteen and route any authorship request through `using-tyf` first.
+- subject hints: using-tyf
+
+Source pointers:
+- docs/PORTABILITY.md:103
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: docs/PORTABILITY.md:103
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## It should return all nineteen skills, route any authorship request through `usin
+
+- id: `cand:c27b7a14beb2`
+- kind: `recovered-intent`
+- disposition: `review`
+- confidence: `0.660`
+- statement: It should return all nineteen skills, route any authorship request through `using-tyf`, and refuse to write into `manuscript/` outside `tyf write --decision`.
+- subject hints: using-tyf, manuscript/
+
+Source pointers:
+- cowork/SETUP.md:39
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
+- scripts/tyf.py:145
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
+- scripts/tyf.py:186
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
+Supporting evidence:
+- doc hypothesis: cowork/SETUP.md:39
+- non-test graph wiring reaches related structure
+Counter evidence:
+- doc-side intent has no recovered behaviour cluster
+Graph paths:
+- down: function:main -> function:_command_requires_event_journal
+
+## Lineage matters for an open-source project, both for credit and because every ke
 
 - id: `cand:66d60ccf92dd`
-- kind: `advisory-recommendation`
+- kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.620`
-- statement: TYF should preserve project lineage and rationale so contributors can challenge accepted and rejected design decisions.
-- subject hints: open-source, lineage, contributors, rationale
+- confidence: `0.660`
+- statement: Lineage matters for an open-source project, both for credit and because every keep and reject below is a decision a contributor should be able to challenge.
+- subject hints: open-source
 
 Source pointers:
 - TYF-manifesto-and-architecture.md:53
+- scripts/tyf.py:2522
+- scripts/tyf.py:270
+- scripts/tyf.py:262
+- scripts/tyf.py:2431
+- scripts/tyf.py:4295
+- scripts/tyf.py:4780
+- scripts/tyf.py:4784
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:191
+- scripts/tyf.py:4795
+- scripts/tyf.py:670
+- scripts/tyf.py:2368
+- scripts/tyf.py:249
+- scripts/tyf.py:5261
+- scripts/tyf.py:2055
+- scripts/tyf.py:296
+- scripts/tyf.py:201
+- scripts/tyf.py:2013
+- scripts/tyf.py:2081
+- scripts/tyf.py:2070
+- scripts/tyf.py:5811
+- scripts/tyf.py:211
+- scripts/tyf.py:4729
+- scripts/tyf.py:1897
+- scripts/tyf.py:1913
+- scripts/tyf.py:1902
+- scripts/tyf.py:5369
+- scripts/tyf.py:5000
+- scripts/tyf.py:5382
+- scripts/tyf.py:2046
+- scripts/tyf.py:1893
+- scripts/tyf.py:2313
+- scripts/tyf.py:2448
+- scripts/tyf.py:242
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:5250
+- scripts/tyf.py:5394
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:5626
+- scripts/tyf.py:5583
+- scripts/tyf.py:3900
+- scripts/tyf.py:4742
+- scripts/tyf.py:5327
+- scripts/tyf.py:4816
+- scripts/tyf.py:5489
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:1125
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:105
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf_concept_review.py:157
+- scripts/tyf_concept_review.py:87
+- scripts/tyf_continuity_review.py:232
+- scripts/tyf_continuity_review.py:104
+- scripts/tyf_continuity_review.py:125
+- scripts/tyf_continuity_review.py:96
+- scripts/tyf_continuity_review.py:112
+- scripts/tyf_continuity_review.py:100
+- scripts/tyf_continuity_review.py:154
+- scripts/tyf_polish_review.py:153
+- scripts/tyf_polish_review.py:60
+- scripts/tyf_workbench_v06.py:57
+- scripts/tyf_workbench_v06.py:274
+- scripts/tyf_workbench_v06.py:42
+- scripts/tyf_workbench_v06.py:50
+- scripts/tyf_workbench_v06.py:84
 Supporting evidence:
 - doc hypothesis: TYF-manifesto-and-architecture.md:53
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Supported by manifesto language, but it is a contribution/governance value rather than an executable product behaviour.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: doc:INSTALL.md -> module:scripts.tyf -> function:cmd_open
-- up: function:cmd_open -> module:scripts.tyf -> doc:INSTALL.md
+- up: function:iter_source_lines -> function:build_index -> function:write_outputs -> function:run
 
-## TYF should keep machine-only bookkeeping in `.tyf/ledger.db`, including notice s
+## Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace,
 
-- id: `cand:0a02c628cd70`
-- kind: `recovered-intent`
-- disposition: `review`
-- confidence: `0.760`
-- statement: TYF should keep machine-only bookkeeping in `.tyf/ledger.db`, including notice statuses, dismissals, timestamps, and an append-only event log for init/write/mark-ready/dismiss/repair.
-- subject hints: .tyf/ledger.db, init, ledger, event log
-
-Source pointers:
-- TYF-manifesto-and-architecture.md:234
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: TYF-manifesto-and-architecture.md:234
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Strong documentation support and helper database/event-log hints; needs behaviour checks for event coverage and no hand-edit contract.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## `tyf init` and `tyf doctor --repair` should be idempotent, creating only missing
-
-- id: `cand:dcfef99eac7d`
-- kind: `recovered-intent`
-- disposition: `review`
-- confidence: `0.800`
-- statement: `tyf init` and `tyf doctor --repair` should be idempotent, creating only missing workspace structure without clobbering existing authored files.
-- subject hints: tyf init, doctor --repair, idempotency
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:116
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:116
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Acceptance docs state this and helper scaffold/repair code exists; should become an executable behaviour if not already covered.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## `tyf check` should exempt historical/validation files that intentionally preserv
-
-- id: `cand:9310ac365be5`
-- kind: `inferred-capability`
-- disposition: `review`
-- confidence: `0.660`
-- statement: `tyf check` should exempt historical/validation files that intentionally preserve older command lists or examples.
-- subject hints: tyf check, history exemptions
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:143
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:143
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Acceptance docs mention exemptions, but promotion should name exact exempt paths and why they are history rather than drift.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## TYF workspace operations should preserve per-work isolation
-
-- id: `cand:b8dd391c27a8`
-- kind: `recovered-intent`
-- disposition: `review`
-- confidence: `0.700`
-- statement: TYF workspace operations should preserve per-work isolation.
-- subject hints: per-work, per-work isolation, workspace
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:126
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:487
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:105
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:126
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Acceptance docs and path-confinement functions support this, though the original statement is fragmentary and needs concrete path/write behaviours.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: doc:INSTALL.md -> module:scripts.tyf -> function:_confine_work
-- up: function:_safe_work_id -> module:scripts.tyf -> doc:INSTALL.md
-
-## When manuscript files and write logs disagree, `tyf doctor` should surface the i
-
-- id: `cand:59859656aff4`
-- kind: `recovered-intent`
-- disposition: `review`
-- confidence: `0.730`
-- statement: When manuscript files and write logs disagree, `tyf doctor` should surface the inconsistency.
-- subject hints: tyf doctor, write log, manuscript
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:106
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:106
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Acceptance docs state the desired doctor behaviour; behaviour coverage should construct mismatched manuscript/log state.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## When TYF is uncertain about a write boundary, not writing should be the safe def
-
-- id: `cand:9c108c5e01a8`
-- kind: `recovered-intent`
-- disposition: `review`
-- confidence: `0.690`
-- statement: When TYF is uncertain about a write boundary, not writing should be the safe default.
-- subject hints: safe, safe default, write boundary
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:127
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:487
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:105
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:127
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: This is a core safety posture in acceptance docs but needs formulation into concrete refusal behaviours.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: doc:INSTALL.md -> module:scripts.tyf -> function:_safe_work_id
-- up: function:_safe_work_id -> module:scripts.tyf -> doc:INSTALL.md
-
-## TYF should resolve real paths and refuse writes outside the workspace root
-
-- id: `cand:399567a979ec`
-- kind: `recovered-intent`
-- disposition: `review`
-- confidence: `0.780`
-- statement: TYF should resolve real paths and refuse writes outside the workspace root.
-- subject hints: root, path confinement, workspace root, security
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:125
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:1125
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:125
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Acceptance docs and helper path logic support this; it is important security/path-confinement behaviour.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail -> function:run_doc_check -> function:_pack_root
-- up: function:_pack_root -> module:scripts.tyf -> doc:INSTALL.md
-
-## Workspace-affecting commands should scaffold or repair required structure before
-
-- id: `cand:e04ec0f6138c`
-- kind: `inferred-capability`
-- disposition: `review`
-- confidence: `0.640`
-- statement: Workspace-affecting commands should scaffold or repair required structure before relying on it.
-- subject hints: scaffold, workspace structure
-
-Source pointers:
-- tests/acceptance-and-edge-cases.md:119
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:110
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:119
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: The original is too fragmentary; keep as a helper design affordance unless tied to specific commands.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: doc:INSTALL.md -> module:scripts.tyf -> function:_scaffold
-- up: function:_scaffold -> module:scripts.tyf -> doc:INSTALL.md
-
-## Source material areas should be treated as read-mostly, with writes reserved for
-
-- id: `cand:82a71c018fb0`
+- id: `cand:c09fd4dfd334`
 - kind: `recovered-intent`
 - disposition: `review`
 - confidence: `0.660`
-- statement: Source material areas should be treated as read-mostly, with writes reserved for explicit ingest or author-approved operations.
-- subject hints: read-mostly, sources, write zones
+- statement: Load `using-tyf` and `initializing-a-workspace`, create or enter the workspace, then run `tyf start` with no title required.
+- subject hints: using-tyf, initializing-a-workspace
 
 Source pointers:
-- tests/acceptance-and-edge-cases.md:128
+- AGENTS.md:11
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:853
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
-- doc hypothesis: tests/acceptance-and-edge-cases.md:128
+- doc hypothesis: AGENTS.md:11
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Acceptance docs support read-mostly source posture, but exact allowed write paths need clarification before promotion.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:gather_notices -> function:_read
-- up: function:read_state -> module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal
 
-## Harnesses with post-turn hooks may call `tyf notice --peek` or append intent cap
+## MCP returns active unit, selected text, notes, style sheet, and related local pa
 
-- id: `cand:1dc73a6bdaeb`
-- kind: `advisory-recommendation`
-- disposition: `review`
-- confidence: `0.680`
-- statement: Harnesses with post-turn hooks may call `tyf notice --peek` or append intent capture to `.proposals/`, while TYF itself should not claim this portability universally.
-- subject hints: tyf notice --peek, .proposals/, hooks, .proposals
-
-Source pointers:
-- docs/ATTENTIVENESS.md:37
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: docs/ATTENTIVENESS.md:37
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: ATTENTIVENESS frames this as harness-dependent future/optional integration, not a portable core requirement.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## `tyf write` should require `--confirm` as the concrete signal of explicit author
-
-- id: `cand:308a79228582`
+- id: `cand:ed2a909853c3`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.860`
-- statement: `tyf write` should require `--confirm` as the concrete signal of explicit author acceptance.
-- subject hints: tyf write, --confirm, author acceptance
+- confidence: `0.660`
+- statement: MCP returns active unit, selected text, notes, style sheet, and related local passages.
+- subject hints: related
 
 Source pointers:
-- cowork/SETUP.md:27
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- docs/WORKBENCH_TWO_WAY_MACHINERY.md:151
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:2094
+- scripts/tyf.py:5143
+- scripts/tyf.py:4209
+- scripts/tyf.py:2539
+- scripts/tyf.py:5085
+- scripts/tyf.py:3236
+- scripts/tyf.py:3131
+- scripts/tyf.py:1788
+- scripts/tyf.py:901
+- scripts/tyf.py:4060
+- scripts/tyf.py:2123
+- scripts/tyf.py:2431
+- scripts/tyf.py:2882
+- scripts/tyf.py:2893
+- scripts/tyf.py:1022
+- scripts/tyf.py:2995
+- scripts/tyf.py:1945
+- scripts/tyf.py:1968
+- scripts/tyf.py:2003
+- scripts/tyf.py:4795
+- scripts/tyf.py:5005
+- scripts/tyf.py:2368
+- scripts/tyf.py:2346
+- scripts/tyf.py:867
+- scripts/tyf.py:2317
+- scripts/tyf.py:4926
+- scripts/tyf.py:2413
+- scripts/tyf.py:1177
+- scripts/tyf.py:2013
+- scripts/tyf.py:2504
+- scripts/tyf.py:2483
+- scripts/tyf.py:5811
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:3007
+- scripts/tyf.py:4493
+- scripts/tyf.py:4729
+- scripts/tyf.py:310
+- scripts/tyf.py:5369
+- scripts/tyf.py:2046
+- scripts/tyf.py:3501
+- scripts/tyf.py:3477
+- scripts/tyf.py:3314
+- scripts/tyf.py:3298
+- scripts/tyf.py:5841
+- scripts/tyf.py:1566
+- scripts/tyf.py:6048
+- scripts/tyf.py:4079
+- scripts/tyf.py:4383
+- scripts/tyf.py:4014
+- scripts/tyf.py:181
+- scripts/tyf.py:1102
+- scripts/tyf.py:5693
+- scripts/tyf.py:3900
+- scripts/tyf.py:2767
+- scripts/tyf.py:5862
+- scripts/tyf.py:4871
+- scripts/tyf.py:2685
+- scripts/tyf.py:5725
+- scripts/tyf_codex_bridge.py:96
+- scripts/tyf_workbench_v06.py:714
+- scripts/tyf_workbench_v06.py:274
+- scripts/tyf_workbench_v06.py:50
+- scripts/tyf_workbench_v06.py:286
+- scripts/tyf_workbench_v06.py:679
+- scripts/tyf_workbench_v06.py:669
 Supporting evidence:
-- doc hypothesis: cowork/SETUP.md:27
+- doc hypothesis: docs/WORKBENCH_TWO_WAY_MACHINERY.md:151
 - non-test graph wiring reaches related structure
 - public/docs/route/command surface reaches related structure
-- LLM intent synthesis: Strong duplicate of controlled-write intent; consolidate with the main controlled-write requirement.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- up: function:related_passages -> module:scripts.tyf_workbench_v06 -> doc:RC_ARCHITECTURE_CONTRACTS_3X.md
 
-## The documentation-honesty check should run warn-only after mutating `tyf` comman
+## Manuscript writes must go through proposal, audit, author review packet, author
 
-- id: `cand:e5efeee579fe`
+- id: `cand:185def6a9511`
 - kind: `recovered-intent`
 - disposition: `review`
-- confidence: `0.740`
-- statement: The documentation-honesty check should run warn-only after mutating `tyf` commands and hard-fail when invoked as standalone `tyf check`.
-- subject hints: tyf, 1, doc honesty, mutating commands, tyf check
+- confidence: `0.660`
+- statement: Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
+- subject hints: tyf write --decision <id>
 
 Source pointers:
-- VALIDATION.md:6
+- author-context/AGENTS.md:22
+- scripts/tyf.py:883
+- scripts/tyf.py:1070
+- scripts/tyf.py:1398
+- scripts/tyf.py:1080
+- scripts/tyf.py:1006
+- scripts/tyf.py:270
+- scripts/tyf.py:1090
+- scripts/tyf.py:1629
+- scripts/tyf.py:934
+- scripts/tyf.py:852
+- scripts/tyf.py:1788
+- scripts/tyf.py:262
+- scripts/tyf.py:925
+- scripts/tyf.py:901
+- scripts/tyf.py:856
+- scripts/tyf.py:860
+- scripts/tyf.py:1690
+- scripts/tyf.py:995
+- scripts/tyf.py:677
+- scripts/tyf.py:226
+- scripts/tyf.py:370
+- scripts/tyf.py:1022
+- scripts/tyf.py:392
+- scripts/tyf.py:990
+- scripts/tyf.py:973
+- scripts/tyf.py:977
+- scripts/tyf.py:1043
+- scripts/tyf.py:397
+- scripts/tyf.py:664
+- scripts/tyf.py:191
+- scripts/tyf.py:361
+- scripts/tyf.py:633
+- scripts/tyf.py:670
+- scripts/tyf.py:867
+- scripts/tyf.py:388
+- scripts/tyf.py:249
+- scripts/tyf.py:1177
+- scripts/tyf.py:296
+- scripts/tyf.py:327
+- scripts/tyf.py:201
+- scripts/tyf.py:1427
+- scripts/tyf.py:211
+- scripts/tyf.py:1381
+- scripts/tyf.py:1505
+- scripts/tyf.py:310
+- scripts/tyf.py:1673
+- scripts/tyf.py:849
+- scripts/tyf.py:1681
+- scripts/tyf.py:1566
+- scripts/tyf.py:242
+- scripts/tyf.py:230
+- scripts/tyf.py:238
+- scripts/tyf.py:234
+- scripts/tyf.py:306
+- scripts/tyf.py:302
+- scripts/tyf.py:986
+- scripts/tyf.py:1733
+- scripts/tyf.py:96
+- scripts/tyf.py:197
+- scripts/tyf.py:181
+- scripts/tyf.py:164
+- scripts/tyf.py:1102
+- scripts/tyf.py:1841
+- scripts/tyf.py:1536
+- scripts/tyf.py:1199
+- scripts/tyf.py:1556
+- scripts/tyf.py:1857
+- scripts/tyf.py:1322
+- scripts/tyf.py:1358
+- scripts/tyf.py:683
 - scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
+- scripts/tyf.py:1343
+- scripts/tyf.py:953
 - scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
+- scripts/tyf.py:155
+- scripts/tyf.py:106
+- scripts/tyf.py:1249
+- scripts/tyf.py:417
+- scripts/tyf.py:158
 Supporting evidence:
-- doc hypothesis: VALIDATION.md:6
+- doc hypothesis: author-context/AGENTS.md:22
 - non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: VALIDATION describes this as observed behaviour; treat as command contract rather than mere recommendation if tests still prove it.
 Counter evidence:
 - doc-side intent has no recovered behaviour cluster
 Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## The existing validation evidence records an end-to-end POSIX exercise of core `t
-
-- id: `cand:ef117f5e8edc`
-- kind: `advisory-recommendation`
-- disposition: `review`
-- confidence: `0.700`
-- statement: The existing validation evidence records an end-to-end POSIX exercise of core `tyf` helper commands, including write refusal without `--confirm` and success with it.
-- subject hints: tyf, --confirm, validation, POSIX, helper commands
-
-Source pointers:
-- VALIDATION.md:13
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: VALIDATION.md:13
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: This is validation history/evidence, not a future requirement; keep as supporting evidence for promoted behaviours.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
-
-## Validation evidence should demonstrate that introduced documentation drift is wa
-
-- id: `cand:3fe008191654`
-- kind: `advisory-recommendation`
-- disposition: `review`
-- confidence: `0.720`
-- statement: Validation evidence should demonstrate that introduced documentation drift is warned after mutating commands and fails standalone `tyf check`.
-- subject hints: tyf check, 1, doc drift, validation
-
-Source pointers:
-- VALIDATION.md:6
-- scripts/tyf.py:145
-- scripts/tyf.py:471
-- scripts/tyf.py:468
-- scripts/tyf.py:1101
-- scripts/tyf.py:348
-- scripts/tyf.py:1062
-- scripts/tyf.py:1012
-- scripts/tyf.py:186
-- scripts/tyf.py:1020
-- scripts/tyf.py:839
-- scripts/tyf.py:336
-- scripts/tyf.py:177
-- scripts/tyf.py:305
-- scripts/tyf.py:342
-- scripts/tyf.py:1045
-- scripts/tyf.py:154
-- scripts/tyf.py:120
-- scripts/tyf.py:640
-- scripts/tyf.py:127
-- scripts/tyf.py:623
-- scripts/tyf.py:671
-- scripts/tyf.py:740
-- scripts/tyf.py:1036
-- scripts/tyf.py:465
-- scripts/tyf.py:1041
-- scripts/tyf.py:1003
-- scripts/tyf.py:138
-- scripts/tyf.py:1052
-- scripts/tyf.py:110
-- scripts/tyf.py:791
-- scripts/tyf.py:915
-- scripts/tyf.py:963
-- scripts/tyf.py:853
-- scripts/tyf.py:699
-- scripts/tyf.py:781
-- scripts/tyf.py:719
-- scripts/tyf.py:921
-- scripts/tyf.py:753
-- scripts/tyf.py:971
-- scripts/tyf.py:769
-- scripts/tyf.py:1068
-- scripts/tyf.py:804
-- scripts/tyf.py:565
-- scripts/tyf.py:600
-- scripts/tyf.py:354
-- scripts/tyf.py:92
-- scripts/tyf.py:586
-- scripts/tyf.py:487
-- scripts/tyf.py:1125
-- scripts/tyf.py:115
-- scripts/tyf.py:102
-- scripts/tyf.py:53
-- scripts/tyf.py:500
-- scripts/tyf.py:193
-- scripts/tyf.py:105
-- tests/test_tyf.py:43
-- tests/test_tyf.py:34
-Supporting evidence:
-- doc hypothesis: VALIDATION.md:6
-- non-test graph wiring reaches related structure
-- public/docs/route/command surface reaches related structure
-- LLM intent synthesis: This is a quality gate recommendation derived from VALIDATION; can support behaviour promotion for doc-honesty checks.
-Counter evidence:
-- doc-side intent has no recovered behaviour cluster
-Graph paths:
-- down: function:main -> function:_doc_hook_tail
-- up: module:scripts.tyf -> doc:INSTALL.md
+- down: function:main -> function:_command_requires_event_journal

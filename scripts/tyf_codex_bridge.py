@@ -196,7 +196,7 @@ class CodexAppServerClient:
     def start(self) -> None:
         if self.proc:
             return
-        self.proc = subprocess.Popen(
+        self.proc = subprocess.Popen(  # process-owner: reviewed: local Codex app-server command list, no shell, stdio-only bridge
             self.command,
             cwd=self.cwd,
             stdin=subprocess.PIPE,
@@ -268,7 +268,7 @@ class CodexAppServerClient:
             try:
                 self.proc.kill()
             except Exception:
-                pass
+                pass  # degradation: ok: process may already be gone after terminate/wait failed
         self.proc = None
 
 

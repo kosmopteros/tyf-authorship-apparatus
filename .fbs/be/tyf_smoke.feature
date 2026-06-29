@@ -352,7 +352,22 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:.cursor-plugin/plugin.json @bind-file:gemini-extension.json @bind-file:author-context/AGENTS.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: release export ignores workshop debris
-    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris DocCheck.test_release_archive_keeps_author_context_templates DocCheck.test_release_archive_runs_check_from_exported_tree Installer.test_release_archive_installs_from_exported_tree_with_bash -v"
+    When Run "python tests/test_tyf.py DocCheck.test_release_archive_excludes_workshop_debris DocCheck.test_release_archive_keeps_author_context_templates -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:author-context/AGENTS.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: release export keeps author context templates
+    When Run "python tests/test_tyf.py DocCheck.test_release_archive_keeps_author_context_templates -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/tyf.py @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: release export runs check from exported tree
+    When Run "python tests/test_tyf.py DocCheck.test_release_archive_runs_check_from_exported_tree -v"
+    Then Exit code is 0
+
+  @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.gitattributes @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: release export installs from exported tree with bash
+    When Run "python tests/test_tyf.py Installer.test_release_archive_installs_from_exported_tree_with_bash -v"
     Then Exit code is 0
 
   @covers:tyf-release-packaging-contract @covers:tyf-public-onboarding-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:.opencode/INSTALL.md @bind-file:tests/test_tyf.py @tool-check:cli

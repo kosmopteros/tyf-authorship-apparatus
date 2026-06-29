@@ -26,7 +26,7 @@ try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 except AttributeError:
-    pass
+    pass  # degradation: ok: older Python streams may not support reconfigure; keep host defaults
 
 ROOT_WORK_ID = "work"
 DEFAULT_PORT = 8766
@@ -68,7 +68,7 @@ def atomic_write(path: Path, text: str) -> None:
             if tmp.exists():
                 tmp.unlink()
         except OSError:
-            pass
+            pass  # degradation: ok: temp cleanup failure should not mask the original write result
 
 
 def append_text(path: Path, text: str) -> None:

@@ -88,9 +88,7 @@ Finding: No new remote surface is added by default. The live wrapper defaults to
 
 ### 9. Package reviewer
 
-Finding: `tyf-workbench` is exposed as an installed console command. This is not yet `tyf workbench`, but it gives authors a real command surface without rewriting the large existing `tyf.py` command parser in this PR.
-
-Recommendation: Add `tyf workbench` as the next integration once the live wrapper is stable.
+Finding: `tyf-workbench` is exposed as an installed console command, and the canonical `tyf surface` command now routes to the live Workbench wrapper. Authors no longer need to know the hidden console command to get assistant status, save safety, approval state, and recovery actions.
 
 ### 10. Test reviewer
 
@@ -112,11 +110,10 @@ Finding: The scope is still honest. This is Workbench visibility and approval-st
 - Split the status model out of the browser wrapper for testability.
 - Added a pure stale-draft detector for tests and future UI use.
 - Added an approval model independent of the app-server bridge so approval requests and decisions remain inspectable local state.
-- Added `tyf-workbench` as an installable command while avoiding a risky invasive edit of `scripts/tyf.py`.
+- Added `tyf-workbench` as an installable command and routed the canonical `tyf surface` command through the live wrapper.
 
 ## Remaining after this PR
 
-- Add true `tyf workbench` subcommand inside `scripts/tyf.py` once the live wrapper has real use.
 - Add SSE or long-polling only if simple polling feels laggy.
 - Validate the hook sample on an actual local Codex install.
 - Wire approval decisions back into app-server after the local schema is confirmed.

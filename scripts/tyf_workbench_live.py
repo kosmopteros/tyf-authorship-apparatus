@@ -246,9 +246,12 @@ def run(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--open", action="store_true")
     parser.add_argument("--allow-remote", action="store_true")
+    parser.add_argument("--refresh-map", action="store_true", help="regenerate outline/book-map.yaml from draft and manuscript files")
     args = parser.parse_args(argv)
     work_id, work_root, workspace = wb.resolve_work(args.work)
     wb.ensure_workbench_shape(work_root, workspace)
+    if args.refresh_map:
+        wb.write_book_map(work_root)
     session_key = secrets.token_urlsafe(24) if args.serve else ""
     data = wb.collect_data(work_id, work_root, workspace, token=session_key)
     out_dir = work_root / ".review" / "surface"

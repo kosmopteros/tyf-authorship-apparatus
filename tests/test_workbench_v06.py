@@ -3,6 +3,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
+import time
 import unittest
 
 
@@ -79,6 +81,75 @@ class WorkbenchV06Tests(unittest.TestCase):
         )
         self.assertEqual(conflict["status"], "conflict")
         self.assertIn("current_text", conflict)
+
+    def test_parallel_draft_saves_produce_one_save_and_one_conflict(self):
+        work_id, work_root, workspace = self.resolved()
+        data = workbench.collect_data(work_id, work_root, workspace)
+        draft = data["units"][0]["draft"]
+        original_atomic_write = workbench.atomic_write
+        barrier = threading.Barrier(2)
+        results = []
+
+        def slow_atomic_write(path, text):
+            if Path(path) == work_root / draft["path"]:
+                time.sleep(0.05)
+            return original_atomic_write(path, text)
+
+        def save(text):
+            barrier.wait()
+            results.append(
+                workbench.save_draft(
+                    work_id,
+                    work_root,
+                    workspace,
+                    {"path": draft["path"], "base_hash": draft["sha256"], "text": text},
+                )["status"]
+            )
+
+        try:
+            workbench.atomic_write = slow_atomic_write
+            threads = [
+                threading.Thread(target=save, args=("Thread A.\n",)),
+                threading.Thread(target=save, args=("Thread B.\n",)),
+            ]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        finally:
+            workbench.atomic_write = original_atomic_write
+
+        self.assertEqual(sorted(results), ["conflict", "saved"])
+        self.assertIn((work_root / draft["path"]).read_text(encoding="utf-8"), {"Thread A.\n", "Thread B.\n"})
+
+    def test_gate_packet_rejects_selection_not_in_saved_draft(self):
+        work_id, work_root, workspace = self.resolved()
+        data = workbench.collect_data(work_id, work_root, workspace)
+        draft = data["units"][0]["draft"]
+
+        result = workbench.gate_packet(
+            work_id,
+            work_root,
+            workspace,
+            {
+                "path": draft["path"],
+                "base_hash": draft["sha256"],
+                "selection": "Unsaved browser-only sentence.",
+                "note": "should not packet unsaved text",
+            },
+        )
+
+        self.assertEqual(result["status"], "conflict")
+        self.assertIn("not found in the saved draft", result["message"])
+
+    def test_static_html_has_unsaved_draft_guard_and_accessible_status(self):
+        work_id, work_root, workspace = self.resolved()
+        html = workbench.surface_html(workbench.collect_data(work_id, work_root, workspace, token="test-token"))
+
+        self.assertIn("aria-live=\"polite\"", html)
+        self.assertIn("draftDirty", html)
+        self.assertIn("beforeunload", html)
+        self.assertIn("Unsaved draft changes", html)
 
     def test_notes_footnotes_gate_packets_and_context_do_not_touch_manuscript(self):
         work_id, work_root, workspace = self.resolved()

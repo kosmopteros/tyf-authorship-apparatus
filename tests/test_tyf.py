@@ -268,21 +268,23 @@ class CLIBehaviour(unittest.TestCase):
 
         rc, out = run_tyf(["surface"], ws)
         self.assertEqual(rc, 0, out)
-        self.assertIn("TYF Workbench v0.6", out)
+        self.assertIn("TYF live Workbench", out)
         self.assertIn("manuscript/ remains Gate-only", out)
         self.assertEqual((ws / "manuscript" / "chapter-01.md").read_text(encoding="utf-8"), before)
 
-        index = ws / ".review" / "surface" / "workbench-v06.html"
-        data_path = ws / ".review" / "surface" / "workbench-v06-data.json"
+        index = ws / ".review" / "surface" / "workbench-live.html"
+        data_path = ws / ".review" / "surface" / "workbench-live-data.json"
         self.assertTrue(index.is_file())
         self.assertTrue(data_path.is_file())
         html = index.read_text(encoding="utf-8")
         self.assertIn("TYF Workbench", html)
         self.assertIn("drafts/candidate-draft.md", html)
         self.assertIn("drafts/chapter-02.md", html)
-        self.assertIn("Gate packet from selection", html)
+        self.assertIn("Prepare for manuscript review", html)
+        self.assertIn("Assistant status", html)
+        self.assertIn("Save safety", html)
         self.assertIn("Author note on selection", html)
-        self.assertIn("Footnote candidate", html)
+        self.assertIn("Make footnote candidate", html)
         self.assertIn("Gate-only", html)
 
         data = json.loads(data_path.read_text(encoding="utf-8"))
@@ -313,7 +315,7 @@ class CLIBehaviour(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertTrue((ws / "design" / "book-style.yaml").is_file())
         self.assertTrue((ws / "assets" / "images" / "index.jsonl").is_file())
-        self.assertIn("TYF Workbench v0.6", out)
+        self.assertIn("TYF live Workbench", out)
 
     def test_surface_draft_save_requires_matching_base_hash(self):
         ws = self.ws()

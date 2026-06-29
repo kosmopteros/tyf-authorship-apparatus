@@ -159,7 +159,7 @@ No copy-paste is needed. The desk remembers what the author touched.
 2. Codex decides that the author intention should be preserved as a note.
 3. Codex calls `create_author_note`.
 4. MCP appends a JSONL note under `knowledge-base/author-notes.jsonl`.
-5. Workbench refreshes or receives a future event notification and shows the note.
+5. Workbench refreshes through polling or receives an event notification and shows the note.
 
 The note is author material or amanuensis material. It is not a command to edit manuscript text.
 
@@ -185,8 +185,8 @@ The note is author material or amanuensis material. It is not a command to edit 
 1. Codex starts or completes a turn.
 2. Hook, MCP call, or bridge event records status.
 3. TYF writes `.review/surface/codex-turn-status.json` and appends JSONL history.
-4. Workbench can poll this file and show the last turn status and changed paths.
-5. If a changed draft hash conflicts with browser state, Workbench should show conflict before save.
+4. The live Workbench polls or receives events and shows the last turn status and changed paths.
+5. If a changed draft hash conflicts with browser state, Workbench shows conflict before save.
 
 ### Flow F: Browser-native chat through app-server
 
@@ -207,7 +207,7 @@ This is scaffolded, not complete.
    - MCP server availability
 7. Bridge sends `turn/start` to app-server.
 8. Bridge records Codex notifications as local event/status files.
-9. Future browser UI renders agent messages, tool calls, approval needs, changed paths, and final status.
+9. Future browser UI renders agent messages and tool calls; the current live Workbench already renders local status, approval state, changed paths, and final status records.
 10. Any file changes still happen through Codex permissions and TYF tools.
 
 ## Why MCP and app-server are both needed
@@ -293,27 +293,27 @@ No component should silently convert a selection, note, or model suggestion into
 Implemented now:
 
 - local Workbench v0.6 in `scripts/tyf_workbench_v06.py`
+- live Workbench wrapper in `scripts/tyf_workbench_live.py`
 - MCP stdio server in `scripts/tyf_workbench_mcp.py`
 - Codex MCP config sample in `docs/CODEX_MCP_CONFIG.sample.toml`
 - Codex hook recorder in `scripts/tyf_codex_hook.py`
 - Codex hooks sample in `docs/CODEX_HOOKS.sample.toml`
 - local app-server bridge scaffold in `scripts/tyf_codex_bridge.py`
 - schema compatibility helper in `scripts/tyf_codex_schema.py`
-- public Workbench entry through `tyf surface`
+- public Workbench entry through `tyf surface`, routed to the live wrapper
 - active context packet path in `.review/surface/active-context.md`
 - Codex turn status record path in `.review/surface/codex-turn-status.json`
+- live Workbench polling/SSE display for Codex status, save safety, approval state, and review dashboard files
 - focused tests for Workbench, MCP, hook recorder, and bridge context
 - external-style critique convergence in `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md`
 
 Still to implement before browser-native chat is complete:
 
-- Workbench live polling or SSE display for Codex status files
-- approval UI mirroring for app-server events
+- approval decision round-tripping back into app-server
 - local validation of exact hook config syntax against installed Codex
-- optional `tyf workbench` alias if the product wants a separate noun from `surface`
 
 ## Product decision
 
-Start with MCP as the usable path. Keep browser-native Codex chat behind the bridge until status polling, approval mirroring, and local hook validation are in place.
+Start with MCP as the usable path. Keep browser-native Codex chat behind the bridge until approval decision round-tripping and local hook validation are in place.
 
 The immediate author pain is not the lack of chat. It is that the book has no spatial body. MCP fixes the copy-paste problem while preserving the current Codex workflow. App-server becomes valuable after the desk itself is trustworthy enough to host the conversation.

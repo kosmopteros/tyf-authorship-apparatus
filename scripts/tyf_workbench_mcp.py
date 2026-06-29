@@ -375,8 +375,9 @@ def tool_prepare_gate_packet(ctx: WorkbenchContext, args: Dict[str, Any]) -> Dic
     if not source_path:
         return error_result("source_path is required")
     norm, path = wb.safe_rel_path(work_root, source_path, ("drafts/",))
-    text = wb.read_text(path) if path.is_file() else ""
-    base_hash = first_text(args.get("base_hash")) or wb.sha256_text(text)
+    base_hash = first_text(args.get("base_hash"))
+    if not base_hash:
+        return error_result("base_hash is required")
     return ok_result(wb.gate_packet(
         work_id,
         work_root,
@@ -554,7 +555,7 @@ TOOLS: Dict[str, Tuple[str, Dict[str, Any], Any]] = {
                 "selection": {"type": "string"},
                 "note": {"type": "string"},
             },
-            "required": ["source_path"],
+            "required": ["source_path", "base_hash"],
         },
         tool_prepare_gate_packet,
     ),

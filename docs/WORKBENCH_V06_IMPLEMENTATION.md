@@ -1,6 +1,6 @@
 # Workbench v0.6 implementation plan
 
-Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with MCP, hook, bridge, schema, and focused test scaffolds.
+Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with the public `tyf surface` front door now routed through the live wrapper in `scripts/tyf_workbench_live.py`.
 
 See also: `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md` for the 12-lens external-style critique and convergence map.
 
@@ -23,7 +23,9 @@ This keeps the apparatus aligned with the existing TYF rule: the author is the s
 
 ## How it looks
 
-The v0.6 Workbench is a four-panel browser desk.
+The base v0.6 Workbench is a four-panel browser desk. The public `tyf surface`
+command adds the live wrapper: assistant status, save-safety state, approval
+state, review dashboard, and recovery actions.
 
 1. **Book map sidebar**
    - reads `outline/book-map.yaml`
@@ -70,7 +72,13 @@ To regenerate `outline/book-map.yaml` from discovered draft and manuscript files
 tyf surface --refresh-map
 ```
 
-The helper delegates to `scripts/tyf_workbench_v06.py`, which also remains callable for focused diagnostics. It writes static artifacts to `.review/surface/workbench-v06.html` and `.review/surface/workbench-v06-data.json`. Static HTML is useful for inspection, but draft saves and note creation require `--serve`.
+The helper delegates to `scripts/tyf_workbench_live.py`, which wraps the base
+v0.6 Workbench. It writes author-facing artifacts to
+`.review/surface/workbench-live.html` and
+`.review/surface/workbench-live-data.json`. The base v0.6 module remains
+callable for focused diagnostics and still owns the shared draft/note/Gate
+packet primitives. Static HTML is useful for inspection, but draft saves and
+note creation require `--serve`.
 
 ## MCP bridge
 
@@ -115,8 +123,10 @@ The app-server bridge is intentionally behind TYF rather than exposed directly t
 - `design/book-style.yaml`
 - `assets/images/index.jsonl`
 - `knowledge-base/author-notes.jsonl`
-- `.review/surface/workbench-v06.html`
-- `.review/surface/workbench-v06-data.json`
+- `.review/surface/workbench-live.html`
+- `.review/surface/workbench-live-data.json`
+- `.review/surface/workbench-v06.html` (base helper diagnostic artifact)
+- `.review/surface/workbench-v06-data.json` (base helper diagnostic artifact)
 - `.review/surface/active-context.md`
 - `.review/surface/active-context.json`
 - `.review/surface/book-graph-lite.json`
@@ -159,27 +169,32 @@ Side-effecting POST requests require a per-session capability token embedded in 
 
 All workspace paths are confined to expected TYF directories and symlink components are refused.
 
-Draft saves use compare-and-swap:
+Draft saves use a per-draft Workbench lock plus compare-and-swap:
 
 1. browser loads draft text and `sha256`
 2. author edits
 3. save request sends loaded hash and new text
-4. server checks current disk hash
-5. if disk changed, save returns a conflict with current disk text and browser text
-6. if disk did not change, draft is written atomically
+4. server acquires a short-lived lock for that draft path
+5. server checks the current disk hash inside the lock
+6. if disk changed, save returns a conflict with current disk text and browser text
+7. if disk did not change, draft is written atomically with a unique temporary file
 
 ## What this does not do yet
 
-v0.6 still does not implement:
+The current live Workbench still does not implement:
 
 - browser-native Codex chat UI
-- app-server approval mirroring in the browser
+- approval decision round-tripping back into app-server
 - persistent semantic graph database
 - visual drag and drop chapter reordering
 - manuscript insertion
 - print or export layout
 - multi-user collaboration
-The correct next step is to make the Workbench refresh visibly from Codex turn status and bridge status files, then validate the hook sample against a local Codex install. Browser-native app-server chat belongs after approval mirroring exists.
+The current live wrapper already refreshes visibly from Codex turn status and
+bridge status files. The correct next step is to validate the hook sample
+against a local Codex install and round-trip approval decisions back into the
+app-server after the local schema is confirmed. Browser-native app-server chat
+belongs after approval mirroring exists.
 
 ## Tests
 

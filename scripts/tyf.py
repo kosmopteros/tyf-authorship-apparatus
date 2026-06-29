@@ -3878,9 +3878,9 @@ def cmd_surface(args):
     if script_dir not in sys.path:
         sys.path.insert(0, script_dir)
     try:
-        import tyf_workbench_v06
+        import tyf_workbench_live
     except ImportError as e:
-        sys.exit(f"Refused: TYF Workbench v0.6 helper is unavailable: {e}")
+        sys.exit(f"Refused: TYF live Workbench helper is unavailable: {e}")
 
     argv = []
     if args.work:
@@ -3897,7 +3897,7 @@ def cmd_surface(args):
         argv.append("--allow-remote")
     if getattr(args, "refresh_map", False):
         argv.append("--refresh-map")
-    raise SystemExit(tyf_workbench_v06.run(argv))
+    raise SystemExit(tyf_workbench_live.run(argv))
 
 
 def cmd_capture(args):

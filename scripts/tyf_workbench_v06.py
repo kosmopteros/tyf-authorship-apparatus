@@ -19,8 +19,10 @@ import re
 import secrets
 import socketserver
 import sys
+import time
 import urllib.parse
 import webbrowser
+from contextlib import contextmanager
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -88,7 +90,7 @@ def read_text(path: Path, default: str = "") -> str:
 
 def atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}-{secrets.token_hex(6)}")
     try:
         with tmp.open("w", encoding="utf-8") as f:
             f.write(text)
@@ -192,6 +194,40 @@ def safe_rel_path(work_root: Path, rel: str, allowed_prefixes: tuple[str, ...]) 
     if not is_within(work_root, path):
         raise ValueError(f"path resolves outside the work: {norm}")
     return norm, path
+
+
+def draft_lock_path(work_root: Path, rel: str) -> Path:
+    lock_dir = work_root / ".review" / "locks"
+    reject_symlink_components(lock_dir, "lock dir")
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    return lock_dir / f"workbench-{short_hash(rel)}.lock"
+
+
+@contextmanager
+def draft_write_lock(work_root: Path, rel: str, timeout: float = 5.0):
+    lock_path = draft_lock_path(work_root, rel)
+    reject_symlink_components(lock_path, "draft lock")
+    deadline = time.monotonic() + timeout
+    fd = None
+    while fd is None:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(fd, f"{os.getpid()} {now()}\n".encode("utf-8"))
+        except FileExistsError:
+            if time.monotonic() >= deadline:
+                raise ValueError(f"draft is busy in another Workbench save: {rel}")
+            time.sleep(0.05)
+    try:
+        yield
+    finally:
+        try:
+            if fd is not None:
+                os.close(fd)
+        finally:
+            try:
+                lock_path.unlink()
+            except OSError:
+                pass  # degradation: ok: stale lock cleanup failure is surfaced by the next save timeout
 
 
 def workspace_root() -> Path:
@@ -605,22 +641,23 @@ Refine this in draft/review space if needed. Any insertion into `manuscript/` st
 
 def save_draft(work_id: str, work_root: Path, workspace: Path, payload: dict) -> dict:
     norm, path = safe_rel_path(work_root, one_line(payload.get("path")), ("drafts/",))
-    current = read_text(path) if path.is_file() else ""
-    current_hash = sha256_text(current)
     base_hash = one_line(payload.get("base_hash"))
     proposed = str(payload.get("text") or "")
-    if base_hash != current_hash:
-        return {
-            "status": "conflict",
-            "path": norm,
-            "current_sha256": current_hash,
-            "loaded_sha256": base_hash,
-            "current_text": current,
-            "browser_text": proposed,
-            "message": "Draft changed on disk after the workbench loaded it; reload or merge deliberately before saving.",
-        }
-    atomic_write(path, proposed)
-    new_hash = sha256_text(proposed)
+    with draft_write_lock(work_root, norm):
+        current = read_text(path) if path.is_file() else ""
+        current_hash = sha256_text(current)
+        if base_hash != current_hash:
+            return {
+                "status": "conflict",
+                "path": norm,
+                "current_sha256": current_hash,
+                "loaded_sha256": base_hash,
+                "current_text": current,
+                "browser_text": proposed,
+                "message": "Draft changed on disk after the workbench loaded it; reload or merge deliberately before saving.",
+            }
+        atomic_write(path, proposed)
+        new_hash = sha256_text(proposed)
     log_event(workspace, "workbench-save-draft", work_id, norm)
     return {"status": "saved", "path": norm, "sha256": new_hash, "message": "Draft saved. manuscript/ was not touched."}
 
@@ -659,6 +696,14 @@ def gate_packet(work_id: str, work_root: Path, workspace: Path, payload: dict) -
         }
     selection = str(payload.get("selection") or "")
     selected = selection if selection.strip() else current
+    if selection.strip() and selection not in current:
+        return {
+            "status": "conflict",
+            "path": norm,
+            "current_sha256": current_hash,
+            "loaded_sha256": base_hash,
+            "message": "Selected text was not found in the saved draft. Save the draft first, then prepare the Gate packet.",
+        }
     packet_id = "gate-" + now_id() + "-" + short_hash(work_id, norm, current_hash, selected)
     out_dir = work_root / ".review" / "gate-packets"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -897,6 +942,7 @@ HTML_TEMPLATE = r"""<!doctype html>
     .editor-wrap, .reader-wrap { display:flex; flex-direction:column; height:100%; min-height:calc(100vh - 70px); }
     .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:10px; border-bottom:1px solid var(--line); background:var(--soft); }
     button { border:1px solid var(--line); border-radius:7px; padding:8px 10px; background:var(--card); color:var(--ink); cursor:pointer; font:inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     button.primary { background:var(--accent); border-color:var(--accent); color:white; }
     button:disabled { opacity:.55; cursor:not-allowed; }
     textarea.editor { flex:1; width:100%; min-height:60vh; border:0; resize:none; padding:24px; outline:none; background:var(--card); color:var(--ink); font:18px/1.62 Georgia, "Times New Roman", serif; }
@@ -939,7 +985,7 @@ HTML_TEMPLATE = r"""<!doctype html>
         <button class="primary" id="saveDraft">Save draft</button>
         <button id="gatePacket">Gate packet from selection</button>
         <button id="contextPacket">Amanuensis context</button>
-        <span class="status" id="draftStatus"></span>
+        <span class="status" id="draftStatus" aria-live="polite"></span>
       </div>
       <textarea class="editor" id="draftText" spellcheck="true"></textarea>
     </main>
@@ -983,16 +1029,30 @@ HTML_TEMPLATE = r"""<!doctype html>
     let lastSelection = (data.state && data.state.selection) || {};
     const draft = document.getElementById('draftText');
     const status = document.getElementById('draftStatus');
+    let draftDirty = false;
     function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function activeUnit() { return data.units.find(u => u.id === activeUnitId) || data.units[0] || null; }
     function activeDraft() { const u = activeUnit(); return u && u.draft ? u.draft : null; }
     function activeManuscript() { const u = activeUnit(); return u && u.manuscript ? u.manuscript : null; }
     function setStatus(text, cls) { status.textContent = text || ''; status.className = 'status ' + (cls || ''); }
+    function markDraftDirty() {
+      draftDirty = true;
+      setStatus('Unsaved draft changes', 'warn');
+    }
+    function confirmDiscardUnsaved() {
+      return !draftDirty || confirm('Discard unsaved draft changes in this browser window? Save first if you want to keep them.');
+    }
     function render() {
       document.getElementById('workMeta').textContent = `${data.work.title} · ${data.work.language} · ${data.work.status}`;
       const units = data.units || [];
       document.getElementById('unitList').innerHTML = units.map(u => `<button class="unit ${u.id === activeUnitId ? 'active' : ''}" data-unit="${esc(u.id)}"><strong>${esc(u.title)}</strong><small>${esc((u.draft&&u.draft.path)||'no draft')} · ${esc((u.manuscript&&u.manuscript.path)||'no manuscript')}</small></button>`).join('');
-      document.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener('click', () => { activeUnitId = btn.getAttribute('data-unit'); render(); rememberState(); }));
+      document.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener('click', () => {
+        if (!confirmDiscardUnsaved()) return;
+        draftDirty = false;
+        activeUnitId = btn.getAttribute('data-unit');
+        render();
+        rememberState();
+      }));
       const d = activeDraft();
       draft.disabled = !d;
       draft.value = d ? (d.text || '') : '';
@@ -1006,7 +1066,7 @@ HTML_TEMPLATE = r"""<!doctype html>
       document.getElementById('assets').innerHTML = rows || '<p class="meta">No image assets recorded.</p>';
       renderSelection();
       renderNotes();
-      setStatus(d ? d.path : 'No draft for this unit', '');
+      setStatus(draftDirty ? 'Unsaved draft changes' : (d ? d.path : 'No draft for this unit'), draftDirty ? 'warn' : '');
     }
     function renderSelection() {
       const text = lastSelection && lastSelection.text ? lastSelection.text : '';
@@ -1038,18 +1098,35 @@ HTML_TEMPLATE = r"""<!doctype html>
       return result;
     }
     async function reload() {
+      const unsaved = draftDirty ? {path: draft.dataset.path || '', baseHash: draft.dataset.baseHash || '', text: draft.value} : null;
       data = await fetch('/workbench-data.json').then(r => r.json());
       if (!data.units.find(u => u.id === activeUnitId) && data.units[0]) activeUnitId = data.units[0].id;
       render();
+      if (unsaved) {
+        const d = activeDraft();
+        if (d && d.path === unsaved.path) {
+          draft.value = unsaved.text;
+          draft.dataset.baseHash = unsaved.baseHash;
+          draftDirty = true;
+          setStatus('Unsaved draft changes preserved while refreshing from disk.', 'warn');
+        }
+      }
     }
     async function rememberState() {
       try { await postJson('/api/save-state', {active_unit: activeUnitId, active_path: (activeDraft()||{}).path || '', selection: lastSelection}); } catch (_) {}
     }
+    draft.addEventListener('input', () => { markDraftDirty(); captureSelection(); });
     draft.addEventListener('keyup', captureSelection);
     draft.addEventListener('mouseup', captureSelection);
+    draft.addEventListener('select', captureSelection);
+    window.addEventListener('beforeunload', event => {
+      if (!draftDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
     document.getElementById('saveDraft').addEventListener('click', async () => {
       const d = activeDraft(); if (!d) return;
-      try { const r = await postJson('/api/save-draft', {path:d.path, base_hash:draft.dataset.baseHash, text:draft.value}); setStatus(r.message, 'ok'); await reload(); }
+      try { const r = await postJson('/api/save-draft', {path:d.path, base_hash:draft.dataset.baseHash, text:draft.value}); draftDirty = false; await reload(); setStatus(r.message, 'ok'); }
       catch (err) { setStatus(err.message || 'Save failed. In static mode run with --serve.', err.status === 'conflict' ? 'warn' : 'bad'); }
     });
     document.getElementById('createUnit').addEventListener('click', async () => {
@@ -1064,6 +1141,8 @@ HTML_TEMPLATE = r"""<!doctype html>
     });
     document.getElementById('gatePacket').addEventListener('click', async () => {
       captureSelection(); const d = activeDraft(); if (!d) return;
+      if (draftDirty) { setStatus('Save draft before preparing manuscript review packet.', 'warn'); return; }
+      if (!lastSelection.text && !confirm('Prepare the whole saved draft unit for manuscript review?')) return;
       try { const r = await postJson('/api/gate-packet', {path:d.path, base_hash:draft.dataset.baseHash, selection:lastSelection.text || '', note:document.getElementById('packetNote').value}); setStatus(r.message + ' ' + r.markdown, 'ok'); }
       catch (err) { setStatus(err.message || 'Could not write Gate packet.', 'warn'); }
     });

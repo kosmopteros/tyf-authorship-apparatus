@@ -146,6 +146,37 @@ class WorkbenchMCPTests(unittest.TestCase):
         )
         self.assertEqual(len(conflicts["conflicts"]), 1)
 
+    def test_gate_packet_requires_explicit_base_hash_and_saved_selection(self):
+        missing_hash = self.call_tool(
+            "prepare_gate_packet",
+            {
+                "source_path": "drafts/chapter-one.md",
+                "selection": "Alpha beta",
+                "note": "No implicit current hash.",
+            },
+        )
+        self.assertEqual(missing_hash["error"], "base_hash is required")
+
+        draft = (self.root / "drafts" / "chapter-one.md").read_text(encoding="utf-8")
+        unsaved = self.call_tool(
+            "prepare_gate_packet",
+            {
+                "source_path": "drafts/chapter-one.md",
+                "base_hash": workbench.sha256_text(draft),
+                "selection": "Browser-only sentence.",
+                "note": "Should save first.",
+            },
+        )
+        self.assertEqual(unsaved["status"], "conflict")
+        self.assertIn("not found in the saved draft", unsaved["message"])
+
+    def test_prepare_gate_packet_schema_requires_base_hash(self):
+        server = self.server()
+        server.handle({"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {}})
+        out = server.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
+        tool = next(item for item in out["result"]["tools"] if item["name"] == "prepare_gate_packet")
+        self.assertIn("base_hash", tool["inputSchema"]["required"])
+
 
 if __name__ == "__main__":
     unittest.main()

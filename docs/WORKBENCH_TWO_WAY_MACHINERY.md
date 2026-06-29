@@ -299,21 +299,22 @@ Implemented now:
 - Codex hook recorder in `scripts/tyf_codex_hook.py`
 - Codex hooks sample in `docs/CODEX_HOOKS.sample.toml`
 - local app-server bridge scaffold in `scripts/tyf_codex_bridge.py`
+- approval-aware app-server bridge in `scripts/tyf_codex_bridge_v07.py`, including app-server approval request recording and bridge-side decision responses
 - schema compatibility helper in `scripts/tyf_codex_schema.py`
 - public Workbench entry through `tyf surface`, routed to the live wrapper
 - active context packet path in `.review/surface/active-context.md`
 - Codex turn status record path in `.review/surface/codex-turn-status.json`
 - live Workbench polling/SSE display for Codex status, save safety, approval state, and review dashboard files
-- focused tests for Workbench, MCP, hook recorder, and bridge context
+- focused tests for Workbench, MCP stdio round-trip, hook recorder, Codex app-server command launch, bridge context, and approval decision round-trip
 - external-style critique convergence in `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md`
 
 Still to implement before browser-native chat is complete:
 
-- approval decision round-tripping back into app-server
+- browser-native chat UI and streaming transcript controls
 - local validation of exact hook config syntax against installed Codex
 
 ## Product decision
 
-Start with MCP as the usable path. Keep browser-native Codex chat behind the bridge until approval decision round-tripping and local hook validation are in place.
+Start with MCP as the usable path. Keep browser-native Codex chat behind the bridge until the chat UI, streamed transcript controls, and local hook validation are in place.
 
 The immediate author pain is not the lack of chat. It is that the book has no spatial body. MCP fixes the copy-paste problem while preserving the current Codex workflow. App-server becomes valuable after the desk itself is trustworthy enough to host the conversation.

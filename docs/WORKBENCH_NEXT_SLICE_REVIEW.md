@@ -72,9 +72,9 @@ Finding: MCP remains the correct immediate bridge. This slice does not pollute M
 
 ### 6. App-server reviewer
 
-Finding: The bridge still stays behind TYF. Approval-like notifications are now modeled locally before browser-native chat is claimed complete.
+Finding: The bridge still stays behind TYF. Approval-like notifications are now modeled locally before browser-native chat is claimed complete, and bridge-side decisions are returned to the matching app-server request id.
 
-Remaining: It records approval state but does not yet send decisions back to app-server. That should be a later bridge-action slice after the exact app-server approval schema is validated locally.
+Remaining: Browser-native chat controls still need a real UI on top of the bridge before this can be claimed as complete in the Workbench.
 
 ### 7. Hook reviewer
 
@@ -109,16 +109,17 @@ Finding: The scope is still honest. This is Workbench visibility and approval-st
 - Fixed the live Workbench wrapper to delegate to `tyf_workbench_v06.make_handler(work_id, work_root, workspace, session_key)` instead of the wrong legacy arity.
 - Split the status model out of the browser wrapper for testability.
 - Added a pure stale-draft detector for tests and future UI use.
-- Added an approval model independent of the app-server bridge so approval requests and decisions remain inspectable local state.
+- Added an approval model independent of the app-server bridge so approval requests and decisions remain inspectable local state, then wired bridge-side decisions back to the app-server request id.
 - Added `tyf-workbench` as an installable command and routed the canonical `tyf surface` command through the live wrapper.
+- Added a process-level MCP stdio smoke and a Windows launcher resolver so the local bridge can initialize the installed Codex app-server from this environment.
 
 ## Remaining after this PR
 
 - Add SSE or long-polling only if simple polling feels laggy.
 - Validate the hook sample on an actual local Codex install.
-- Wire approval decisions back into app-server after the local schema is confirmed.
+- Build browser-native chat controls on top of the bridge.
 - Replace HTML string injection with explicit template slots.
 
 ## Verdict
 
-This slice closes the visible-browser-status and stale-draft-badge gap. It also creates a local approval-state model and a validation path for hook config. It is ready to merge as the next sequential slice, with browser-native chat still honestly deferred until approval round-tripping is implemented and locally verified.
+This slice closes the visible-browser-status and stale-draft-badge gap, then bridges the next approval gap: app-server approval requests can now be recorded, decided locally, and answered over the bridge. Browser-native chat remains honestly deferred until the UI and hook validation are ready.

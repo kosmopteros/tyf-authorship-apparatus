@@ -65,6 +65,21 @@ class CodexBridgeContextTests(unittest.TestCase):
         self.assertTrue((work_root / ".review" / "surface" / "codex-bridge-events.jsonl").is_file())
         self.assertEqual((work_root / "manuscript" / "chapter-one.md").read_text(encoding="utf-8"), before)
 
+    def test_windows_codex_launcher_prefers_cmd_or_exe_over_extensionless_stub(self):
+        bin_dir = self.root / "bin"
+        bin_dir.mkdir()
+        (bin_dir / "codex").write_text("stub", encoding="utf-8")
+        (bin_dir / "codex.cmd").write_text("@echo off\n", encoding="utf-8")
+
+        resolved = bridge.resolve_subprocess_command(
+            ["codex", "app-server"],
+            path_env=str(bin_dir),
+            platform_name="nt",
+        )
+
+        self.assertEqual(Path(resolved[0]).name.lower(), "codex.cmd")
+        self.assertEqual(resolved[1:], ["app-server"])
+
 
 if __name__ == "__main__":
     unittest.main()

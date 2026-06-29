@@ -110,6 +110,7 @@ Additional local bridge pieces now exist:
 - `scripts/tyf_codex_hook.py`: tolerant Codex hook recorder that writes status files only.
 - `docs/CODEX_HOOKS.sample.toml`: readable hook wiring sample.
 - `scripts/tyf_codex_bridge.py`: local `codex app-server` bridge scaffold over stdio.
+- `scripts/tyf_codex_bridge_v07.py`: approval-aware bridge wrapper that records app-server approval requests and returns bridge-side decisions to the app-server request id.
 - `scripts/tyf_codex_schema.py`: helper for generating version-specific app-server schema compatibility artifacts.
 
 The app-server bridge is intentionally behind TYF rather than exposed directly to the browser. It builds input from the active Workbench selection, unit hashes, notes, related passages, and style sheet. It records events and turn status under `.review/surface/`. It does not expose a manuscript write route.
@@ -135,6 +136,8 @@ The app-server bridge is intentionally behind TYF rather than exposed directly t
 - `.review/surface/codex-hooks.jsonl`
 - `.review/surface/codex-bridge-events.jsonl`
 - `.review/surface/codex-bridge-status.json`
+- `.review/surface/codex-approval-current.json`
+- `.review/surface/codex-approval-events.jsonl`
 - `.review/surface/codex-app-server-compat.md`
 - `.review/surface/codex-app-server-compat.json`
 - `.review/gate-packets/*.md`
@@ -184,17 +187,17 @@ Draft saves use a per-draft Workbench lock plus compare-and-swap:
 The current live Workbench still does not implement:
 
 - browser-native Codex chat UI
-- approval decision round-tripping back into app-server
 - persistent semantic graph database
 - visual drag and drop chapter reordering
 - manuscript insertion
 - print or export layout
 - multi-user collaboration
 The current live wrapper already refreshes visibly from Codex turn status and
-bridge status files. The correct next step is to validate the hook sample
-against a local Codex install and round-trip approval decisions back into the
-app-server after the local schema is confirmed. Browser-native app-server chat
-belongs after approval mirroring exists.
+bridge status files. The approval-aware bridge now records app-server approval
+requests and sends approved, rejected, or cancelled decisions back to the
+matching app-server request id. The correct next step is to validate the hook
+sample against a local Codex install and build the browser-native chat UI on top
+of the bridge rather than exposing `codex app-server` directly.
 
 ## Tests
 
@@ -203,7 +206,8 @@ The branch includes focused coverage for:
 - Workbench unit discovery, scaffold, CAS save, notes, footnotes, Gate packets, and context packets: `tests/test_workbench_v06.py`
 - MCP tool list, context, notes, footnotes, Gate packets, graph lite, status, and conflict detection: `tests/test_workbench_mcp.py`
 - Codex hook recorder status files: `tests/test_codex_hook_recorder.py`
-- Codex bridge context/status path: `tests/test_codex_bridge_context.py`
+- Codex bridge context/status path and Windows launcher resolution: `tests/test_codex_bridge_context.py`
+- Codex approval recording and app-server decision round-trip: `tests/test_codex_approvals.py`
 
 ## Success test
 
@@ -220,5 +224,6 @@ This slice passes the practical author test when the author can:
 9. expose active context to Codex through MCP
 10. record Codex status visibly in the Workbench file surface
 11. prepare a browser-chat turn through the local bridge without exposing manuscript writes
+12. send approval decisions back to Codex app-server through the bridge rather than leaving them as display-only records
 
 That is enough for the apparatus to stop being only a conversation with Codex and start becoming a real authorship desk.

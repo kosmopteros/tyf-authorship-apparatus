@@ -80,9 +80,9 @@ The Workbench can write context packets, and the bridge can record events, but t
 
 This can be simple polling every 2 to 5 seconds before adding SSE.
 
-### 8. Remaining weakness: app-server approvals are only recorded, not mirrored
+### 8. Superseded weakness: app-server approvals were only recorded, not mirrored
 
-The bridge records notifications generically. It does not yet provide an approval UI for app-server permission requests. Until that exists, the bridge should be treated as scaffolded, not a complete browser-native chat.
+This prototype limitation was closed in the v0.7 bridge slice: approval-like app-server requests are now recorded locally and bridge-side decisions are sent back to the matching app-server request id. Browser-native chat controls are still not complete, so the bridge remains a scaffold for chat rather than a finished author UI.
 
 MCP remains the safe path for current authoring.
 

@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import queue
 import secrets
+import shutil
 import socketserver
 import subprocess
 import sys
@@ -174,6 +175,35 @@ Running style sheet excerpt:
     return [{"type": "text", "text": text}]
 
 
+def resolve_subprocess_command(command: List[str], path_env: Optional[str] = None, platform_name: Optional[str] = None) -> List[str]:
+    if not command:
+        return command
+    executable = command[0]
+    platform = platform_name or os.name
+    if platform != "nt" or os.path.dirname(executable) or Path(executable).suffix:
+        return command
+    search_path = path_env if path_env is not None else os.environ.get("PATH", "")
+    preferred_exts = [".cmd", ".exe", ".bat", ".com"]
+    seen = set()
+    pathext = os.environ.get("PATHEXT", "")
+    extensions: List[str] = []
+    for ext in preferred_exts + [item.lower() for item in pathext.split(os.pathsep) if item]:
+        ext = ext.lower()
+        if ext in seen:
+            continue
+        seen.add(ext)
+        extensions.append(ext)
+    for directory in search_path.split(os.pathsep):
+        if not directory:
+            continue
+        for ext in extensions:
+            candidate = Path(directory) / (executable + ext)
+            if candidate.is_file():
+                return [str(candidate), *command[1:]]
+    resolved = shutil.which(executable, path=search_path)
+    return [resolved, *command[1:]] if resolved else command
+
+
 class CodexAppServerClient:
     """Small JSONL client for `codex app-server --listen stdio://`.
 
@@ -196,8 +226,9 @@ class CodexAppServerClient:
     def start(self) -> None:
         if self.proc:
             return
+        command = resolve_subprocess_command(self.command)
         self.proc = subprocess.Popen(  # process-owner: reviewed: local Codex app-server command list, no shell, stdio-only bridge
-            self.command,
+            command,
             cwd=self.cwd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -251,6 +282,10 @@ class CodexAppServerClient:
 
     def notify(self, method: str, params: Optional[Dict[str, Any]] = None) -> None:
         self._send({"method": method, "params": params or {}})
+
+    def respond(self, request_id: Any, result: Dict[str, Any]) -> Dict[str, Any]:
+        self._send({"id": request_id, "result": result})
+        return {"status": "sent", "id": request_id, "result": result}
 
     def start_thread(self, model: str = "gpt-5.5") -> Dict[str, Any]:
         return self.request("thread/start", {"model": model})

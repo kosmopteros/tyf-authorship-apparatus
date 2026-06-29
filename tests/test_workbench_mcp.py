@@ -2,6 +2,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
@@ -176,6 +177,28 @@ class WorkbenchMCPTests(unittest.TestCase):
         out = server.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
         tool = next(item for item in out["result"]["tools"] if item["name"] == "prepare_gate_packet")
         self.assertIn("base_hash", tool["inputSchema"]["required"])
+
+    def test_stdio_server_round_trips_like_codex_mcp_client(self):
+        messages = [
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+            {"jsonrpc": "2.0", "method": "initialized", "params": {}},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "get_active_selection", "arguments": {}}},
+        ]
+        p = subprocess.run(
+            [sys.executable, "-u", str(MCP_PATH), "--workspace", str(self.root)],
+            input="\n".join(json.dumps(message) for message in messages) + "\n",
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(p.returncode, 0, p.stderr)
+        responses = [json.loads(line) for line in p.stdout.splitlines() if line.strip()]
+        by_id = {item.get("id"): item for item in responses}
+        self.assertEqual(by_id[1]["result"]["serverInfo"]["name"], "tyf-workbench")
+        self.assertIn("get_active_workbench_context", {tool["name"] for tool in by_id[2]["result"]["tools"]})
+        self.assertEqual(by_id[3]["result"]["structuredContent"]["selection"]["text"], "beta gamma")
 
 
 if __name__ == "__main__":

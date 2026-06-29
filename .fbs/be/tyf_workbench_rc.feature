@@ -22,7 +22,7 @@ Feature: TYF Workbench and continuity RC surfaces
 
   @covers:tyf-workbench-bridge-contract @bind-file:scripts/tyf_workbench_mcp.py @bind-file:tests/test_workbench_mcp.py @tool-check:cli
   Scenario: Workbench bridge lists scoped TYF tools and no raw file writer
-    When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_lists_expected_tools_after_initialize"
+    When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_lists_expected_tools_after_initialize tests/test_workbench_mcp.py::WorkbenchMCPTests::test_stdio_server_round_trips_like_codex_mcp_client"
     Then Exit code is 0
 
   @covers:tyf-workbench-bridge-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf_workbench_mcp.py @bind-file:tests/test_workbench_mcp.py @tool-check:cli
@@ -30,9 +30,9 @@ Feature: TYF Workbench and continuity RC surfaces
     When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_note_footnote_gate_graph_and_status_actions_do_not_touch_manuscript"
     Then Exit code is 0
 
-  @covers:tyf-workbench-bridge-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf_workbench_mcp.py @bind-file:scripts/tyf_workbench_status.py @bind-file:scripts/tyf_codex_approvals.py @bind-file:tests/test_workbench_mcp.py @bind-file:tests/test_workbench_status.py @bind-file:tests/test_codex_approvals.py @tool-check:cli
+  @covers:tyf-workbench-bridge-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf_workbench_mcp.py @bind-file:scripts/tyf_workbench_status.py @bind-file:scripts/tyf_codex_bridge.py @bind-file:scripts/tyf_codex_bridge_v07.py @bind-file:scripts/tyf_codex_approvals.py @bind-file:tests/test_workbench_mcp.py @bind-file:tests/test_workbench_status.py @bind-file:tests/test_codex_bridge_context.py @bind-file:tests/test_codex_approvals.py @tool-check:cli
   Scenario: Workbench bridge surfaces conflicts live status and approval state
-    When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_conflict_detection tests/test_workbench_mcp.py::WorkbenchMCPTests::test_gate_packet_requires_explicit_base_hash_and_saved_selection tests/test_workbench_mcp.py::WorkbenchMCPTests::test_prepare_gate_packet_schema_requires_base_hash tests/test_workbench_status.py tests/test_codex_approvals.py"
+    When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_conflict_detection tests/test_workbench_mcp.py::WorkbenchMCPTests::test_gate_packet_requires_explicit_base_hash_and_saved_selection tests/test_workbench_mcp.py::WorkbenchMCPTests::test_prepare_gate_packet_schema_requires_base_hash tests/test_workbench_status.py tests/test_codex_bridge_context.py tests/test_codex_approvals.py"
     Then Exit code is 0
 
   @covers:tyf-graph-storage-projection-contract @bind-file:scripts/tyf_graph_projection.py @bind-file:tests/test_graph_projection.py @tool-check:cli

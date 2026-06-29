@@ -1,8 +1,8 @@
 Feature: TYF Workbench and continuity RC surfaces
 
-  @covers:tyf-workbench-local-desk-contract @bind-file:scripts/tyf_workbench_v06.py @bind-file:tests/test_workbench_v06.py @tool-check:cli
+  @covers:tyf-workbench-local-desk-contract @bind-file:scripts/tyf.py @bind-file:scripts/tyf_workbench_v06.py @bind-file:tests/test_tyf.py @bind-file:tests/test_workbench_v06.py @tool-check:cli
   Scenario: Workbench collects multi-surface units and scaffolds the local desk
-    When Run "python -m pytest -q tests/test_workbench_v06.py::WorkbenchV06Tests::test_collects_multi_surface_units_and_scaffold"
+    When Run "python -m pytest -q tests/test_workbench_v06.py::WorkbenchV06Tests::test_collects_multi_surface_units_and_scaffold tests/test_tyf.py::CLIBehaviour::test_surface_generates_static_review_bench_without_manuscript_write"
     Then Exit code is 0
 
   @covers:tyf-workbench-local-desk-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf_workbench_v06.py @bind-file:tests/test_workbench_v06.py @tool-check:cli

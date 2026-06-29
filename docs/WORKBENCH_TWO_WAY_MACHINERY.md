@@ -299,6 +299,7 @@ Implemented now:
 - Codex hooks sample in `docs/CODEX_HOOKS.sample.toml`
 - local app-server bridge scaffold in `scripts/tyf_codex_bridge.py`
 - schema compatibility helper in `scripts/tyf_codex_schema.py`
+- public Workbench entry through `tyf surface`
 - active context packet path in `.review/surface/active-context.md`
 - Codex turn status record path in `.review/surface/codex-turn-status.json`
 - focused tests for Workbench, MCP, hook recorder, and bridge context
@@ -309,7 +310,7 @@ Still to implement before browser-native chat is complete:
 - Workbench live polling or SSE display for Codex status files
 - approval UI mirroring for app-server events
 - local validation of exact hook config syntax against installed Codex
-- command wiring such as `tyf surface --v06` or `tyf workbench`
+- optional `tyf workbench` alias if the product wants a separate noun from `surface`
 
 ## Product decision
 

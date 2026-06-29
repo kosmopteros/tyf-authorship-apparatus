@@ -95,7 +95,7 @@ The hook recorder is tolerant, but `docs/CODEX_HOOKS.sample.toml` is a sample ra
 1. Add Workbench polling for `.review/surface/codex-turn-status.json` and `.review/surface/codex-bridge-status.json`.
 2. Add an approval-event model before any browser-native Codex chat is presented as usable.
 3. Validate the sample hook config against the installed Codex version.
-4. Wire `tyf surface --v06` or a `tyf workbench` command so authors do not need to call script paths.
+4. Done in this pass: `tyf surface` now opens the v0.6 Workbench so authors do not need to call script paths.
 
 ## Current verdict
 

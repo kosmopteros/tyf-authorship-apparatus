@@ -81,7 +81,7 @@ The Workbench promise is:
 
 **Concern:** Standalone scripts can drift from `tyf.py` and become a parallel product.
 
-**Finding:** This is acceptable for a reviewable PR, but command wiring should be the next integration step: `tyf workbench` or `tyf surface --v06`.
+**Finding:** This was acceptable for a reviewable PR. The next integration step is now partially closed: `tyf surface` opens the v0.6 Workbench, while a future `tyf workbench` alias remains optional.
 
 ### 12. Red-team author reviewer
 

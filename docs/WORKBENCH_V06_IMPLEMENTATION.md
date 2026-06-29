@@ -55,22 +55,22 @@ The v0.6 Workbench is a four-panel browser desk.
 From a TYF workspace root:
 
 ```bash
-python scripts/tyf_workbench_v06.py --serve --open
+tyf surface --serve --open
 ```
 
 For a named work:
 
 ```bash
-python scripts/tyf_workbench_v06.py my-work --serve --open
+tyf surface my-work --serve --open
 ```
 
 To regenerate `outline/book-map.yaml` from discovered draft and manuscript files:
 
 ```bash
-python scripts/tyf_workbench_v06.py --refresh-map
+tyf surface --refresh-map
 ```
 
-The script also writes static artifacts to `.review/surface/workbench-v06.html` and `.review/surface/workbench-v06-data.json`. Static HTML is useful for inspection, but draft saves and note creation require `--serve`.
+The helper delegates to `scripts/tyf_workbench_v06.py`, which also remains callable for focused diagnostics. It writes static artifacts to `.review/surface/workbench-v06.html` and `.review/surface/workbench-v06-data.json`. Static HTML is useful for inspection, but draft saves and note creation require `--serve`.
 
 ## MCP bridge
 
@@ -179,8 +179,6 @@ v0.6 still does not implement:
 - manuscript insertion
 - print or export layout
 - multi-user collaboration
-- direct `tyf workbench` command wiring
-
 The correct next step is to make the Workbench refresh visibly from Codex turn status and bridge status files, then validate the hook sample against a local Codex install. Browser-native app-server chat belongs after approval mirroring exists.
 
 ## Tests

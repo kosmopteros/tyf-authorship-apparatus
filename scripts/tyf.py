@@ -3874,27 +3874,30 @@ def _write_surface_files(work_id):
 
 
 def cmd_surface(args):
-    _require_workspace()
-    work_id = _safe_work_id(args.work or _active_work_id() or ROOT_WORK_ID)
-    _confine_work(work_id)
-    _require_work(work_id)
-    html_path, data_path = _write_surface_files(work_id)
-    log_event(".", "surface", work_id, html_path.replace(os.sep, "/"))
-    print(f"Draft Review Workbench: {html_path.replace(os.sep, '/')}")
-    print(f"Workbench data: {data_path.replace(os.sep, '/')}")
-    print("No manuscript text was written.")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if script_dir not in sys.path:
+        sys.path.insert(0, script_dir)
+    try:
+        import tyf_workbench_v06
+    except ImportError as e:
+        sys.exit(f"Refused: TYF Workbench v0.6 helper is unavailable: {e}")
+
+    argv = []
+    if args.work:
+        argv.append(args.work)
     if getattr(args, "serve", False):
-        host = _one_line(args.host, "127.0.0.1")
-        port = int(args.port or 8765)
-        server = _ReusableThreadingHTTPServer((host, port), _surface_handler(work_id))
-        url = f"http://{host}:{server.server_port}/"
-        print(f"Serving local TYF workbench at {url}")
-        if getattr(args, "open", False):
-            webbrowser.open(url)
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            print("\nStopped TYF workbench.")
+        argv.append("--serve")
+    if getattr(args, "host", None):
+        argv.extend(["--host", str(args.host)])
+    if getattr(args, "port", None) is not None:
+        argv.extend(["--port", str(args.port)])
+    if getattr(args, "open", False):
+        argv.append("--open")
+    if getattr(args, "allow_remote", False):
+        argv.append("--allow-remote")
+    if getattr(args, "refresh_map", False):
+        argv.append("--refresh-map")
+    raise SystemExit(tyf_workbench_v06.run(argv))
 
 
 def cmd_capture(args):
@@ -6310,8 +6313,10 @@ def main():
     s.add_argument("work", nargs="?", default=None)
     s.add_argument("--serve", action="store_true", help="serve a local browser workbench with draft save and Gate packet actions")
     s.add_argument("--host", default="127.0.0.1", help="local host for --serve")
-    s.add_argument("--port", type=int, default=8765, help="local port for --serve")
+    s.add_argument("--port", type=int, default=None, help="local port for --serve")
     s.add_argument("--open", action="store_true", help="open the local workbench URL in the default browser")
+    s.add_argument("--allow-remote", action="store_true", help="advanced: allow binding to a non-loopback host")
+    s.add_argument("--refresh-map", action="store_true", help="regenerate outline/book-map.yaml from draft and manuscript files")
     s.set_defaults(fn=cmd_surface)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")

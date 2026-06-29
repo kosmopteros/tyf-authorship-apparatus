@@ -33,6 +33,38 @@ DEFAULT_PORT = 8766
 MAX_POST_BYTES = 4 * 1024 * 1024
 TEXT_EXTENSIONS = {".md", ".markdown", ".txt"}
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".tif", ".tiff", ".heic"}
+DEFAULT_BOOK_STYLE = """profile: "working-print"
+trim_size: "6x9in"
+font_family: "Charter"
+base_font_size: "11pt"
+line_height: 1.35
+paragraph_styles:
+  body:
+    first_line_indent: "0.22in"
+    space_after: "0"
+  opening:
+    first_line_indent: "0"
+  heading_1:
+    font_size: "18pt"
+    space_before: "0.3in"
+    space_after: "0.18in"
+  block_quote:
+    left_indent: "0.28in"
+    right_indent: "0.28in"
+image_rules:
+  default_width: "page"
+  require_caption: true
+  require_alt_text: true
+  print_minimum_effective_dpi: 300
+export_targets:
+  kdp_paperback:
+    status: "planned"
+    notes: "Print-ready PDF export is a later production slice."
+"""
+DEFAULT_IMAGE_README = """# Image assets
+
+Place book images here. Record captions, alt text, source/rights, and intended placement in `index.jsonl`.
+"""
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +287,12 @@ def ensure_workbench_shape(work_root: Path, workspace: Path) -> None:
         target.mkdir(parents=True, exist_ok=True)
     if not (work_root / "knowledge-base" / "author-notes.jsonl").exists():
         atomic_write(work_root / "knowledge-base" / "author-notes.jsonl", "")
+    if not (work_root / "design" / "book-style.yaml").exists():
+        atomic_write(work_root / "design" / "book-style.yaml", DEFAULT_BOOK_STYLE)
+    if not (work_root / "assets" / "images" / "index.jsonl").exists():
+        atomic_write(work_root / "assets" / "images" / "index.jsonl", "")
+    if not (work_root / "assets" / "images" / "README.md").exists():
+        atomic_write(work_root / "assets" / "images" / "README.md", DEFAULT_IMAGE_README)
     if not (work_root / ".tyf" / "workbench-state.json").exists():
         atomic_write(
             work_root / ".tyf" / "workbench-state.json",

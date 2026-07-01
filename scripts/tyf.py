@@ -37,8 +37,8 @@ Commands:
   tyf doctor [--repair]                   workspace integrity check; --repair creates
                                           any missing required structure
   tyf reflexes                            show transparent hooks and reflexes
-  tyf hook session-start                   emit read-only host context for TYF
-  tyf hook message-sent                    emit read-only prompt routing context
+  tyf hook session-start                   emit read-only host context inside TYF
+  tyf hook message-sent                    emit read-only prompt context inside TYF
   tyf snapshot --message M                explicit git recovery commit for a workspace
   tyf check [--strict] [--quiet]          documentation-honesty check on the pack
   tyf notice [--save] [--all] [--peek]    surface forgotten/unfinished/stale items;
@@ -4493,17 +4493,18 @@ def _host_message_sent_payload(context):
     )
 
 
+def _has_tyf_workspace_marker(root="."):
+    return (
+        os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml"))
+        and os.path.isdir(os.path.join(root, ".tyf"))
+    )
+
+
 def _session_start_context(root="."):
     """Return read-only host context for a TYF author workspace."""
     root = os.path.abspath(root)
-    if not os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml")):
-        return (
-            "No TYF workspace is active here. If the author wants to begin or "
-            "continue a book in this folder, run `tyf init`, then `tyf start` "
-            "or `tyf start <path>` for existing material. Do not hand the "
-            "author a command list; set up the workspace and report the "
-            "writing runway in plain language."
-        )
+    if not _has_tyf_workspace_marker(root):
+        return ""
 
     state = read_state(os.path.join(root, "WORKSPACE_STATE.yaml"))
     work = _one_line(get(state, "active_work", default=ROOT_WORK_ID), ROOT_WORK_ID)
@@ -4580,7 +4581,7 @@ def _hook_prompt_text(payload):
 def _message_sent_context(prompt, root="."):
     """Return optional read-only routing context for a submitted author prompt."""
     low = prompt.lower()
-    in_workspace = os.path.isfile(os.path.join(root, "WORKSPACE_STATE.yaml"))
+    in_workspace = _has_tyf_workspace_marker(root)
     book_terms = (
         "book", "novel", "manuscript", "chapter", "draft", "writing",
         "write", "author", "source", "scaffold", "arrival", "chat",
@@ -4618,15 +4619,6 @@ def _message_sent_context(prompt, root="."):
     is_character_prompt = "what would " in low and any(verb in low for verb in character_verbs)
 
     if not in_workspace:
-        if is_start_prompt or is_arrival_prompt:
-            return (
-                "The author appears to be starting or bringing material for a book, "
-                "but this folder is not yet a TYF workspace. Run `tyf init`, then "
-                "`tyf start` for a fresh book or `tyf start <path>` for existing "
-                "material. Do not hand the author a command list; set up the "
-                "workspace and report the writing runway in plain language. Do "
-                "not write manuscript text before the runway exists."
-            )
         return ""
 
     lines = []
@@ -4655,7 +4647,9 @@ def _message_sent_context(prompt, root="."):
 
 def cmd_hook(args):
     if args.event == "session-start":
-        print(_host_session_start_payload(_session_start_context(".")))
+        context = _session_start_context(".")
+        if context:
+            print(_host_session_start_payload(context))
         return
     if args.event == "message-sent":
         payload = _read_hook_payload()
@@ -4671,10 +4665,12 @@ def cmd_reflexes(args):
     print("tyf reflexes (transparent hooks)")
     print("- session-start: `tyf hook session-start` emits read-only workspace")
     print("  context so hosts can route through TYF automatically without")
-    print("  asking the author to invoke skills.")
+    print("  asking the author to invoke skills. Outside an initialized TYF")
+    print("  workspace, it emits nothing.")
     print("- message-sent: `tyf hook message-sent` can add read-only prompt")
     print("  routing context for continuation, arrivals, character questions,")
-    print("  and Gate-adjacent prompts; unrelated prompts stay silent.")
+    print("  and Gate-adjacent prompts inside a TYF workspace; outside one,")
+    print("  it emits nothing.")
     print("- documentation honesty: mutating commands run `tyf check` warn-only,")
     print("  unless TYF_NO_DOC_HOOK=1 is set.")
     print("- attentive amanuensis: after `tyf write`, new or resurfaced gaps are")

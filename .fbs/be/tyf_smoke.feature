@@ -297,7 +297,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:.claude-plugin/hooks/hooks.json @bind-file:author-context/AGENTS.md @bind-file:author-context/CLAUDE.md @bind-file:author-context/GEMINI.md @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: session-start hook injects automatic author reflex context
-    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outputs_readonly_author_context CLIBehaviour.test_hook_session_start_outside_workspace_guides_init_without_writing DocCheck.test_claude_plugin_declares_session_start_reflex_hook -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outputs_readonly_author_context CLIBehaviour.test_hook_session_start_outside_workspace_stays_silent DocCheck.test_claude_plugin_declares_session_start_reflex_hook -v"
     Then Exit code is 0
 
   @covers:tyf-automatic-author-reflex-contract @bind-file:scripts/tyf.py @bind-file:.claude-plugin/hooks/hooks.json @bind-file:tests/test_tyf.py @tool-check:cli
@@ -312,7 +312,7 @@ Feature: TYF helper smoke suite
 
   @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: session-start hook stays read-only outside workspaces
-    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outside_workspace_guides_init_without_writing -v"
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_session_start_outside_workspace_stays_silent -v"
     Then Exit code is 0
 
   @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
@@ -321,8 +321,8 @@ Feature: TYF helper smoke suite
     Then Exit code is 0
 
   @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli
-  Scenario: message-sent hook guides book starts outside workspaces
-    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_message_sent_outside_workspace_guides_book_start_without_writing -v"
+  Scenario: message-sent hook stays silent outside uninitialized workspaces
+    When Run "python tests/test_tyf.py CLIBehaviour.test_hook_message_sent_outside_workspace_stays_silent_even_for_book_start CLIBehaviour.test_hook_message_sent_outside_workspace_ignores_coding_prompts -v"
     Then Exit code is 0
 
   @covers:tyf-automatic-author-reflex-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:tests/test_tyf.py @tool-check:cli

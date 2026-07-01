@@ -2773,16 +2773,12 @@ class CLIBehaviour(unittest.TestCase):
         after = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
         self.assertEqual(after, before)
 
-    def test_hook_session_start_outside_workspace_guides_init_without_writing(self):
+    def test_hook_session_start_outside_workspace_stays_silent(self):
         tmp = Path(tempfile.mkdtemp(prefix="tyf-hook-outside-"))
         try:
             rc, out = run_tyf(["hook", "session-start"], tmp)
             self.assertEqual(rc, 0, out)
-            payload = json.loads(out)
-            ctx = payload["hookSpecificOutput"]["additionalContext"]
-            self.assertIn("No TYF workspace", ctx)
-            self.assertIn("tyf init", ctx)
-            self.assertIn("tyf start", ctx)
+            self.assertEqual(out.strip(), "")
             self.assertFalse((tmp / "WORKSPACE_STATE.yaml").exists())
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -2806,7 +2802,7 @@ class CLIBehaviour(unittest.TestCase):
         after = (ws / ".tyf" / "events.jsonl").read_text(encoding="utf-8")
         self.assertEqual(after, before)
 
-    def test_hook_message_sent_outside_workspace_guides_book_start_without_writing(self):
+    def test_hook_message_sent_outside_workspace_stays_silent_even_for_book_start(self):
         tmp = Path(tempfile.mkdtemp(prefix="tyf-hook-message-outside-"))
         try:
             payload = json.dumps({
@@ -2815,11 +2811,26 @@ class CLIBehaviour(unittest.TestCase):
             })
             rc, out = run_tyf_stdin(["hook", "message-sent"], tmp, payload)
             self.assertEqual(rc, 0, out)
-            data = json.loads(out)
-            ctx = data["hookSpecificOutput"]["additionalContext"]
-            self.assertIn("tyf init", ctx)
-            self.assertIn("tyf start", ctx)
-            self.assertIn("Do not hand the author a command list", ctx)
+            self.assertEqual(out.strip(), "")
+            self.assertFalse((tmp / "WORKSPACE_STATE.yaml").exists())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_hook_message_sent_outside_workspace_ignores_coding_prompts(self):
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-hook-coding-outside-"))
+        try:
+            for prompt in (
+                "start writing tests for this parser",
+                "begin writing the API client",
+                "import this source folder for the app",
+            ):
+                payload = json.dumps({
+                    "hook_event_name": "UserPromptSubmit",
+                    "prompt": prompt,
+                })
+                rc, out = run_tyf_stdin(["hook", "message-sent"], tmp, payload)
+                self.assertEqual(rc, 0, out)
+                self.assertEqual(out.strip(), "", prompt)
             self.assertFalse((tmp / "WORKSPACE_STATE.yaml").exists())
         finally:
             shutil.rmtree(tmp, ignore_errors=True)

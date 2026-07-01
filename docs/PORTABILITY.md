@@ -4,7 +4,7 @@
 
 TYF is one set of skills that runs across multiple agent harnesses. The unit of capability is a single `SKILL.md` per skill. Each harness reads the same nineteen skills plus a context file under the filename that harness expects. The author release ships clean templates in `author-context/`; an actual book workspace gets root `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `tyf init`. Pack-root contributor context may exist in a development clone, but it is not part of the author release archive.
 
-Where a host supports session-start hooks, TYF can also run `tyf hook session-start` to inject read-only workspace context automatically. Where a host supports prompt-submit hooks, TYF can run `tyf hook message-sent` to inject read-only routing context for continuation, arrivals, character questions, and Gate-adjacent prompts. These hooks report or add context only; they do not write to the workspace, and `message-sent` stays silent for unrelated prompts. In harnesses without hook support, the generated context files carry the same routing contract.
+Where a host supports session-start hooks, TYF can also run `tyf hook session-start` to inject read-only workspace context automatically, but only inside an initialized TYF workspace. Where a host supports prompt-submit hooks, TYF can run `tyf hook message-sent` to inject read-only routing context for continuation, arrivals, character questions, and Gate-adjacent prompts, again only inside an initialized TYF workspace. These hooks report or add context only; they do not write to the workspace. Outside a TYF workspace, both hooks emit nothing so global hooks do not leak into coding projects. In harnesses without hook support, the generated context files carry the same routing contract.
 
 ## Portable Workspace Format
 
@@ -52,7 +52,7 @@ tyf
 
 Then select Install Plugin.
 
-The Codex plugin also bundles `hooks/hooks.json` for `SessionStart` and `UserPromptSubmit`. Codex exposes non-managed hooks for review in `/hooks`; review and trust them before relying on automatic prompt routing. Raw user-config hooks may appear as a generic `Hook 1` row in the host UI, so TYF hook status messages start with `TYF:` and the commands call `tyf hook session-start` and `tyf hook message-sent`. Install the helper or otherwise make `tyf` available on PATH for hook execution. Before publishing a Codex package, run `python scripts/validate_codex_plugin.py .` to check the manifest, skills, and TYF-identifying hook manifest.
+The Codex plugin also bundles `hooks/hooks.json` for `SessionStart` and `UserPromptSubmit`. Codex exposes non-managed hooks for review in `/hooks`; review and trust them before relying on automatic prompt routing. Raw user-config hooks may appear as a generic `Hook 1` row in the host UI, so TYF hook status messages start with `TYF:` and the commands call `tyf hook session-start` and `tyf hook message-sent`. Install the helper or otherwise make `tyf` available on PATH for hook execution. The commands are safe as global hooks because they emit nothing unless the current folder has TYF workspace markers created by `tyf init`. Before publishing a Codex package, run `python scripts/validate_codex_plugin.py .` to check the manifest, skills, and TYF-identifying hook manifest.
 
 For manual Codex use, copy the TYF skills into `$CODEX_HOME/skills` or `~/.codex/skills/`:
 

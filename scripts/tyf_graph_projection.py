@@ -31,7 +31,7 @@ GRAPH_SQLITE = "graph.sqlite"
 LEDGER_PREFIXES = (
     ".tyf/",
     "knowledge-base/",
-    ".review/surface/",
+    ".review/workbench/",
     "assets/images/",
 )
 
@@ -350,7 +350,7 @@ def write_sqlite(work_root: Path, graph: Dict[str, Any]) -> str:
 
 def write_outputs(work_id: str, work_root: Path, root: Path, include_sqlite: bool = False) -> Dict[str, Any]:
     graph = build_graph(work_id, work_root, root)
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     graph_path = out_dir / GRAPH_JSON
     report_json_path = out_dir / GRAPH_REPORT_JSON
@@ -391,7 +391,7 @@ This graph is a rebuildable projection. It is not a source of truth.
 
 ## Rule
 
-Deleting `.tyf/graph.sqlite` or `.review/surface/book-graph.json` must never delete author knowledge. Rebuild from Markdown, notes, packets, status files, and ledgers.
+Deleting `.tyf/graph.sqlite` or `.review/workbench/book-graph.json` must never delete author knowledge. Rebuild from Markdown, notes, packets, status files, and ledgers.
 """
     wb.atomic_write(report_md_path, md)
     wb.log_event(root, "graph-projection", work_id, f"nodes={report['nodes']} edges={report['edges']}")

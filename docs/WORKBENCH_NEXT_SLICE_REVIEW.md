@@ -21,8 +21,8 @@ This branch builds on the merged local Workbench/MCP/Codex bridge baseline and a
 
 3. `scripts/tyf_codex_approvals.py`
    - approval request and decision model in plain JSON/JSONL
-   - writes `.review/surface/codex-approval-current.json`
-   - appends `.review/surface/codex-approval-events.jsonl`
+   - writes `.review/workbench/codex-approval-current.json`
+   - appends `.review/workbench/codex-approval-events.jsonl`
    - never mutates draft or manuscript prose
 
 4. `scripts/tyf_codex_bridge_v07.py`
@@ -33,11 +33,11 @@ This branch builds on the merged local Workbench/MCP/Codex bridge baseline and a
 5. `scripts/tyf_codex_hook_validate.py`
    - local validator for the hook wiring sample
    - invokes the installed Codex command locally
-   - writes `.review/surface/codex-hook-config-validation.json`
-   - writes `.review/surface/codex-hook-config-validation.md`
+   - writes `.review/workbench/codex-hook-config-validation.json`
+   - writes `.review/workbench/codex-hook-config-validation.md`
 
 6. `pyproject.toml`
-   - exposes `tyf-workbench = "tyf_workbench_live:main"`
+   - exposes the live Workbench through `tyf workbench`
    - packages the new helper modules so installed users can run the live Workbench command
 
 7. Tests
@@ -48,7 +48,7 @@ This branch builds on the merged local Workbench/MCP/Codex bridge baseline and a
 
 ### 1. Author workflow reviewer
 
-Finding: The live status card reduces the need to inspect `.review/surface/` manually. This is the right next product slice.
+Finding: The live status card reduces the need to inspect `.review/workbench/` manually. This is the right next product slice.
 
 Remaining: It is polling, not SSE. Fine for this slice.
 
@@ -88,7 +88,7 @@ Finding: No new remote surface is added by default. The live wrapper defaults to
 
 ### 9. Package reviewer
 
-Finding: `tyf-workbench` is exposed as an installed console command, and the canonical `tyf surface` command now routes to the live Workbench wrapper. Authors no longer need to know the hidden console command to get assistant status, save safety, approval state, and recovery actions.
+Finding: the canonical `tyf workbench` command routes to the live Workbench wrapper. Authors no longer need a second console command to get assistant status, save safety, approval state, and recovery actions.
 
 ### 10. Test reviewer
 
@@ -110,7 +110,7 @@ Finding: The scope is still honest. This is Workbench visibility and approval-st
 - Split the status model out of the browser wrapper for testability.
 - Added a pure stale-draft detector for tests and future UI use.
 - Added an approval model independent of the app-server bridge so approval requests and decisions remain inspectable local state, then wired bridge-side decisions back to the app-server request id.
-- Added `tyf-workbench` as an installable command and routed the canonical `tyf surface` command through the live wrapper.
+- Routed the canonical `tyf workbench` command through the live wrapper.
 - Added a process-level MCP stdio smoke and a Windows launcher resolver so the local bridge can initialize the installed Codex app-server from this environment.
 
 ## Remaining after this PR

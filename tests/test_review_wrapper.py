@@ -52,7 +52,7 @@ class ReviewWrapperTests(unittest.TestCase):
         self.assertEqual(review.run(["concept"]), 0)
         self.assertEqual(review.run(["continuity"]), 0)
         self.assertEqual(review.run(["polish"]), 0)
-        surface = self.root / ".review" / "surface"
+        surface = self.root / ".review" / "workbench"
         self.assertTrue((surface / "book-graph.json").is_file())
         self.assertTrue((surface / "concept-review.json").is_file())
         self.assertTrue((surface / "continuity-review.json").is_file())
@@ -62,7 +62,7 @@ class ReviewWrapperTests(unittest.TestCase):
         self.assertEqual(review.run(["graph", "--sqlite"]), 0)
         self.assertEqual(review.run(["doctor"]), 0)
         self.assertTrue((self.root / ".tyf" / "graph.sqlite").is_file())
-        self.assertTrue((self.root / ".review" / "surface" / "rc-doctor.md").is_file())
+        self.assertTrue((self.root / ".review" / "workbench" / "rc-doctor.md").is_file())
 
 
 if __name__ == "__main__":

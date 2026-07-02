@@ -28,7 +28,7 @@ PROMISES = "knowledge-base/reader-promises.jsonl"
 OPEN_THREADS = "knowledge-base/open-threads.jsonl"
 REGISTER_RULES = "knowledge-base/register-rules.jsonl"
 SCOPE_RULES = "knowledge-base/scope-rules.jsonl"
-DECISIONS = ".review/surface/continuity-decisions.jsonl"
+DECISIONS = ".review/workbench/continuity-decisions.jsonl"
 REVIEW_JSON = "continuity-review.json"
 REVIEW_MD = "continuity-review.md"
 
@@ -268,7 +268,7 @@ def build_review(work_root: Path) -> Dict[str, Any]:
 
 def write_outputs(work_root: Path) -> Dict[str, Any]:
     review = build_review(work_root)
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "continuity-review.json"
     md_path = out_dir / "continuity-review.md"

@@ -23,9 +23,9 @@ Generated graph artifacts may be deleted and rebuilt. Deleting them must not del
 By default:
 
 ```text
-.review/surface/book-graph.json
-.review/surface/graph-build-report.json
-.review/surface/graph-build-report.md
+.review/workbench/book-graph.json
+.review/workbench/graph-build-report.json
+.review/workbench/graph-build-report.md
 ```
 
 Optional cache:
@@ -103,7 +103,7 @@ The same command audits JSONL files under known local apparatus prefixes:
 ```text
 .tyf/
 knowledge-base/
-.review/surface/
+.review/workbench/
 assets/images/
 ```
 

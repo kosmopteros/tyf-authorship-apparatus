@@ -24,7 +24,7 @@ Commands:
   tyf session [work-id]                   write a review-only writing session packet
   tyf diagnose [work-id]                  write a review-only diagnostic isolation packet
   tyf treat [work-id]                     write a review-only typographer-redactor packet
-  tyf surface [work-id]                   generate or serve the local draft review workbench
+  tyf workbench [work-id]                   generate or serve the local draft review workbench
   tyf resume [work-id]                    show continuity and the next useful move
   tyf open <work-id>                      set active work; print what to load
   tyf mark-ready <work-id> <unit>         flag a unit for audit
@@ -1415,7 +1415,7 @@ Suppress any broader assistant persona, voice sign-off, status dashboard, or rep
 - `tyf capture --kind source` and text imports mint source fragments in `sources/fragments/`; run `tyf structure work --source-ref <id>` before drafting when a fragment contains explicit claims, examples, or questions. When the next author question is unclear, run `tyf attend work --source-ref <id> --query "<focus>"` and use `.review/gentle-attention.md` as hidden amanuensis guidance with transparent local retrieval, then pass relevant ids to `tyf propose --source-ref <id>`.
 - If the author asks why a passage does not land, run `tyf diagnose` with the smallest band and use `.review/current-diagnosis.md` as hidden amanuensis guidance. Diagnosis is attention, not doubt, and it never rewrites manuscript text.
 - If an existing or substantial manuscript body needs language treatment, run `tyf treat` or `tyf treat --unit manuscript/<file>` before proposing edits. The packet is review-only and typographer-redactor work never writes manuscript text directly.
-- If the author wants to see or work physically with the book, run `tyf surface` for a static Draft Review Workbench or `tyf surface --serve` for local draft editing. The workbench may save `drafts/candidate-draft.md` with a matching base hash and may create review packets, but `manuscript/` stays read-only and still requires the Gate.
+- If the author wants to see or work physically with the book, run `tyf workbench` for a static Draft Review Workbench or `tyf workbench --serve` for local draft editing. The workbench may save `drafts/candidate-draft.md` with a matching base hash and may create review packets, but `manuscript/` stays read-only and still requires the Gate.
 - If the author asks what a named character would say, do, or notice, keep it as hidden amanuensis machinery: capture supplied character facts or cadence with `tyf character <name> --knowledge ... --voice ...`, then run `tyf consult-character work <name> --prompt "<question>"`. The contained packet may guide candidate dramatic insight; it is not manuscript text or a replacement for the author.
 - Do not write manuscript prose directly. Manuscript writes must go through proposal, audit, author review packet, author decision, and `tyf write --decision <id>`.
 - Missing knowledge stays visible as `[AUTHOR: needed - what]`.
@@ -3439,7 +3439,7 @@ def _surface_scaffold(work_id):
     index_path = _work_path(work_id, "assets", "images", "index.jsonl")
     if not os.path.isfile(index_path):
         write(index_path, "")
-    _ensure_real_dir(_work_path(work_id, ".review", "surface"), ".review/surface/")
+    _ensure_real_dir(_work_path(work_id, ".review", "workbench"), ".review/workbench/")
     if not _within(os.path.realpath(work_root), os.path.realpath(_work_path(work_id, "design"))):
         sys.exit("Refused: design/ resolves outside the work.")
     if not _within(os.path.realpath(work_root), os.path.realpath(_work_path(work_id, "assets", "images"))):
@@ -3530,7 +3530,7 @@ def _surface_data(work_id):
         "assets": _surface_image_assets(work_id),
         "gate": {
             "manuscript_write": "read-only here; use proposal, audit, review, author decision, and tyf write --decision",
-            "selection_packet_dir": ".review/surface/",
+            "selection_packet_dir": ".review/workbench/",
         },
     }
 
@@ -3569,9 +3569,9 @@ def _surface_gate_packet(work_id, source_path, base_hash, selection, note=""):
             "loaded_sha256": base_hash,
             "message": "Draft changed on disk after the workbench loaded it; reload before building a Gate packet.",
         }
-    packet_id = _record_id("surface", work_id, norm, current_hash, selection or "", note or "")
-    surface_dir = _work_path(work_id, ".review", "surface")
-    _ensure_real_dir(surface_dir, ".review/surface/")
+    packet_id = _record_id("workbench", work_id, norm, current_hash, selection or "", note or "")
+    surface_dir = _work_path(work_id, ".review", "workbench")
+    _ensure_real_dir(surface_dir, ".review/workbench/")
     selected = selection if selection.strip() else current
     data = {
         "id": packet_id,
@@ -3755,7 +3755,7 @@ def _surface_html(data):
         const fresh = await fetch('/workbench-data.json').then(r => r.json());
         render(fresh);
       }} catch (err) {{
-        status.textContent = err.message || 'Saving needs local server mode: tyf surface --serve';
+        status.textContent = err.message || 'Saving needs local server mode: tyf workbench --serve';
         status.className = 'status warn';
       }}
     }});
@@ -3781,7 +3781,7 @@ def _surface_html(data):
         status.textContent = result.message || 'Gate packet written.';
         status.className = 'status ok';
       }} catch (err) {{
-        status.textContent = err.message || 'Gate packet creation needs local server mode: tyf surface --serve';
+        status.textContent = err.message || 'Gate packet creation needs local server mode: tyf workbench --serve';
         status.className = 'status warn';
       }}
     }});
@@ -3864,16 +3864,16 @@ def _surface_handler(work_id):
 
 def _write_surface_files(work_id):
     data = _surface_data(work_id)
-    surface_dir = _work_path(work_id, ".review", "surface")
-    _ensure_real_dir(surface_dir, ".review/surface/")
-    data_path = os.path.join(surface_dir, "workbench-data.json")
-    html_path = os.path.join(surface_dir, "index.html")
+    workbench_dir = _work_path(work_id, ".review", "workbench")
+    _ensure_real_dir(workbench_dir, ".review/workbench/")
+    data_path = os.path.join(workbench_dir, "workbench-data.json")
+    html_path = os.path.join(workbench_dir, "index.html")
     _write_json(data_path, data)
     atomic_write(html_path, _surface_html(data))
     return html_path, data_path
 
 
-def cmd_surface(args):
+def cmd_workbench(args):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     if script_dir not in sys.path:
         sys.path.insert(0, script_dir)
@@ -6190,7 +6190,7 @@ def _command_requires_event_journal(args):
     if cmd == "audit":
         return getattr(args, "record", False)
     return cmd in {
-        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "surface", "character",
+        "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "workbench", "character",
         "consult-character", "open", "mark-ready",
         "propose", "review", "accept", "adopt", "write", "snapshot", "dismiss",
     }
@@ -6305,7 +6305,7 @@ def main():
     s.add_argument("--unit", default=None, help="drafts/ or manuscript/ text unit to treat; defaults to the manuscript body before candidate draft")
     s.add_argument("--focus", default=None, help="optional language-treatment focus")
     s.set_defaults(fn=cmd_treat)
-    s = sub.add_parser("surface", help="generate or serve the local draft review workbench")
+    s = sub.add_parser("workbench", help="generate or serve the local draft review workbench")
     s.add_argument("work", nargs="?", default=None)
     s.add_argument("--serve", action="store_true", help="serve a local browser workbench with draft save and Gate packet actions")
     s.add_argument("--host", default="127.0.0.1", help="local host for --serve")
@@ -6313,7 +6313,7 @@ def main():
     s.add_argument("--open", action="store_true", help="open the local workbench URL in the default browser")
     s.add_argument("--allow-remote", action="store_true", help="advanced: allow binding to a non-loopback host")
     s.add_argument("--refresh-map", action="store_true", help="regenerate outline/book-map.yaml from draft and manuscript files")
-    s.set_defaults(fn=cmd_surface)
+    s.set_defaults(fn=cmd_workbench)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")
     s.add_argument("--knowledge", default=None)
@@ -6401,7 +6401,7 @@ def main():
         _require_event_journal_ready(".")
     args.fn(args)
     # Documentation-honesty hook: mutating commands run the doc check warn-only.
-    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "surface", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
+    if getattr(args, "cmd", None) in {"init", "new-work", "start", "begin", "import", "capture", "structure", "attend", "feedback", "session", "diagnose", "treat", "workbench", "propose", "review", "audit", "accept", "adopt", "write", "mark-ready"}:
         _doc_hook_tail()
         _git_hook_tail()
     # Attentive-amanuensis hook: after a manuscript write, surface a count of

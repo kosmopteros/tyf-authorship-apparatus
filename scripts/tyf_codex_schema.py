@@ -62,8 +62,8 @@ def generate_schema(work_id: str, work_root: Path, root: Path, codex_command: Li
         "schema_files": files,
         "local_only": True,
     }
-    record_path = work_root / ".review" / "surface" / "codex-app-server-compat.json"
-    md_path = work_root / ".review" / "surface" / "codex-app-server-compat.md"
+    record_path = work_root / ".review" / "workbench" / "codex-app-server-compat.json"
+    md_path = work_root / ".review" / "workbench" / "codex-app-server-compat.md"
     wb.write_json(record_path, record)
     status = "ok" if schema.get("ok") else "needs local Codex check"
     md = f"""# Codex app-server compatibility

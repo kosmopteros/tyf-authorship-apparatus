@@ -28,7 +28,7 @@ enabled_tools = [
   "prepare_gate_packet",
   "refresh_book_graph",
   "refresh_book_map",
-  "surface_current_conflicts",
+  "workbench_current_conflicts",
   "record_codex_turn_status"
 ]
 
@@ -49,7 +49,7 @@ approval_mode = "approve"
 [mcp_servers.tyf_workbench.tools.list_author_notes]
 approval_mode = "approve"
 
-[mcp_servers.tyf_workbench.tools.surface_current_conflicts]
+[mcp_servers.tyf_workbench.tools.workbench_current_conflicts]
 approval_mode = "approve"
 
 # Append-only or packet-writing actions should prompt. They do not touch

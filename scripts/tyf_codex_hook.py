@@ -2,7 +2,7 @@
 """Record Codex hook events into TYF Workbench status files.
 
 The script is deliberately tolerant of host JSON shapes. It reads a hook payload
-from stdin, extracts a small visible status, writes it to .review/surface/, and
+from stdin, extracts a small visible status, writes it to .review/workbench/, and
 never mutates draft or manuscript prose.
 """
 
@@ -76,9 +76,9 @@ def record_hook(work_id: str, work_root: Path, root: Path, hook_name: str, paylo
         "changed_paths": find_changed_paths(payload),
         "manuscript_written_by_hook": False,
     }
-    status_path = work_root / ".review" / "surface" / "codex-turn-status.json"
-    history_path = work_root / ".review" / "surface" / "codex-turn-status.jsonl"
-    hook_path = work_root / ".review" / "surface" / "codex-hooks.jsonl"
+    status_path = work_root / ".review" / "workbench" / "codex-turn-status.json"
+    history_path = work_root / ".review" / "workbench" / "codex-turn-status.jsonl"
+    hook_path = work_root / ".review" / "workbench" / "codex-hooks.jsonl"
     wb.write_json(status_path, record)
     line = json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n"
     wb.append_text(history_path, line)

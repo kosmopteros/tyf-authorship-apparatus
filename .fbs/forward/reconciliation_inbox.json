@@ -860,7 +860,7 @@
       "source_line": 37,
       "source_path": ".fbs/recovered/_review/source-of-truth/REQUIREMENTS-BACKLOG-CANDIDATE.md",
       "source_role": "recovered-source-of-truth",
-      "text": "R-018 Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `surface`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`. gap-needs-Be 0.66 TYF-manifesto-and-architecture.md:236, scripts/tyf.py:883"
+      "text": "R-018 Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `workbench`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`. gap-needs-Be 0.66 TYF-manifesto-and-architecture.md:236, scripts/tyf.py:883"
     },
     {
       "candidate_id": "cand:635524641d51",
@@ -1490,7 +1490,7 @@
       "source_line": 78,
       "source_path": ".fbs/recovered/_review/source-of-truth/REQUIREMENTS-BACKLOG-CANDIDATE.md",
       "source_role": "recovered-source-of-truth",
-      "text": "init - Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `surface`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`."
+      "text": "init - Commands include `init` (idempotent: creates only missing structure, never clobbers), `start`, `begin`, `import`, `capture`, `attend`, `session`, `diagnose`, `treat`, `workbench`, `resume`, `status`, `new-work`, `open`, `mark-ready`, `propose`, `audit`, `accept`, `adopt`, `write --decision`, `doctor [--repair]`, `check`, `notice`, `dismiss`, and `reconcile`."
     },
     {
       "candidate_id": "cand:156b28966390",
@@ -1826,7 +1826,7 @@
       "source_line": 0,
       "source_path": "merged-pr-history-2026-06-27:R15",
       "source_role": "",
-      "text": "R15. RC doctor should verify private-RC workspace health Source: PR #9. TYF should provide an RC doctor that checks the private-RC workspace surface and writes reports under `.review/surface/`. Doctor checks should improve confidence without editing manuscript prose."
+      "text": "R15. RC doctor should verify private-RC workspace health Source: PR #9. TYF should provide an RC doctor that checks the private-RC workspace surface and writes reports under `.review/workbench/`. Doctor checks should improve confidence without editing manuscript prose."
     },
     {
       "candidate_id": "cand:6da4e20b807e",

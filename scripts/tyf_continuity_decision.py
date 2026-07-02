@@ -21,7 +21,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import tyf_workbench_v06 as wb  # noqa: E402
 
-DECISIONS = ".review/surface/continuity-decisions.jsonl"
+DECISIONS = ".review/workbench/continuity-decisions.jsonl"
 VALID_STATUSES = {"accepted", "intentional", "ignored", "fixed", "needs-rewrite", "belongs-elsewhere"}
 
 

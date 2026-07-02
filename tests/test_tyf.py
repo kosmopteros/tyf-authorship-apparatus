@@ -250,7 +250,20 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("design/book-style.yaml", marker["canonical_text_state"])
         self.assertIn("assets/images/", marker["canonical_text_state"])
 
-    def test_surface_generates_static_review_bench_without_manuscript_write(self):
+    def test_workbench_is_only_public_browser_command(self):
+        rc, out = run_tyf(["--help"], self.tmp)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("workbench", out)
+        self.assertNotRegex(out, r"(?m)^\s+surface\s+")
+        self.assertNotIn(",surface,", out)
+        pyproject = (REPO / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertNotIn("tyf-workbench =", pyproject)
+
+        rc, out = run_tyf(["surface"], self.tmp)
+        self.assertNotEqual(rc, 0, "surface should not remain as a second public browser command")
+        self.assertIn("invalid choice", out)
+
+    def test_workbench_generates_static_review_bench_without_manuscript_write(self):
         ws = self.ws()
         (ws / "drafts" / "candidate-draft.md").write_text(
             "# Candidate\n\nA paragraph that may become the book.\n",
@@ -266,14 +279,14 @@ class CLIBehaviour(unittest.TestCase):
         )
         before = (ws / "manuscript" / "chapter-01.md").read_text(encoding="utf-8")
 
-        rc, out = run_tyf(["surface"], ws)
+        rc, out = run_tyf(["workbench"], ws)
         self.assertEqual(rc, 0, out)
         self.assertIn("TYF live Workbench", out)
         self.assertIn("manuscript/ remains Gate-only", out)
         self.assertEqual((ws / "manuscript" / "chapter-01.md").read_text(encoding="utf-8"), before)
 
-        index = ws / ".review" / "surface" / "workbench-live.html"
-        data_path = ws / ".review" / "surface" / "workbench-live-data.json"
+        index = ws / ".review" / "workbench" / "workbench-live.html"
+        data_path = ws / ".review" / "workbench" / "workbench-live-data.json"
         self.assertTrue(index.is_file())
         self.assertTrue(data_path.is_file())
         html = index.read_text(encoding="utf-8")
@@ -306,18 +319,18 @@ class CLIBehaviour(unittest.TestCase):
         self.assertIn("paragraph_styles:", data["style"]["book_style"])
         self.assertIn("image_rules:", data["style"]["book_style"])
 
-    def test_surface_heals_missing_style_and_asset_scaffolding(self):
+    def test_workbench_heals_missing_style_and_asset_scaffolding(self):
         ws = self.ws()
         shutil.rmtree(ws / "design", ignore_errors=True)
         shutil.rmtree(ws / "assets", ignore_errors=True)
 
-        rc, out = run_tyf(["surface"], ws)
+        rc, out = run_tyf(["workbench"], ws)
         self.assertEqual(rc, 0, out)
         self.assertTrue((ws / "design" / "book-style.yaml").is_file())
         self.assertTrue((ws / "assets" / "images" / "index.jsonl").is_file())
         self.assertIn("TYF live Workbench", out)
 
-    def test_surface_draft_save_requires_matching_base_hash(self):
+    def test_workbench_draft_save_requires_matching_base_hash(self):
         ws = self.ws()
         draft = ws / "drafts" / "candidate-draft.md"
         draft.write_text("Original draft.\n", encoding="utf-8")
@@ -340,7 +353,7 @@ class CLIBehaviour(unittest.TestCase):
         finally:
             os.chdir(old)
 
-    def test_surface_draft_save_refuses_manuscript_paths(self):
+    def test_workbench_draft_save_refuses_manuscript_paths(self):
         ws = self.ws()
         (ws / "manuscript" / "chapter-01.md").write_text("Approved.\n", encoding="utf-8")
         old = os.getcwd()

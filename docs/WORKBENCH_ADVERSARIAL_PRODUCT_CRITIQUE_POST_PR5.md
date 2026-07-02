@@ -129,7 +129,7 @@ This is not just logging; it is author reassurance.
 
 **Attack:** `tyf-workbench` is better than a script path, but it splits the user mental model from `tyf`. Authors will ask: do I use `tyf`, `tyf-workbench`, Codex, or the browser?
 
-**Convergence:** `tyf workbench` should become the canonical command. `tyf-workbench` can remain a packaging shortcut.
+**Convergence:** `tyf workbench` should become the canonical command. Do not keep `tyf-workbench` as a second author-facing packaging shortcut.
 
 ### 11. Testing reviewer
 
@@ -177,7 +177,7 @@ Approval files are useful, but the Workbench needs an author-visible decision pa
 
 ### Convergence 5: The main command must be unified
 
-`tyf-workbench` is useful, but `tyf workbench` should become canonical.
+The separate `tyf-workbench` command was useful during integration, but `tyf workbench` should be the only author-facing command.
 
 ## Product decision after this critique
 

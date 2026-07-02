@@ -39,7 +39,7 @@ It:
 - appends author notes to `knowledge-base/author-notes.jsonl`
 - writes footnote candidate packets to `.review/footnote-candidates/`
 - writes Gate packets to `.review/gate-packets/`
-- writes active context packets to `.review/surface/active-context.md`
+- writes active context packets to `.review/workbench/active-context.md`
 - logs apparatus events to `.tyf/events.jsonl`
 
 It does not:
@@ -65,7 +65,7 @@ It exposes TYF verbs, not filesystem verbs:
 - `prepare_gate_packet`
 - `refresh_book_graph`
 - `refresh_book_map`
-- `surface_current_conflicts`
+- `workbench_current_conflicts`
 - `record_codex_turn_status`
 
 It does not expose:
@@ -83,11 +83,11 @@ The first implementation is `scripts/tyf_workbench_mcp.py`. It is stdio-only by 
 
 Hooks are the quiet visibility lane. They should publish status into local files, not edit prose.
 
-The first recorder is `scripts/tyf_codex_hook.py`. It reads tolerant hook JSON from stdin and writes only status records under `.review/surface/`:
+The first recorder is `scripts/tyf_codex_hook.py`. It reads tolerant hook JSON from stdin and writes only status records under `.review/workbench/`:
 
-- `.review/surface/codex-turn-status.json`
-- `.review/surface/codex-turn-status.jsonl`
-- `.review/surface/codex-hooks.jsonl`
+- `.review/workbench/codex-turn-status.json`
+- `.review/workbench/codex-turn-status.jsonl`
+- `.review/workbench/codex-hooks.jsonl`
 
 Recommended hook behavior:
 
@@ -133,10 +133,10 @@ The browser should not talk directly to `codex app-server` in WebSocket mode by 
 
 The bridge currently records app-server events to:
 
-- `.review/surface/codex-bridge-events.jsonl`
-- `.review/surface/codex-bridge-status.json`
-- `.review/surface/codex-turn-status.json`
-- `.review/surface/codex-turn-status.jsonl`
+- `.review/workbench/codex-bridge-events.jsonl`
+- `.review/workbench/codex-bridge-status.json`
+- `.review/workbench/codex-turn-status.json`
+- `.review/workbench/codex-turn-status.jsonl`
 
 It is still a scaffold, not a complete browser-native chat client.
 
@@ -184,7 +184,7 @@ The note is author material or amanuensis material. It is not a command to edit 
 
 1. Codex starts or completes a turn.
 2. Hook, MCP call, or bridge event records status.
-3. TYF writes `.review/surface/codex-turn-status.json` and appends JSONL history.
+3. TYF writes `.review/workbench/codex-turn-status.json` and appends JSONL history.
 4. The live Workbench polls or receives events and shows the last turn status and changed paths.
 5. If a changed draft hash conflicts with browser state, Workbench shows conflict before save.
 
@@ -271,8 +271,8 @@ python scripts/tyf_codex_schema.py --workspace /absolute/path/to/your-tyf-book-w
 
 It stores version-specific artifacts under `.tyf/codex-app-server-schema/` and writes:
 
-- `.review/surface/codex-app-server-compat.json`
-- `.review/surface/codex-app-server-compat.md`
+- `.review/workbench/codex-app-server-compat.json`
+- `.review/workbench/codex-app-server-compat.md`
 
 ## Trust boundary
 
@@ -301,9 +301,9 @@ Implemented now:
 - local app-server bridge scaffold in `scripts/tyf_codex_bridge.py`
 - approval-aware app-server bridge in `scripts/tyf_codex_bridge_v07.py`, including app-server approval request recording and bridge-side decision responses
 - schema compatibility helper in `scripts/tyf_codex_schema.py`
-- public Workbench entry through `tyf surface`, routed to the live wrapper
-- active context packet path in `.review/surface/active-context.md`
-- Codex turn status record path in `.review/surface/codex-turn-status.json`
+- public Workbench entry through `tyf workbench`, routed to the live wrapper
+- active context packet path in `.review/workbench/active-context.md`
+- Codex turn status record path in `.review/workbench/codex-turn-status.json`
 - live Workbench polling/SSE display for Codex status, save safety, approval state, and review dashboard files
 - focused tests for Workbench, MCP stdio round-trip, hook recorder, Codex app-server command launch, bridge context, and approval decision round-trip
 - external-style critique convergence in `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md`

@@ -46,7 +46,7 @@ imagined.
   context templates.
 - The single-work beta surface is root-first: `work.yaml`, `drafts/`,
   `.review/`, `manuscript/`, `design/book-style.yaml`, `assets/images/`,
-  and the optional `.review/surface/` Draft Review Workbench.
+  and the optional `.review/workbench/` Draft Review Workbench.
 - Arrival from chat, text, folder, zip, binary, unreadable, and oversized
   material preserves source before any drafting claim.
 - The Gate uses proposal, audit, review, decision, and write records rather than

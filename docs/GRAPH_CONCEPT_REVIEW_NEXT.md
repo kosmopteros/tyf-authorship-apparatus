@@ -20,7 +20,7 @@ Do not make it a new source of truth. Use:
 
 - draft and manuscript lines as source
 - optional `knowledge-base/concepts.jsonl` as author-editable concept registry
-- review outputs under `.review/surface/`
+- review outputs under `.review/workbench/`
 
 ## Atomic unit
 
@@ -45,9 +45,9 @@ This is not required for simple scanning, but it makes rename and drift detectio
 ## Review outputs
 
 ```text
-.review/surface/concept-index.json
-.review/surface/concept-review.json
-.review/surface/concept-review.md
+.review/workbench/concept-index.json
+.review/workbench/concept-review.json
+.review/workbench/concept-review.md
 ```
 
 ## Detection classes

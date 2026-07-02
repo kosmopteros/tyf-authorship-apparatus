@@ -1,6 +1,6 @@
 # Workbench v0.6 implementation plan
 
-Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with the public `tyf surface` front door now routed through the live wrapper in `scripts/tyf_workbench_live.py`.
+Status: implemented as a first local slice in `scripts/tyf_workbench_v06.py`, with the public `tyf workbench` front door now routed through the live wrapper in `scripts/tyf_workbench_live.py`.
 
 See also: `docs/WORKBENCH_EXTERNAL_CRITIQUE_COUNCIL.md` for the 12-lens external-style critique and convergence map.
 
@@ -23,7 +23,7 @@ This keeps the apparatus aligned with the existing TYF rule: the author is the s
 
 ## How it looks
 
-The base v0.6 Workbench is a four-panel browser desk. The public `tyf surface`
+The base v0.6 Workbench is a four-panel browser desk. The public `tyf workbench`
 command adds the live wrapper: assistant status, save-safety state, approval
 state, review dashboard, and recovery actions.
 
@@ -49,7 +49,7 @@ state, review dashboard, and recovery actions.
    - writes author notes to `knowledge-base/author-notes.jsonl`
    - converts notes into footnote candidate packets under `.review/footnote-candidates/`
    - writes selection Gate packets under `.review/gate-packets/`
-   - writes an active context packet for Codex or another amanuensis under `.review/surface/active-context.md`
+   - writes an active context packet for Codex or another amanuensis under `.review/workbench/active-context.md`
    - shows the style sheet and image inventory
 
 ## How to run
@@ -57,25 +57,25 @@ state, review dashboard, and recovery actions.
 From a TYF workspace root:
 
 ```bash
-tyf surface --serve --open
+tyf workbench --serve --open
 ```
 
 For a named work:
 
 ```bash
-tyf surface my-work --serve --open
+tyf workbench my-work --serve --open
 ```
 
 To regenerate `outline/book-map.yaml` from discovered draft and manuscript files:
 
 ```bash
-tyf surface --refresh-map
+tyf workbench --refresh-map
 ```
 
 The helper delegates to `scripts/tyf_workbench_live.py`, which wraps the base
 v0.6 Workbench. It writes author-facing artifacts to
-`.review/surface/workbench-live.html` and
-`.review/surface/workbench-live-data.json`. The base v0.6 module remains
+`.review/workbench/workbench-live.html` and
+`.review/workbench/workbench-live-data.json`. The base v0.6 module remains
 callable for focused diagnostics and still owns the shared draft/note/Gate
 packet primitives. Static HTML is useful for inspection, but draft saves and
 note creation require `--serve`.
@@ -96,7 +96,7 @@ It is a stdio MCP server for Codex and other MCP clients. It exposes TYF operati
 - `prepare_gate_packet`
 - `refresh_book_graph`
 - `refresh_book_map`
-- `surface_current_conflicts`
+- `workbench_current_conflicts`
 - `record_codex_turn_status`
 
 Configuration example: `docs/CODEX_MCP_CONFIG.sample.toml`.
@@ -113,7 +113,7 @@ Additional local bridge pieces now exist:
 - `scripts/tyf_codex_bridge_v07.py`: approval-aware bridge wrapper that records app-server approval requests and returns bridge-side decisions to the app-server request id.
 - `scripts/tyf_codex_schema.py`: helper for generating version-specific app-server schema compatibility artifacts.
 
-The app-server bridge is intentionally behind TYF rather than exposed directly to the browser. It builds input from the active Workbench selection, unit hashes, notes, related passages, and style sheet. It records events and turn status under `.review/surface/`. It does not expose a manuscript write route.
+The app-server bridge is intentionally behind TYF rather than exposed directly to the browser. It builds input from the active Workbench selection, unit hashes, notes, related passages, and style sheet. It records events and turn status under `.review/workbench/`. It does not expose a manuscript write route.
 
 ## Files created or used
 
@@ -124,22 +124,22 @@ The app-server bridge is intentionally behind TYF rather than exposed directly t
 - `design/book-style.yaml`
 - `assets/images/index.jsonl`
 - `knowledge-base/author-notes.jsonl`
-- `.review/surface/workbench-live.html`
-- `.review/surface/workbench-live-data.json`
-- `.review/surface/workbench-v06.html` (base helper diagnostic artifact)
-- `.review/surface/workbench-v06-data.json` (base helper diagnostic artifact)
-- `.review/surface/active-context.md`
-- `.review/surface/active-context.json`
-- `.review/surface/book-graph-lite.json`
-- `.review/surface/codex-turn-status.json`
-- `.review/surface/codex-turn-status.jsonl`
-- `.review/surface/codex-hooks.jsonl`
-- `.review/surface/codex-bridge-events.jsonl`
-- `.review/surface/codex-bridge-status.json`
-- `.review/surface/codex-approval-current.json`
-- `.review/surface/codex-approval-events.jsonl`
-- `.review/surface/codex-app-server-compat.md`
-- `.review/surface/codex-app-server-compat.json`
+- `.review/workbench/workbench-live.html`
+- `.review/workbench/workbench-live-data.json`
+- `.review/workbench/workbench-v06.html` (base helper diagnostic artifact)
+- `.review/workbench/workbench-v06-data.json` (base helper diagnostic artifact)
+- `.review/workbench/active-context.md`
+- `.review/workbench/active-context.json`
+- `.review/workbench/book-graph-lite.json`
+- `.review/workbench/codex-turn-status.json`
+- `.review/workbench/codex-turn-status.jsonl`
+- `.review/workbench/codex-hooks.jsonl`
+- `.review/workbench/codex-bridge-events.jsonl`
+- `.review/workbench/codex-bridge-status.json`
+- `.review/workbench/codex-approval-current.json`
+- `.review/workbench/codex-approval-events.jsonl`
+- `.review/workbench/codex-app-server-compat.md`
+- `.review/workbench/codex-app-server-compat.json`
 - `.review/gate-packets/*.md`
 - `.review/gate-packets/*.json`
 - `.review/footnote-candidates/*.md`

@@ -56,11 +56,11 @@ def load_json(path: Path, default: Any) -> Any:
 
 
 def bridge_events_path(work_root: Path) -> Path:
-    return work_root / ".review" / "surface" / "codex-bridge-events.jsonl"
+    return work_root / ".review" / "workbench" / "codex-bridge-events.jsonl"
 
 
 def bridge_status_path(work_root: Path) -> Path:
-    return work_root / ".review" / "surface" / "codex-bridge-status.json"
+    return work_root / ".review" / "workbench" / "codex-bridge-status.json"
 
 
 def record_bridge_event(work_id: str, work_root: Path, root: Path, event: Dict[str, Any]) -> Dict[str, Any]:
@@ -86,8 +86,8 @@ def record_codex_status(work_id: str, work_root: Path, root: Path, status: Dict[
         "manuscript_written_by_bridge": False,
         **status,
     }
-    out = work_root / ".review" / "surface" / "codex-turn-status.json"
-    hist = work_root / ".review" / "surface" / "codex-turn-status.jsonl"
+    out = work_root / ".review" / "workbench" / "codex-turn-status.json"
+    hist = work_root / ".review" / "workbench" / "codex-turn-status.jsonl"
     wb.write_json(out, record)
     wb.append_text(hist, json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
     wb.log_event(root, "codex-turn-status", work_id, one_line(record.get("status"), "unknown"))

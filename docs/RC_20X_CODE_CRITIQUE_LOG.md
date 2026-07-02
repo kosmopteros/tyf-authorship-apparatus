@@ -18,7 +18,7 @@ This log records twenty alternating code-persona and critic passes for the RC di
 
 ## Pass 02
 
-**Coder:** Store decisions in `.review/surface/continuity-decisions.jsonl`.
+**Coder:** Store decisions in `.review/workbench/continuity-decisions.jsonl`.
 
 **Critic:** Correct location for review state. This is append-log review memory, not manuscript content.
 

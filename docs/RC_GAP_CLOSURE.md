@@ -59,7 +59,7 @@ The live status model now includes review summaries for:
 - concept review
 - graph build report
 
-The Workbench side panel now shows a compact Review dashboard instead of requiring the author to manually inspect `.review/surface/`.
+The Workbench side panel now shows a compact Review dashboard instead of requiring the author to manually inspect `.review/workbench/`.
 
 ### 4. RC doctor
 
@@ -89,8 +89,8 @@ It checks:
 Outputs:
 
 ```text
-.review/surface/rc-doctor.json
-.review/surface/rc-doctor.md
+.review/workbench/rc-doctor.json
+.review/workbench/rc-doctor.md
 ```
 
 ## Product boundary

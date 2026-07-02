@@ -59,7 +59,7 @@ Already present before this pass:
 
 ## Pass 08
 
-**Coder:** Write author-facing outputs under `.review/surface/`: `concept-index.json`, `concept-review.json`, and `concept-review.md`.
+**Coder:** Write author-facing outputs under `.review/workbench/`: `concept-index.json`, `concept-review.json`, and `concept-review.md`.
 
 **Critic:** Correct. `.md` is the author surface; `.json` is machine-readable state. Do not replace author reports with opaque graph dumps.
 
@@ -169,8 +169,8 @@ Add:
 
 ```text
 tyf-continuity-review
-.review/surface/continuity-review.json
-.review/surface/continuity-review.md
+.review/workbench/continuity-review.json
+.review/workbench/continuity-review.md
 ```
 
 Detection classes:
@@ -201,7 +201,7 @@ Continuity review
 Add review decision records:
 
 ```text
-.review/surface/continuity-decisions.jsonl
+.review/workbench/continuity-decisions.jsonl
 ```
 
 Statuses:

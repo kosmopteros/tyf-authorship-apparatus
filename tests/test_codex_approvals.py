@@ -50,7 +50,7 @@ class ApprovalEventTests(unittest.TestCase):
         self.assertEqual(event["status"], "pending")
         decision = approvals.decide(wid, wroot, root, "a1", "approved", "ok")
         self.assertEqual(decision["status"], "approved")
-        self.assertTrue((wroot / ".review" / "surface" / "codex-approval-events.jsonl").is_file())
+        self.assertTrue((wroot / ".review" / "workbench" / "codex-approval-events.jsonl").is_file())
 
     def test_approval_aware_bridge_round_trips_decision_to_app_server_client(self):
         runtime = bridge_v07.BridgeRuntime(str(self.root), ["fake-codex"], "gpt-test")
@@ -83,7 +83,7 @@ class ApprovalEventTests(unittest.TestCase):
         decision = runtime.decide_approval("approval-1", "approved", "looks fine")
         self.assertEqual(decision["status"], "approved")
         self.assertEqual(fake.responses, [{"id": "req-1", "result": {"decision": "accept"}}])
-        current = json.loads((self.root / ".review" / "surface" / "codex-approval-current.json").read_text(encoding="utf-8"))
+        current = json.loads((self.root / ".review" / "workbench" / "codex-approval-current.json").read_text(encoding="utf-8"))
         self.assertEqual(current["app_server_response"]["decision"], "accept")
 
     def test_approval_aware_bridge_http_decision_endpoint_requires_token_and_responds(self):

@@ -53,8 +53,8 @@ class CodexHookRecorderTests(unittest.TestCase):
         )
         self.assertEqual(record["hook"], "PostToolUse")
         self.assertEqual(record["changed_paths"], ["drafts/chapter-one.md"])
-        self.assertTrue((work_root / ".review" / "surface" / "codex-hooks.jsonl").is_file())
-        self.assertTrue((work_root / ".review" / "surface" / "codex-turn-status.json").is_file())
+        self.assertTrue((work_root / ".review" / "workbench" / "codex-hooks.jsonl").is_file())
+        self.assertTrue((work_root / ".review" / "workbench" / "codex-turn-status.json").is_file())
         self.assertEqual((work_root / "manuscript" / "chapter-one.md").read_text(encoding="utf-8"), before)
 
 

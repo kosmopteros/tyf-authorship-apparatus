@@ -313,7 +313,7 @@ def ensure_workbench_shape(work_root: Path, workspace: Path) -> None:
         "knowledge-base",
         "assets/images",
         "design",
-        ".review/surface",
+        ".review/workbench",
         ".review/gate-packets",
         ".review/footnote-candidates",
         ".tyf",
@@ -817,7 +817,7 @@ def create_context_packet(work_id: str, work_root: Path, workspace: Path, payloa
         "created_at": now(),
         "manuscript_written": False,
     }
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "active-context.json"
     md_path = out_dir / "active-context.md"
@@ -857,7 +857,7 @@ When Codex or another amanuensis turn needs context, read this packet, the activ
         "id": packet_id,
         "json": json_path.relative_to(work_root).as_posix(),
         "markdown": md_path.relative_to(work_root).as_posix(),
-        "message": "Amanuensis context packet written. Open .review/surface/active-context.md from Codex.",
+        "message": "Amanuensis context packet written. Open .review/workbench/active-context.md from Codex.",
     }
 
 
@@ -900,7 +900,7 @@ def collect_data(work_id: str, work_root: Path, workspace: Path, token: str = ""
             "book_map": "outline/book-map.yaml",
             "author_notes": "knowledge-base/author-notes.jsonl",
             "workbench_state": ".tyf/workbench-state.json",
-            "surface_dir": ".review/surface/",
+            "workbench_dir": ".review/workbench/",
             "gate_packet_dir": ".review/gate-packets/",
             "footnote_candidate_dir": ".review/footnote-candidates/",
         },
@@ -1166,7 +1166,7 @@ def surface_html(data: dict) -> str:
 
 def write_surface_files(work_id: str, work_root: Path, workspace: Path, token: str = "") -> tuple[Path, Path]:
     data = collect_data(work_id, work_root, workspace, token=token)
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     html_path = out_dir / "workbench-v06.html"
     data_path = out_dir / "workbench-v06-data.json"

@@ -35,7 +35,7 @@ def check_helper() -> None:
     required = {
         "start", "begin", "import", "capture", "resume", "reflexes", "hook", "snapshot", "propose",
         "audit", "review", "accept", "adopt", "write", "doctor", "check", "structure", "character",
-        "attend", "consult-character", "feedback", "session", "diagnose", "surface",
+        "attend", "consult-character", "feedback", "session", "diagnose", "workbench",
     }
     missing = sorted(
         command for command in required
@@ -45,7 +45,7 @@ def check_helper() -> None:
     for handler in ("cmd_start", "cmd_begin", "cmd_import", "cmd_capture", "cmd_structure", "cmd_attend", "cmd_character",
                     "cmd_consult_character", "cmd_resume", "cmd_hook",
                     "cmd_reflexes", "cmd_snapshot", "cmd_propose", "cmd_review", "cmd_accept",
-                    "cmd_adopt", "cmd_feedback", "cmd_session", "cmd_diagnose", "cmd_surface"):
+                    "cmd_adopt", "cmd_feedback", "cmd_session", "cmd_diagnose", "cmd_workbench"):
         assert f"def {handler}(" in source, f"missing {handler}"
         assert f"fn={handler}" in source, f"{handler} is not wired into argparse"
     assert "--language" in source, "work creation must expose writing-language metadata"
@@ -77,8 +77,8 @@ def check_helper() -> None:
     assert "design/book-style.yaml" in source
     assert "assets/images/index.jsonl" in source
     assert "Draft Review Workbench" in source
-    assert "test_surface_generates_static_review_bench_without_manuscript_write" in tests
-    assert "test_surface_draft_save_requires_matching_base_hash" in tests
+    assert "test_workbench_generates_static_review_bench_without_manuscript_write" in tests
+    assert "test_workbench_draft_save_requires_matching_base_hash" in tests
 
 
 def check_gate() -> None:

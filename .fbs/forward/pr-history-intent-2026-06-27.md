@@ -95,7 +95,7 @@ TYF should provide local draft recovery helpers and Workbench recovery actions w
 
 Source: PR #9.
 
-TYF should provide an RC doctor that checks the private-RC workspace surface and writes reports under `.review/surface/`. Doctor checks should improve confidence without editing manuscript prose.
+TYF should provide an RC doctor that checks the private-RC workspace surface and writes reports under `.review/workbench/`. Doctor checks should improve confidence without editing manuscript prose.
 
 ### R16. Storage contracts should be explicit and executable
 

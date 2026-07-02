@@ -75,7 +75,7 @@ Rules:
 Append-style local logs without hash-chain semantics.
 
 ```text
-.review/surface/*.jsonl
+.review/workbench/*.jsonl
 .review/conflicts/**/*.jsonl
 ```
 
@@ -90,13 +90,13 @@ Rules:
 Human-readable and machine-readable derived review outputs.
 
 ```text
-.review/surface/*-review.md
-.review/surface/*-review.json
-.review/surface/*-report.md
-.review/surface/*-report.json
-.review/surface/book-graph.json
-.review/surface/workbench-*.html
-.review/surface/workbench-*-data.json
+.review/workbench/*-review.md
+.review/workbench/*-review.json
+.review/workbench/*-report.md
+.review/workbench/*-report.json
+.review/workbench/book-graph.json
+.review/workbench/workbench-*.html
+.review/workbench/workbench-*-data.json
 ```
 
 Rules:

@@ -47,7 +47,7 @@ class GraphProjectionTests(unittest.TestCase):
         )["note"]
         wb.footnote_candidate(self.work_id, self.work_root, self.workspace, note["id"])
         wb.gate_packet(self.work_id, self.work_root, self.workspace, {"path": draft["path"], "base_hash": draft["sha256"], "selection": "Alpha beta", "note": "ready"})
-        surface = self.work_root / ".review" / "surface"
+        surface = self.work_root / ".review" / "workbench"
         surface.mkdir(parents=True, exist_ok=True)
         with (surface / "codex-turn-status.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"kind": "codex-turn-status", "status": "completed", "active_path": draft["path"]}) + "\n")
@@ -61,7 +61,7 @@ class GraphProjectionTests(unittest.TestCase):
         classes = {item["path"]: item["classification"] for item in audit["files"]}
         self.assertEqual(classes[".tyf/events.jsonl"], "hash-chain-ledger")
         self.assertEqual(classes["knowledge-base/author-notes.jsonl"], "mutable-record-store-jsonl")
-        self.assertEqual(classes[".review/surface/codex-turn-status.jsonl"], "append-log-jsonl")
+        self.assertEqual(classes[".review/workbench/codex-turn-status.jsonl"], "append-log-jsonl")
         self.assertEqual(audit["totals"]["mutable_record_stores"], 1)
         result = graph.write_outputs(self.work_id, self.work_root, self.workspace, include_sqlite=True)
         self.assertTrue((self.work_root / result["graph"]).is_file())

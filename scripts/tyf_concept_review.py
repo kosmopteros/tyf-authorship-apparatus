@@ -289,7 +289,7 @@ def build_review(index: Dict[str, Any]) -> Dict[str, Any]:
 def write_outputs(work_root: Path) -> Dict[str, Any]:
     index = build_index(work_root)
     review = build_review(index)
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     index_path = out_dir / INDEX_JSON
     review_path = out_dir / REVIEW_JSON

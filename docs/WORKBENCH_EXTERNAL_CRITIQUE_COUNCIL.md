@@ -57,7 +57,7 @@ The Workbench promise is:
 
 **Concern:** If status, turns, notes, and graph outputs are not plain files, the author cannot inspect or recover the work.
 
-**Finding:** Status and bridge files are plain JSON/JSONL under `.review/surface/`; notes remain JSONL; packets remain Markdown and JSON. Good.
+**Finding:** Status and bridge files are plain JSON/JSONL under `.review/workbench/`; notes remain JSONL; packets remain Markdown and JSON. Good.
 
 ### 8. Test reviewer
 
@@ -81,7 +81,7 @@ The Workbench promise is:
 
 **Concern:** Standalone scripts can drift from `tyf.py` and become a parallel product.
 
-**Finding:** This was acceptable for a reviewable PR. The next integration step is now partially closed: `tyf surface` opens the v0.6 Workbench, while a future `tyf workbench` alias remains optional.
+**Finding:** This was acceptable for a reviewable PR. The next integration step is now closed: `tyf workbench` is the single author-facing Workbench command.
 
 ### 12. Red-team author reviewer
 

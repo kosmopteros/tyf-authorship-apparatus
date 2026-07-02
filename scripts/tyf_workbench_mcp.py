@@ -260,7 +260,7 @@ def derive_graph(work_id: str, work_root: Path) -> Dict[str, Any]:
         "edges": edges,
         "limits": "Local transparent scan only. This is not semantic truth and does not adjudicate author intent.",
     }
-    out = work_root / ".review" / "surface" / "book-graph-lite.json"
+    out = work_root / ".review" / "workbench" / "book-graph-lite.json"
     wb.write_json(out, graph)
     return {"graph": graph, "path": out.relative_to(work_root).as_posix()}
 
@@ -403,7 +403,7 @@ def tool_refresh_book_map(ctx: WorkbenchContext, args: Dict[str, Any]) -> Dict[s
     return ok_result({"status": "refreshed", "path": path.relative_to(work_root).as_posix()})
 
 
-def tool_surface_current_conflicts(ctx: WorkbenchContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_workbench_current_conflicts(ctx: WorkbenchContext, args: Dict[str, Any]) -> Dict[str, Any]:
     _work_id, work_root, _workspace, data = ctx.data()
     path_arg = first_text(args.get("path"))
     loaded = first_text(args.get("loaded_sha256"))
@@ -421,7 +421,7 @@ def tool_surface_current_conflicts(ctx: WorkbenchContext, args: Dict[str, Any]) 
             "current_text": current if bool(loaded and loaded != current_hash) else "",
         })
     else:
-        snapshot_path = work_root / ".review" / "surface" / "workbench-v06-data.json"
+        snapshot_path = work_root / ".review" / "workbench" / "workbench-v06-data.json"
         try:
             snapshot = json.loads(wb.read_text(snapshot_path, "{}"))
         except json.JSONDecodeError:
@@ -456,9 +456,9 @@ def tool_record_codex_turn_status(ctx: WorkbenchContext, args: Dict[str, Any]) -
         "created_at": wb.now(),
         "manuscript_written_by_tool": False,
     }
-    out = work_root / ".review" / "surface" / "codex-turn-status.json"
+    out = work_root / ".review" / "workbench" / "codex-turn-status.json"
     wb.write_json(out, status)
-    wb.append_text(work_root / ".review" / "surface" / "codex-turn-status.jsonl", json.dumps(status, ensure_ascii=False, sort_keys=True) + "\n")
+    wb.append_text(work_root / ".review" / "workbench" / "codex-turn-status.jsonl", json.dumps(status, ensure_ascii=False, sort_keys=True) + "\n")
     wb.log_event(workspace, "mcp-codex-turn-status", work_id, status.get("status", ""))
     return ok_result({"status": "recorded", "path": out.relative_to(work_root).as_posix(), "record": status})
 
@@ -560,7 +560,7 @@ TOOLS: Dict[str, Tuple[str, Dict[str, Any], Any]] = {
         tool_prepare_gate_packet,
     ),
     "refresh_book_graph": (
-        "Rebuild the transparent local book graph lite under .review/surface/book-graph-lite.json.",
+        "Rebuild the transparent local book graph lite under .review/workbench/book-graph-lite.json.",
         {"type": "object", "properties": {}},
         tool_refresh_book_graph,
     ),
@@ -569,7 +569,7 @@ TOOLS: Dict[str, Tuple[str, Dict[str, Any], Any]] = {
         {"type": "object", "properties": {}},
         tool_refresh_book_map,
     ),
-    "surface_current_conflicts": (
+    "workbench_current_conflicts": (
         "Compare loaded Workbench draft hashes with current disk hashes and report conflicts.",
         {
             "type": "object",
@@ -578,7 +578,7 @@ TOOLS: Dict[str, Tuple[str, Dict[str, Any], Any]] = {
                 "loaded_sha256": {"type": "string"},
             },
         },
-        tool_surface_current_conflicts,
+        tool_workbench_current_conflicts,
     ),
     "record_codex_turn_status": (
         "Record visible Codex turn status for the browser Workbench surface.",

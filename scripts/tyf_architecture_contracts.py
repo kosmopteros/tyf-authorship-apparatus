@@ -30,8 +30,8 @@ STORAGE_CLASSES: Dict[str, List[str]] = {
     ],
     "mutable-record-store": ["knowledge-base/author-notes.jsonl"],
     "hash-chain-ledger": [".tyf/events.jsonl"],
-    "append-log": [".review/surface/*.jsonl", ".review/conflicts/**/*.jsonl"],
-    "generated-review": [".review/surface/*-review.*", ".review/surface/*-report.*", ".review/surface/book-graph.json"],
+    "append-log": [".review/workbench/*.jsonl", ".review/conflicts/**/*.jsonl"],
+    "generated-review": [".review/workbench/*-review.*", ".review/workbench/*-report.*", ".review/workbench/book-graph.json"],
     "rebuildable-cache": [".tyf/graph.sqlite"],
     "recovery-artifact": ["drafts/.recovery-copies/**/*.md", ".review/conflicts/**"],
 }

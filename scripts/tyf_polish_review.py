@@ -171,7 +171,7 @@ def build_review(work_root: Path) -> Dict[str, Any]:
 
 def write_outputs(work_root: Path) -> Dict[str, Any]:
     review = build_review(work_root)
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / POLISH_JSON
     md_path = out_dir / POLISH_MD

@@ -38,7 +38,7 @@ def resolve(workspace: Optional[str], work: Optional[str]) -> tuple[str, Path, P
 
 
 def surface(work_root: Path, name: str) -> Path:
-    return work_root / ".review" / "surface" / name
+    return work_root / ".review" / "workbench" / name
 
 
 def draft_rows(data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -73,25 +73,25 @@ def review_summary(work_root: Path) -> Dict[str, Any]:
     return {
         "continuity": {
             "exists": bool(continuity),
-            "path": ".review/surface/continuity-review.md",
+            "path": ".review/workbench/continuity-review.md",
             "counts": severity_counts(continuity.get("issues", []) if isinstance(continuity.get("issues"), list) else []),
             "summary": continuity.get("summary", {}) if isinstance(continuity, dict) else {},
         },
         "polish": {
             "exists": bool(polish),
-            "path": ".review/surface/polish-review.md",
+            "path": ".review/workbench/polish-review.md",
             "counts": severity_counts(polish.get("issues", []) if isinstance(polish.get("issues"), list) else []),
             "summary": polish.get("summary", {}) if isinstance(polish, dict) else {},
         },
         "concept": {
             "exists": bool(concept),
-            "path": ".review/surface/concept-review.md",
+            "path": ".review/workbench/concept-review.md",
             "counts": severity_counts(concept.get("issues", []) if isinstance(concept.get("issues"), list) else []),
             "summary": concept.get("summary", {}) if isinstance(concept, dict) else {},
         },
         "graph": {
             "exists": bool(graph_report),
-            "path": ".review/surface/graph-build-report.md",
+            "path": ".review/workbench/graph-build-report.md",
             "nodes": graph_report.get("nodes", 0) if isinstance(graph_report, dict) else 0,
             "edges": graph_report.get("edges", 0) if isinstance(graph_report, dict) else 0,
             "ledger_totals": graph_report.get("ledger_totals", {}) if isinstance(graph_report, dict) else {},

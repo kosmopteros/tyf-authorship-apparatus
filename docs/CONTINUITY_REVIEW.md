@@ -13,8 +13,8 @@ tyf-continuity-review
 Outputs:
 
 ```text
-.review/surface/continuity-review.json
-.review/surface/continuity-review.md
+.review/workbench/continuity-review.json
+.review/workbench/continuity-review.md
 ```
 
 ## Registries
@@ -93,7 +93,7 @@ Each issue receives a stable-ish `issue_key` based on kind, message, path, line,
 Future decisions can be stored in:
 
 ```text
-.review/surface/continuity-decisions.jsonl
+.review/workbench/continuity-decisions.jsonl
 ```
 
 Suggested statuses:

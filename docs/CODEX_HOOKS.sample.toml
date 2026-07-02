@@ -3,7 +3,7 @@
 # Exact hook configuration shape may vary by Codex version. Keep this as a
 # readable wiring sample: each hook invokes the tolerant recorder and passes the
 # Codex hook JSON payload on stdin. The recorder writes only status files under
-# .review/surface/ and never edits draft or manuscript prose.
+# .review/workbench/ and never edits draft or manuscript prose.
 
 [hooks.SessionStart]
 command = "python"

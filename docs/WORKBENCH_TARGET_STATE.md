@@ -42,7 +42,7 @@ Current v0.5 surface:
 
 - one active editable draft: `drafts/candidate-draft.md`;
 - many read-only manuscript units;
-- local HTML/JSON generated under `.review/surface/`;
+- local HTML/JSON generated under `.review/workbench/`;
 - served mode can save the candidate draft with a base-hash conflict check;
 - selected candidate text can become a review packet;
 - no embedded amanuensis chat;
@@ -165,7 +165,7 @@ It should expose read tools and carefully scoped actions such as:
 - `propose_footnote_from_note`;
 - `prepare_gate_packet`;
 - `refresh_book_graph`;
-- `surface_current_conflicts`.
+- `workbench_current_conflicts`.
 
 The MCP server should not offer a raw write-any-file tool. It should expose TYF
 operations with TYF names and TYF constraints.
@@ -220,7 +220,7 @@ design/book-style.yaml             typeface, paragraph styles, production intent
 assets/images/                     image files and image-use index
 knowledge-base/retrieval-index.jsonl
 knowledge-base/author-notes.jsonl  sidecar notes and footnote candidates
-.review/surface/                   generated UI data and review packets
+.review/workbench/                   generated UI data and review packets
 .review/gate-packets/              packets prepared from selections
 .tyf/events.jsonl                  canonical apparatus event stream
 .tyf/workbench-state.json          ephemeral active surface state

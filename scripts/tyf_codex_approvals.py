@@ -3,7 +3,7 @@
 
 Browser-native Codex chat needs a visible approval model before it can be
 considered complete. This module records request-like notifications and author
-responses under `.review/surface/`. It never edits draft or manuscript prose.
+responses under `.review/workbench/`. It never edits draft or manuscript prose.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ def resolve(workspace: Optional[str]) -> tuple[str, Path, Path]:
 
 
 def surface_dir(work_root: Path) -> Path:
-    out = work_root / ".review" / "surface"
+    out = work_root / ".review" / "workbench"
     out.mkdir(parents=True, exist_ok=True)
     return out
 

@@ -27,7 +27,7 @@ import tyf_polish_review as polish_review  # noqa: E402
 import tyf_workbench_live as live_workbench  # noqa: E402
 import tyf_workbench_v06 as wb  # noqa: E402
 
-REQUIRED_DIRS = ["drafts", "manuscript", ".tyf", ".review/surface", "knowledge-base"]
+REQUIRED_DIRS = ["drafts", "manuscript", ".tyf", ".review/workbench", "knowledge-base"]
 REQUIRED_FILES = ["WORKSPACE_STATE.yaml", "work.yaml"]
 
 
@@ -153,7 +153,7 @@ def doctor(work_arg: Optional[str] = None) -> Dict[str, Any]:
         "failures": len(failures),
         "checks": checks,
     }
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "rc-doctor.json"
     md_path = out_dir / "rc-doctor.md"

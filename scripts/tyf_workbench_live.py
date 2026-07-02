@@ -254,7 +254,7 @@ def run(argv: Optional[list[str]] = None) -> int:
         wb.write_book_map(work_root)
     session_key = secrets.token_urlsafe(24) if args.serve else ""
     data = wb.collect_data(work_id, work_root, workspace, token=session_key)
-    out_dir = work_root / ".review" / "surface"
+    out_dir = work_root / ".review" / "workbench"
     out_dir.mkdir(parents=True, exist_ok=True)
     html_path = out_dir / "workbench-live.html"
     data_path = out_dir / "workbench-live-data.json"

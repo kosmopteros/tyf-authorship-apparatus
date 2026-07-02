@@ -3,7 +3,7 @@
 
 This helper performs local checks only. It verifies that a Codex command can be
 invoked, that the hook recorder exists, that the sample hook config is present,
-and writes an inspectable report under `.review/surface/`.
+and writes an inspectable report under `.review/workbench/`.
 """
 
 from __future__ import annotations
@@ -68,8 +68,8 @@ def validate(work_id: str, work_root: Path, root: Path, codex_command: List[str]
         "recorder_path": str(recorder),
         "local_only": True,
     }
-    out = work_root / ".review" / "surface" / "codex-hook-config-validation.json"
-    md = work_root / ".review" / "surface" / "codex-hook-config-validation.md"
+    out = work_root / ".review" / "workbench" / "codex-hook-config-validation.json"
+    md = work_root / ".review" / "workbench" / "codex-hook-config-validation.md"
     wb.write_json(out, report)
     md_text = "# Codex hook config validation\n\n"
     md_text += f"Status: {overall}\n\n"

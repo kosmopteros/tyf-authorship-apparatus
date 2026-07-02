@@ -142,7 +142,7 @@ class WorkbenchMCPTests(unittest.TestCase):
         old_hash = snapshot["units"][0]["draft"]["sha256"]
         (self.root / "drafts" / "chapter-one.md").write_text("Changed on disk.\n", encoding="utf-8")
         conflicts = self.call_tool(
-            "surface_current_conflicts",
+            "workbench_current_conflicts",
             {"path": "drafts/chapter-one.md", "loaded_sha256": old_hash},
         )
         self.assertEqual(len(conflicts["conflicts"]), 1)

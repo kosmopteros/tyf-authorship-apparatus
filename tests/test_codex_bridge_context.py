@@ -62,7 +62,7 @@ class CodexBridgeContextTests(unittest.TestCase):
         self.assertIn("What needs attention?", items[0]["text"])
         self.assertEqual(event["type"], "unit-test")
         self.assertEqual(status["status"], "recorded")
-        self.assertTrue((work_root / ".review" / "surface" / "codex-bridge-events.jsonl").is_file())
+        self.assertTrue((work_root / ".review" / "workbench" / "codex-bridge-events.jsonl").is_file())
         self.assertEqual((work_root / "manuscript" / "chapter-one.md").read_text(encoding="utf-8"), before)
 
     def test_windows_codex_launcher_prefers_cmd_or_exe_over_extensionless_stub(self):

@@ -37,11 +37,11 @@ That is the most important invariant.
 
 Both MCP and hooks can write visible status files:
 
-- `.review/surface/codex-turn-status.json`
-- `.review/surface/codex-turn-status.jsonl`
-- `.review/surface/codex-hooks.jsonl`
-- `.review/surface/codex-bridge-events.jsonl`
-- `.review/surface/codex-bridge-status.json`
+- `.review/workbench/codex-turn-status.json`
+- `.review/workbench/codex-turn-status.jsonl`
+- `.review/workbench/codex-hooks.jsonl`
+- `.review/workbench/codex-bridge-events.jsonl`
+- `.review/workbench/codex-bridge-status.json`
 
 The browser still needs a live status card, but the state now exists in files and is covered by tests.
 
@@ -55,8 +55,8 @@ It also stays behind a local TYF bridge instead of letting the browser talk dire
 
 `tyf_codex_schema.py` runs the local Codex schema generation command, stores version-specific artifacts under `.tyf/codex-app-server-schema/`, and writes review packets:
 
-- `.review/surface/codex-app-server-compat.json`
-- `.review/surface/codex-app-server-compat.md`
+- `.review/workbench/codex-app-server-compat.json`
+- `.review/workbench/codex-app-server-compat.md`
 
 This does not prove compatibility by itself, but it prevents the bridge from pretending the app-server schema is timeless.
 
@@ -92,10 +92,10 @@ The hook recorder is tolerant, but `docs/CODEX_HOOKS.sample.toml` is a sample ra
 
 ## Next fixes before calling browser-native chat complete
 
-1. Add Workbench polling for `.review/surface/codex-turn-status.json` and `.review/surface/codex-bridge-status.json`.
+1. Add Workbench polling for `.review/workbench/codex-turn-status.json` and `.review/workbench/codex-bridge-status.json`.
 2. Add an approval-event model before any browser-native Codex chat is presented as usable.
 3. Validate the sample hook config against the installed Codex version.
-4. Done in this pass: `tyf surface` now opens the v0.6 Workbench so authors do not need to call script paths.
+4. Done in this pass: `tyf workbench` now opens the v0.6 Workbench so authors do not need to call script paths.
 
 ## Current verdict
 

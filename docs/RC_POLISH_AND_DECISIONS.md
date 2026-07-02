@@ -23,7 +23,7 @@ tyf-polish-review
 Decisions are appended to:
 
 ```text
-.review/surface/continuity-decisions.jsonl
+.review/workbench/continuity-decisions.jsonl
 ```
 
 Allowed statuses:
@@ -51,8 +51,8 @@ knowledge-base/typography-style.jsonl
 and writes:
 
 ```text
-.review/surface/polish-review.json
-.review/surface/polish-review.md
+.review/workbench/polish-review.json
+.review/workbench/polish-review.md
 ```
 
 ## Voice map

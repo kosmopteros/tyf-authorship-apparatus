@@ -318,7 +318,7 @@ def check_codex_skill() -> None:
         if (ROOT / name).is_file()
     )
 
-    assert manifest["version"] == "0.5.0"
+    assert manifest["version"] == "0.6.0"
     assert manifest["skills"] == "./skills/"
     codex_hooks_path = ROOT / ".codex-plugin" / "hooks" / "hooks.json"
     assert codex_hooks_path.is_file()

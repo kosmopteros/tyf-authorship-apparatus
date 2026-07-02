@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0
+
+Release label: "Workbench Path".
+
+- Made `tyf workbench` the single author-facing Workbench command, removed the public `tyf surface` command and the separate `tyf-workbench` console script, and moved generated Workbench artifacts to `.review/workbench/`.
+- Kept the Workbench's draft-only authority intact: local browser saves remain compare-and-swap guarded under `drafts/`, while `manuscript/` stays read-only until the proposal, audit, author review, author decision, and `tyf write --decision` Gate path.
+- Refreshed Codex skills, plugin metadata, author contexts, Cowork instructions, docs, tests, and development evidence around the one-path Workbench contract.
+
 ## 0.5.0
 
 Release label: "Single Book Folder".

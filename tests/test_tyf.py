@@ -3750,7 +3750,8 @@ class Installer(unittest.TestCase):
         self.assertIn('${CODEX_HOME:-$HOME/.codex}/skills', script)
         self.assertNotIn('$HOME/.agents/skills', script)
         self.assertIn("$env:CODEX_HOME", ps_script)
-        self.assertIn(".codex\\skills", ps_script)
+        self.assertIn(".codex", ps_script)
+        self.assertIn('"skills"', ps_script)
         self.assertNotIn(".agents", ps_script)
 
     def test_powershell_installer_has_windows_author_contract(self):
@@ -3808,6 +3809,83 @@ class Installer(unittest.TestCase):
             out2 = p2.stdout + p2.stderr
             self.assertEqual(p2.returncode, 0, out2)
             self.assertIn("skill directories", out2)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    @unittest.skipUnless(shutil.which("powershell") or shutil.which("pwsh"), "PowerShell not available")
+    def test_powershell_installer_installs_codex_personal_plugin_cache(self):
+        ps = shutil.which("powershell") or shutil.which("pwsh")
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-ps-plugin-install-"))
+        try:
+            env = {**ENV, "CODEX_HOME": str(tmp / "codex-home"),
+                   "BIN_DIR": str(tmp / "bin")}
+            stale = tmp / "codex-home" / "plugins" / "cache" / "personal" / "tyf" / "0.5.0"
+            stale.mkdir(parents=True)
+            (stale / "OLD.txt").write_text("stale", encoding="utf-8")
+            cmd = [ps, "-NoProfile"]
+            if Path(ps).name.lower() == "powershell.exe":
+                cmd += ["-ExecutionPolicy", "Bypass"]
+            cmd += ["-File", str(REPO / "scripts" / "install.ps1"), "codex-plugin"]
+            p = subprocess.run(cmd, cwd=str(REPO), capture_output=True, text=True, env=env)
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            manifest = json.loads((REPO / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+            cache = (tmp / "codex-home" / "plugins" / "cache" / "personal" /
+                     "tyf" / manifest["version"])
+            installed_manifest = cache / ".codex-plugin" / "plugin.json"
+            self.assertTrue(installed_manifest.is_file(), out)
+            self.assertEqual(
+                json.loads(installed_manifest.read_text(encoding="utf-8"))["version"],
+                manifest["version"],
+            )
+            self.assertTrue((cache / ".codex-plugin" / "hooks" / "hooks.json").is_file(), out)
+            self.assertTrue((cache / "skills" / "using-tyf" / "SKILL.md").is_file(), out)
+            self.assertFalse(stale.exists(), out)
+            self.assertIn("personal Codex plugin cache", out)
+            self.assertIn("Older TYF personal plugin cache versions were removed.", out)
+            self.assertIn("Restart Codex", out)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    @unittest.skipUnless(shutil.which("bash"), "bash not available")
+    def test_bash_installer_installs_codex_personal_plugin_cache(self):
+        bash = shutil.which("bash")
+        tmp = Path(tempfile.mkdtemp(prefix="tyf-bash-plugin-install-"))
+        try:
+            def bash_path(path):
+                path = Path(path)
+                if os.name == "nt" and path.drive:
+                    drive = path.drive.rstrip(":").lower()
+                    rest = path.as_posix().split(":/", 1)[1]
+                    return f"/mnt/{drive}/{rest}"
+                return path.as_posix()
+
+            script = bash_path(REPO / "scripts" / "install.sh")
+            codex_home = bash_path(tmp / "codex-home")
+            bin_dir = bash_path(tmp / "bin")
+            stale = tmp / "codex-home" / "plugins" / "cache" / "personal" / "tyf" / "0.5.0"
+            stale.mkdir(parents=True)
+            (stale / "OLD.txt").write_text("stale", encoding="utf-8")
+            command = f"CODEX_HOME='{codex_home}' BIN_DIR='{bin_dir}' '{script}' codex-plugin"
+            cmd = [bash, "-lc", command]
+            p = subprocess.run(cmd, cwd=str(REPO), capture_output=True, text=True, env=ENV)
+            out = p.stdout + p.stderr
+            self.assertEqual(p.returncode, 0, out)
+            manifest = json.loads((REPO / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+            cache = (tmp / "codex-home" / "plugins" / "cache" / "personal" /
+                     "tyf" / manifest["version"])
+            installed_manifest = cache / ".codex-plugin" / "plugin.json"
+            self.assertTrue(installed_manifest.is_file(), out)
+            self.assertEqual(
+                json.loads(installed_manifest.read_text(encoding="utf-8"))["version"],
+                manifest["version"],
+            )
+            self.assertTrue((cache / ".codex-plugin" / "hooks" / "hooks.json").is_file(), out)
+            self.assertTrue((cache / "skills" / "using-tyf" / "SKILL.md").is_file(), out)
+            self.assertFalse(stale.exists(), out)
+            self.assertIn("personal Codex plugin cache", out)
+            self.assertIn("Older TYF personal plugin cache versions were removed.", out)
+            self.assertIn("Restart Codex", out)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

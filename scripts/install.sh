@@ -5,6 +5,7 @@
 #   bash scripts/install.sh claude          # ~/.claude/skills
 #   bash scripts/install.sh codex           # ${CODEX_HOME:-~/.codex}/skills
 #   bash scripts/install.sh cursor          # ~/.cursor/skills
+#   bash scripts/install.sh codex-plugin    # ${CODEX_HOME:-~/.codex}/plugins/cache/personal/tyf/<version>
 #   bash scripts/install.sh /custom/path    # any explicit skills directory
 #
 # Set BIN_DIR to choose where the `tyf` launcher is linked (default ~/.local/bin).
@@ -19,6 +20,7 @@ resolve_target() {
   case "${1:-}" in
     claude)  echo "$HOME/.claude/skills" ;;
     codex)   echo "${CODEX_HOME:-$HOME/.codex}/skills" ;;
+    codex-plugin) echo "__TYF_CODEX_PLUGIN__" ;;
     cursor)  echo "$HOME/.cursor/skills" ;;
     "")      echo "" ;;
     *)       echo "$1" ;;
@@ -29,9 +31,72 @@ ctx_file_for() {
   case "${1:-}" in
     claude) echo "CLAUDE.md" ;;
     codex)  echo "AGENTS.md" ;;
+    codex-plugin) echo "AGENTS.md" ;;
     cursor) echo "AGENTS.md" ;;
     *)      echo "CLAUDE.md / AGENTS.md / GEMINI.md" ;;
   esac
+}
+
+codex_plugin_version() {
+  sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$ROOT/.codex-plugin/plugin.json" | head -n 1
+}
+
+install_codex_plugin_cache() {
+  local version codex_home cache
+  version="$(codex_plugin_version)"
+  if [ -z "$version" ]; then
+    echo "No Codex plugin version found in $ROOT/.codex-plugin/plugin.json" >&2
+    exit 1
+  fi
+  codex_home="${CODEX_HOME:-$HOME/.codex}"
+  cache="$codex_home/plugins/cache/personal/tyf/$version"
+  local cache_parent old
+  cache_parent="$(dirname "$cache")"
+  mkdir -p "$cache_parent"
+  for old in "$cache_parent"/*; do
+    [ -e "$old" ] || continue
+    [ "$(basename "$old")" = "$version" ] && continue
+    rm -rf -- "$old"
+  done
+
+  rm -rf -- "$cache"
+  mkdir -p "$cache"
+
+  local entries=(
+    ".codex-plugin"
+    ".claude-plugin"
+    ".cursor-plugin"
+    ".opencode"
+    "author-context"
+    "bin"
+    "cowork"
+    "docs"
+    "examples"
+    "plugin"
+    "scripts"
+    "skills"
+    "CHANGELOG.md"
+    "LICENSE"
+    "README.md"
+    "TYF-manifesto-and-architecture.md"
+    "VALIDATION.md"
+    "gemini-extension.json"
+    "package.json"
+    "pyproject.toml"
+    "tyf.portable.json"
+  )
+  local entry
+  for entry in "${entries[@]}"; do
+    if [ -e "$ROOT/$entry" ]; then
+      cp -R "$ROOT/$entry" "$cache/$entry"
+    fi
+  done
+
+  echo "Installed TYF personal Codex plugin cache:"
+  echo "  $cache"
+  echo "  version: $version"
+  echo "Older TYF personal plugin cache versions were removed."
+  echo "Restart Codex so it can reload the TYF plugin from the refreshed cache."
 }
 
 HARNESS="${1:-}"
@@ -48,18 +113,22 @@ if [ -z "$TARGET" ]; then
   exit 1
 fi
 
-# 1. Skills
-mkdir -p "$TARGET"
-echo "Installing TYF skills into: $TARGET"
-count=0
-for dir in "$SRC"/*/; do
-  name="$(basename "$dir")"
-  rm -rf "${TARGET:?}/$name"
-  cp -R "$dir" "$TARGET/$name"
-  echo "  installed: $name"
-  count=$((count + 1))
-done
-echo "  $count skills installed."
+if [ "$TARGET" = "__TYF_CODEX_PLUGIN__" ]; then
+  install_codex_plugin_cache
+else
+  # 1. Skills
+  mkdir -p "$TARGET"
+  echo "Installing TYF skills into: $TARGET"
+  count=0
+  for dir in "$SRC"/*/; do
+    name="$(basename "$dir")"
+    rm -rf "${TARGET:?}/$name"
+    cp -R "$dir" "$TARGET/$name"
+    echo "  installed: $name"
+    count=$((count + 1))
+  done
+  echo "  $count skills installed."
+fi
 
 # 2. The tyf helper, linked (not copied) onto PATH. A symlink keeps `tyf check`
 #    able to resolve the pack root; a loose copy could not.

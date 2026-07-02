@@ -380,6 +380,16 @@ Feature: TYF helper smoke suite
     When Run "python tests/test_tyf.py Installer.test_powershell_installer_installs_codex_skills_and_helper -v"
     Then Exit code is 0
 
+  @covers:tyf-codex-skill-book-repo @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: PowerShell codex-plugin installs current metadata into the Windows Codex cache
+    When Run "python tests/test_tyf.py Installer.test_powershell_installer_installs_codex_personal_plugin_cache -v"
+    Then Exit code is 0
+
+  @covers:tyf-codex-skill-book-repo @covers:tyf-release-packaging-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.sh @bind-file:tests/test_tyf.py @tool-check:cli
+  Scenario: Bash codex-plugin prunes stale TYF cache versions in POSIX installs
+    When Run "python tests/test_tyf.py Installer.test_bash_installer_installs_codex_personal_plugin_cache -v"
+    Then Exit code is 0
+
   @covers:tyf-windows-installer-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/install.ps1 @bind-file:tests/test_tyf.py @tool-check:cli
   Scenario: Windows installer targets current Codex skill roots
     When Run "python tests/test_tyf.py Installer.test_codex_install_targets_current_skill_root -v"

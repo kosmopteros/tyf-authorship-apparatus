@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1
+
+Release label: "Codex Install Path".
+
+- Added `codex-plugin` install targets to the bash and PowerShell installers so Codex users can refresh the version-aligned personal plugin cache under `$CODEX_HOME/plugins/cache/personal/tyf/<version>` or `~/.codex/plugins/cache/personal/tyf/<version>`.
+- The `codex-plugin` installer path now removes older TYF personal plugin cache versions, leaving Codex with one current TYF plugin cache path after update.
+- Aligned package, plugin, Gemini, and nested Cowork manifest versions at 0.6.1.
+- Expanded the helper smoke suite to 201 tests and development acceptance coverage to 177 scenarios with 177/177 direct RED proof.
+
 ## 0.6.0
 
 Release label: "Workbench Path".

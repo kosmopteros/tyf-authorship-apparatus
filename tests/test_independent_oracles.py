@@ -293,7 +293,11 @@ def check_single_work() -> None:
 def check_plugin() -> None:
     manifest_path = ROOT / ".codex-plugin" / "plugin.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    gemini = json.loads((ROOT / "gemini-extension.json").read_text(encoding="utf-8"))
     assert manifest["name"] == "tyf"
+    assert package["version"] == manifest["version"]
+    assert gemini["version"] == manifest["version"]
     assert manifest["skills"] == "./skills/"
     assert manifest["author"]["name"]
     interface = manifest["interface"]
@@ -304,6 +308,7 @@ def check_plugin() -> None:
 
 def check_codex_skill() -> None:
     manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
     install = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
     portability = (ROOT / "docs" / "PORTABILITY.md").read_text(encoding="utf-8")
     using = (ROOT / "skills" / "using-tyf" / "SKILL.md").read_text(encoding="utf-8")
@@ -318,7 +323,7 @@ def check_codex_skill() -> None:
         if (ROOT / name).is_file()
     )
 
-    assert manifest["version"] == "0.6.0"
+    assert manifest["version"] == package["version"]
     assert manifest["skills"] == "./skills/"
     codex_hooks_path = ROOT / ".codex-plugin" / "hooks" / "hooks.json"
     assert codex_hooks_path.is_file()
@@ -336,8 +341,12 @@ def check_codex_skill() -> None:
     assert (ROOT / cursor["context_file"]).is_file()
     assert (ROOT / gemini["contextFileName"]).is_file()
     assert '${CODEX_HOME:-$HOME/.codex}/skills' in install
+    assert "codex-plugin" in install
+    assert "plugins/cache/personal/tyf" in install
     assert "~/.codex/skills/" in portability
     assert "$CODEX_HOME/skills" in portability
+    assert "codex-plugin" in portability
+    assert "plugins/cache/personal/tyf" in portability
     assert openai_yaml.is_file()
     metadata = openai_yaml.read_text(encoding="utf-8")
     assert "display_name:" in metadata

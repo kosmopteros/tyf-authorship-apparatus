@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.5
+
+Release label: "Product Disposition".
+
+- Recorded the product disposition for the accepted local-first single-book beta scope.
+- Closed the evidence-green requirement queue as `done` after the 0.6.4 gate evidence.
+- Kept package, plugin, Gemini, and nested Cowork manifest versions aligned at 0.6.5.
+
 ## 0.6.4
 
 Release label: "Workbench Style Surface".

@@ -1,12 +1,13 @@
 # TYF Release Readiness Review
 
-This page is the maintainer-facing acceptance checklist for the current beta
-round. It is not a marketing page and not a release blessing by itself. It
-separates what is locally proven from what still needs real author use.
+This page records the maintainer-facing acceptance evidence for the current beta
+round. It is not a marketing page and not a claim that later roadmap layers are
+finished. It separates what is locally proven from what still needs real author
+use.
 
 ## Current Verdict
 
-TYF is ready for a local-first single-book beta start.
+TYF 0.6.5 is accepted for a local-first single-book beta start.
 
 The proved launch promise is narrow and useful: preserve existing material,
 start without a final title, keep candidate prose in `drafts/`, keep
@@ -40,7 +41,7 @@ imagined.
 - `202` stdlib helper, documentation, installer, and packaging tests pass.
 - `241` aggregate pytest cases pass across the helper and Workbench modules.
 - `179/179` internal acceptance scenarios have current direct RED proof.
-- `fbs finish --version-impact "patch: release TYF 0.6.4 Workbench Style Surface"` passes the release gate: prove-red, Be correspondence, release-check, and Be authorization are current.
+- `fbs finish --version-impact "patch: release TYF 0.6.5 Product Disposition"` passes the release gate: prove-red, Be correspondence, release-check, and Be authorization are current.
 - `scripts/validate_codex_plugin.py` validates the Codex plugin and hook identity without relying on private host tooling.
 - GitHub CI is not the current evidence source when automation minutes are unavailable; rely on the local release checks above and rerun CI when minutes return.
 - Public TYF-visible surfaces do not require private development context.
@@ -69,14 +70,14 @@ imagined.
 - A complete semantic engine for contradiction graphs, retrieval, or citation
   confidence.
 
-## Maintainer Acceptance Checklist
+## Acceptance Evidence Checklist
 
-Before calling the beta release accepted, run or confirm:
+The beta release acceptance is backed by these reproducible checks:
 
 - `python -m pytest -q` passes locally.
 - `python scripts/tyf.py check --strict` reports no documentation drift.
 - `python scripts/validate_codex_plugin.py .` passes locally.
-- `fbs finish --version-impact "<impact>"` passes, or the exact non-product blocker is recorded.
+- `fbs finish --version-impact "patch: release TYF 0.6.5 Product Disposition"` passes, or the exact non-product blocker is recorded.
 - If GitHub CI minutes are available, CI is green; if not, the missing CI evidence is named rather than converted into a false claim.
 - The public/private boundary scan finds no private development context in
   TYF-visible surfaces.

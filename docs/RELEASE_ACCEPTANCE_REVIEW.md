@@ -1,15 +1,14 @@
-# TYF 0.6.4 Workbench Style Surface
+# TYF 0.6.5 Product Disposition
 
 Date: 2026-07-03
 
-This note reviews whether TYF 0.6.4 satisfies the declared local-first
-single-book beta promise. It is a product disposition aid, not a substitute for
-the maintainer's acceptance decision.
+This note reviews whether TYF 0.6.5 satisfies the declared local-first
+single-book beta promise and records the product disposition for this release
+scope.
 
-## Recommendation
+## Decision
 
-Accept TYF 0.6.4 as a product-ready local-first single-book beta release
-candidate.
+TYF 0.6.5 is accepted as a product-ready local-first single-book beta.
 
 Do not score it as a mature mass-market product or as the complete long-term
 Workbench vision. The correct release claim is narrower: an author can bring
@@ -19,14 +18,16 @@ into `manuscript/` through the Gate without TYF becoming the writer.
 
 ## Evidence Reviewed
 
-- `fbs finish --version-impact "patch: release TYF 0.6.4 Workbench Style Surface"` passed.
+- `fbs finish --version-impact "patch: release TYF 0.6.5 Product Disposition"` passes.
 - `fbs prove-red` reported all `179` Be carry current bound RED proof.
 - `fbs test` executed `179` Be with `179` passing and no gaps.
-- `fbs release-check` reported package and plugin version `0.6.4`.
+- `fbs release-check` reported package and plugin version `0.6.5`.
 - `fbs be auth status` reported `179/179` current authorized execution-sensitive Be.
 - `python -m pytest -q` passed `241` aggregate pytest cases.
 - `python scripts/tyf.py check --strict` reported no documentation drift.
 - `python scripts/validate_codex_plugin.py .` passed.
+- `fbs r` reports no open requirements in the active view after the evidence-led
+  requirements were explicitly dispositioned as `done`.
 
 ## Proven Beta Promise
 
@@ -72,18 +73,18 @@ apparatus is strong enough to start real writing, but the product still needs
 live author sessions to reveal friction in pacing, question quality, Workbench
 ergonomics, treatment depth, and Gate comprehension.
 
-The second residual risk is disposition drift. The evidence record correctly
-shows all open requirements as evidence-strong but review-required. Closing them
-as `done` should be a maintainer product decision after reviewing this evidence,
-not an automatic side effect of a green gate.
+The second residual risk is scope creep after acceptance. The release is done
+for the declared beta promise; future Workbench, print, longitudinal-memory, or
+semantic-engine improvements should enter as new requirements rather than
+reopening this beta unless real author use reveals a blocker in the accepted
+scope.
 
 ## Acceptance Decision
 
-Recommended decision:
+Decision recorded:
 
-`ship candidate for real author use`
+`ship TYF 0.6.5 for real author use`
 
-If accepted, record the product decision in the release process, then use real
-writing sessions as the next validation source. Do not reopen the beta for
-speculative later-workbench improvements unless they become concrete defects in
-the declared beta promise.
+Use real writing sessions as the next validation source. Do not reopen this beta
+for speculative later-workbench improvements unless they become concrete defects
+in the declared beta promise.

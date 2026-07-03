@@ -69,6 +69,16 @@ class WorkbenchStatusTests(unittest.TestCase):
         self.assertIn("Share this moment", html)
         self.assertIn("Make footnote candidate", html)
 
+    def test_open_implies_serve_for_editable_browser_mode(self):
+        args = live.parse_args(["--open"])
+        self.assertTrue(args.open)
+        self.assertTrue(args.serve)
+
+    def test_static_mode_remains_explicit(self):
+        args = live.parse_args([])
+        self.assertFalse(args.open)
+        self.assertFalse(args.serve)
+
 
 if __name__ == "__main__":
     unittest.main()

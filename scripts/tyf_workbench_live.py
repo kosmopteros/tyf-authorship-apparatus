@@ -238,16 +238,27 @@ def make_handler(work_id: str, work_root: Path, workspace: Path, session_key: st
     return Handler
 
 
-def run(argv: Optional[list[str]] = None) -> int:
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="TYF live Workbench with assistant status, save-safety, recovery, and review dashboard")
     parser.add_argument("work", nargs="?", default=None)
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
-    parser.add_argument("--open", action="store_true")
+    parser.add_argument("--open", action="store_true", help="open the editable local browser Workbench; implies --serve")
     parser.add_argument("--allow-remote", action="store_true")
     parser.add_argument("--refresh-map", action="store_true", help="regenerate outline/book-map.yaml from draft and manuscript files")
-    args = parser.parse_args(argv)
+    return parser
+
+
+def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+    args = build_arg_parser().parse_args(argv)
+    if args.open:
+        args.serve = True
+    return args
+
+
+def run(argv: Optional[list[str]] = None) -> int:
+    args = parse_args(argv)
     work_id, work_root, workspace = wb.resolve_work(args.work)
     wb.ensure_workbench_shape(work_root, workspace)
     if args.refresh_map:
@@ -263,6 +274,10 @@ def run(argv: Optional[list[str]] = None) -> int:
     wb.log_event(workspace, "workbench-live", work_id, html_path.relative_to(work_root).as_posix())
     print(f"TYF live Workbench: {html_path.relative_to(work_root).as_posix()}")
     print("No manuscript text was written. manuscript/ remains Gate-only.")
+    if not args.serve:
+        print("Static inspection file written. It will not save drafts from a file:// browser tab.")
+        print("For the editable browser Workbench, run:")
+        print("  tyf workbench --serve --open")
     if args.serve:
         if not args.allow_remote and not is_loopback(args.host):
             raise SystemExit("Refused: non-loopback host requires --allow-remote.")
@@ -274,7 +289,7 @@ def run(argv: Optional[list[str]] = None) -> int:
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print("\nStopped TYF live Workbench.")
+            print("\nStopped TYF workbench.")
     return 0
 
 

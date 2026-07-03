@@ -37,10 +37,12 @@ imagined.
 
 ## Evidence-Green
 
-- `188` stdlib helper, documentation, installer, and packaging tests pass.
-- `151/151` internal acceptance scenarios have current direct RED proof.
+- `202` stdlib helper, documentation, installer, and packaging tests pass.
+- `240` aggregate pytest cases pass across the helper and Workbench modules.
+- `178/178` internal acceptance scenarios have current direct RED proof.
+- `fbs finish --version-impact "none: post-release readiness audit after 0.6.2"` passes the release gate: prove-red, Be correspondence, release-check, and Be authorization are current.
 - `scripts/validate_codex_plugin.py` validates the Codex plugin and hook identity without relying on private host tooling.
-- CI passes on the pull request for install, Python 3.9, and Python 3.12.
+- GitHub CI is not the current evidence source when automation minutes are unavailable; rely on the local release checks above and rerun CI when minutes return.
 - Public TYF-visible surfaces do not require private development context.
 - The exported author package excludes workshop debris and keeps clean author
   context templates.
@@ -71,9 +73,11 @@ imagined.
 
 Before calling the beta release accepted, run or confirm:
 
-- The pull request CI is green.
-- `python tests/test_tyf.py -v` passes locally.
+- `python -m pytest -q` passes locally.
 - `python scripts/tyf.py check --strict` reports no documentation drift.
+- `python scripts/validate_codex_plugin.py .` passes locally.
+- `fbs finish --version-impact "<impact>"` passes, or the exact non-product blocker is recorded.
+- If GitHub CI minutes are available, CI is green; if not, the missing CI evidence is named rather than converted into a false claim.
 - The public/private boundary scan finds no private development context in
   TYF-visible surfaces.
 - A fresh install can create a separate book workspace, preserve an arrival

@@ -18,7 +18,6 @@ keywords = ["authorship", "writing", "editing", "voice", "skills"]
 # itself, so run it from a repo clone or set TYF_PACK_ROOT to one.
 [project.scripts]
 tyf = "tyf:main"
-tyf-workbench = "tyf_workbench_live:main"
 tyf-review = "tyf_review:main"
 tyf-architecture-check = "tyf_architecture_contracts:main"
 tyf-graph = "tyf_graph_projection:main"

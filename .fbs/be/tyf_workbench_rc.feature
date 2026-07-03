@@ -25,6 +25,11 @@ Feature: TYF Workbench and continuity RC surfaces
     When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_lists_expected_tools_after_initialize tests/test_workbench_mcp.py::WorkbenchMCPTests::test_stdio_server_round_trips_like_codex_mcp_client"
     Then Exit code is 0
 
+  @covers:tyf-workbench-bridge-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf.py @bind-file:scripts/tyf_workbench_mcp.py @bind-file:tests/test_tyf.py @bind-file:tests/test_workbench_mcp.py @tool-check:cli
+  Scenario: Workbench writes Codex-recognized MCP config without leaking tools outside the book workspace
+    When Run "python -m pytest -q tests/test_tyf.py::CLIBehaviour::test_workbench_writes_ready_codex_mcp_config tests/test_workbench_mcp.py::WorkbenchMCPTests::test_workspace_bound_server_exposes_no_tools_outside_workspace"
+    Then Exit code is 0
+
   @covers:tyf-workbench-bridge-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf_workbench_mcp.py @bind-file:tests/test_workbench_mcp.py @tool-check:cli
   Scenario: Workbench bridge actions create review artifacts without manuscript writes
     When Run "python -m pytest -q tests/test_workbench_mcp.py::WorkbenchMCPTests::test_note_footnote_gate_graph_and_status_actions_do_not_touch_manuscript"

@@ -224,6 +224,18 @@ MCP is the tool and context surface. App-server is the rich conversation transpo
 
 ### MCP only
 
+From inside a TYF book workspace, use the helper first:
+
+```bash
+tyf workbench --codex-mcp-config
+```
+
+It writes `$CODEX_HOME/config.toml` or `~/.codex/config.toml` with the current
+TYF pack path and current book workspace path, and keeps only TYF-named
+Workbench tools enabled. The server is workspace-bound and exposes no tools when
+Codex is launched outside that book folder. Restart Codex or reload MCP servers
+after writing it.
+
 Use `docs/CODEX_MCP_CONFIG.sample.toml` as the starting point.
 
 Minimal shape:
@@ -234,7 +246,8 @@ command = "python"
 args = [
   "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_workbench_mcp.py",
   "--workspace",
-  "/absolute/path/to/your-tyf-book-workspace"
+  "/absolute/path/to/your-tyf-book-workspace",
+  "--require-cwd-inside-workspace"
 ]
 default_tools_approval_mode = "prompt"
 ```

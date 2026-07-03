@@ -72,6 +72,18 @@ To regenerate `outline/book-map.yaml` from discovered draft and manuscript files
 tyf workbench --refresh-map
 ```
 
+To connect Codex to the Workbench MCP server without hand-editing paths:
+
+```bash
+tyf workbench --codex-mcp-config
+```
+
+That writes the ready Codex user config block to `$CODEX_HOME/config.toml` or
+`~/.codex/config.toml`, using the current TYF pack path and workspace path. The
+server is workspace-bound and exposes no tools when Codex is launched outside
+that book folder. It exposes TYF-named Workbench tools only; it does not add raw
+filesystem tools or a manuscript write API.
+
 The helper delegates to `scripts/tyf_workbench_live.py`, which wraps the base
 v0.6 Workbench. It writes author-facing artifacts to
 `.review/workbench/workbench-live.html` and
@@ -102,6 +114,10 @@ It is a stdio MCP server for Codex and other MCP clients. It exposes TYF operati
 Configuration example: `docs/CODEX_MCP_CONFIG.sample.toml`.
 
 The MCP bridge lets Codex know what the author is touching without manual copy-paste, and lets Codex create notes, footnote candidates, and review packets without receiving a raw write-any-file tool. It still has no manuscript write API.
+
+From inside a book workspace, `tyf workbench --codex-mcp-config` writes the
+ready Codex MCP config to `$CODEX_HOME/config.toml` or `~/.codex/config.toml`.
+The sample file remains a readable reference for manual installs.
 
 ## Codex visibility and bridge scaffolds
 

@@ -3873,6 +3873,104 @@ def _write_surface_files(work_id):
     return html_path, data_path
 
 
+_CODEX_MCP_TOOLS = [
+    "get_active_workbench_context",
+    "get_active_selection",
+    "read_unit_context",
+    "search_book_graph",
+    "list_author_notes",
+    "create_author_note",
+    "propose_footnote_from_note",
+    "prepare_gate_packet",
+    "refresh_book_graph",
+    "refresh_book_map",
+    "workbench_current_conflicts",
+    "record_codex_turn_status",
+]
+
+
+def _toml_string(value):
+    return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _codex_mcp_block(workspace):
+    mcp_script = os.path.join(_pack_root(), "scripts", "tyf_workbench_mcp.py")
+    if not os.path.isfile(mcp_script):
+        sys.exit(f"Refused: TYF Workbench MCP helper is unavailable: {mcp_script}")
+    tools = "\n".join(f"  {_toml_string(tool)}," for tool in _CODEX_MCP_TOOLS)
+    read_only = [
+        "get_active_workbench_context",
+        "get_active_selection",
+        "read_unit_context",
+        "search_book_graph",
+        "list_author_notes",
+        "workbench_current_conflicts",
+        "record_codex_turn_status",
+    ]
+    tool_modes = "\n\n".join(
+        f"[mcp_servers.tyf_workbench.tools.{tool}]\napproval_mode = \"approve\""
+        for tool in read_only
+    )
+    return f"""# BEGIN TYF Workbench MCP
+[mcp_servers.tyf_workbench]
+command = {_toml_string(sys.executable or "python")}
+args = [
+  {_toml_string(mcp_script)},
+  "--workspace",
+  {_toml_string(workspace)},
+  "--require-cwd-inside-workspace"
+]
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+enabled = true
+required = false
+default_tools_approval_mode = "prompt"
+
+enabled_tools = [
+{tools}
+]
+
+{tool_modes}
+# END TYF Workbench MCP
+"""
+
+
+def _upsert_managed_block(existing, block, begin="# BEGIN TYF Workbench MCP", end="# END TYF Workbench MCP"):
+    if begin in existing and end in existing:
+        before = existing.split(begin, 1)[0].rstrip()
+        after = existing.split(end, 1)[1].lstrip()
+        pieces = [part for part in (before, block.rstrip(), after.rstrip()) if part]
+        return "\n\n".join(pieces) + "\n"
+    if existing.strip():
+        return existing.rstrip() + "\n\n" + block
+    return block
+
+
+def _codex_home():
+    return os.path.realpath(os.environ.get("CODEX_HOME") or os.path.join(str(Path.home()), ".codex"))
+
+
+def _write_codex_mcp_config(work_id):
+    _require_workspace()
+    _confine_work(work_id)
+    _require_work(work_id)
+    workspace = os.path.realpath(_work_base(work_id))
+    config_dir = _codex_home()
+    os.makedirs(config_dir, exist_ok=True)
+    config_path = os.path.join(config_dir, "config.toml")
+    existing = _read(config_path) if os.path.isfile(config_path) else ""
+    block = _codex_mcp_block(workspace)
+    atomic_write(config_path, _upsert_managed_block(existing, block))
+    log_event(workspace, "codex-mcp-config", work_id, config_path)
+    print("Codex MCP config written for TYF Workbench:")
+    print(f"  {config_path}")
+    print("  server: tyf_workbench")
+    print(f"  workspace: {workspace}")
+    print("  tools: TYF-named Workbench context, notes, Gate packets, graph refresh, and status only")
+    print("  guard: inactive unless Codex is launched from this TYF workspace")
+    print("Restart Codex or reload MCP servers so it sees the updated user config.")
+
+
 def cmd_workbench(args):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     if script_dir not in sys.path:
@@ -3881,6 +3979,11 @@ def cmd_workbench(args):
         import tyf_workbench_live
     except ImportError as e:
         sys.exit(f"Refused: TYF live Workbench helper is unavailable: {e}")
+
+    if getattr(args, "codex_mcp_config", False):
+        work_id = _safe_work_id(args.work or _active_work_id() or ROOT_WORK_ID)
+        _write_codex_mcp_config(work_id)
+        return
 
     argv = []
     if args.work:
@@ -6313,6 +6416,7 @@ def main():
     s.add_argument("--open", action="store_true", help="open the local workbench URL in the default browser")
     s.add_argument("--allow-remote", action="store_true", help="advanced: allow binding to a non-loopback host")
     s.add_argument("--refresh-map", action="store_true", help="regenerate outline/book-map.yaml from draft and manuscript files")
+    s.add_argument("--codex-mcp-config", action="store_true", help="write a ready Codex user MCP config bound to this TYF workspace")
     s.set_defaults(fn=cmd_workbench)
     s = sub.add_parser("character", help="append isolated per-character knowledge and voice dossier notes")
     s.add_argument("name")

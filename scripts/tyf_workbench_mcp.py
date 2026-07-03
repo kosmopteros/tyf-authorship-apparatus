@@ -100,11 +100,33 @@ def first_text(value: Any, default: str = "") -> str:
 
 
 class WorkbenchContext:
-    def __init__(self, workspace: Optional[str], work: Optional[str]) -> None:
+    def __init__(
+        self,
+        workspace: Optional[str],
+        work: Optional[str],
+        require_cwd_inside_workspace: bool = False,
+        launch_cwd: Optional[str] = None,
+    ) -> None:
         self.workspace = workspace
         self.work_arg = work
+        self.require_cwd_inside_workspace = require_cwd_inside_workspace
+        self.launch_cwd = Path(launch_cwd or os.getcwd()).resolve()
+
+    def active(self) -> bool:
+        if not self.require_cwd_inside_workspace or not self.workspace:
+            return True
+        workspace = Path(self.workspace).resolve()
+        return self.launch_cwd == workspace or workspace in self.launch_cwd.parents
+
+    def inactive_message(self) -> str:
+        return (
+            "TYF Workbench MCP is inactive outside its bound book workspace: "
+            f"{self.workspace}. Launch Codex from that TYF workspace to use these tools."
+        )
 
     def resolve(self) -> Tuple[str, Path, Path]:
+        if not self.active():
+            raise SystemExit(self.inactive_message())
         if self.workspace:
             os.chdir(self.workspace)
         work_id, work_root, workspace = wb.resolve_work(self.work_arg)
@@ -621,11 +643,14 @@ class MCPServer:
         try:
             if method == "initialize":
                 self.initialized = True
+                instructions = INSTRUCTIONS
+                if not self.context.active():
+                    instructions += " " + self.context.inactive_message()
                 return response(msg_id, {
                     "protocolVersion": PROTOCOL_VERSION,
                     "capabilities": {"tools": {"listChanged": False}},
                     "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
-                    "instructions": INSTRUCTIONS,
+                    "instructions": instructions,
                 })
             if method == "initialized":
                 self.initialized = True
@@ -633,8 +658,13 @@ class MCPServer:
             if not self.initialized:
                 return response(msg_id, error={"code": -32002, "message": "Server not initialized"})
             if method == "tools/list":
+                if not self.context.active():
+                    return response(msg_id, {"tools": []})
+                self.context.resolve()
                 return response(msg_id, {"tools": list_tools()})
             if method == "tools/call":
+                if not self.context.active():
+                    return response(msg_id, result=error_result(self.context.inactive_message()))
                 name = first_text(params.get("name"))
                 args = params.get("arguments") or {}
                 if name not in TOOLS:
@@ -672,13 +702,18 @@ def run(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="TYF Workbench MCP stdio server")
     parser.add_argument("--workspace", default=None, help="TYF workspace root; defaults to current working directory")
     parser.add_argument("--work", default=None, help="optional TYF work id; defaults to active work")
+    parser.add_argument(
+        "--require-cwd-inside-workspace",
+        action="store_true",
+        help="expose tools only when the MCP client launches this server from inside the bound workspace",
+    )
     args = parser.parse_args(argv)
     if args.workspace:
         workspace_path = Path(args.workspace).expanduser().resolve()
         if not workspace_path.is_dir():
             raise SystemExit("workspace is not a directory: " + str(workspace_path))
         args.workspace = str(workspace_path)
-    server = MCPServer(WorkbenchContext(args.workspace, args.work))
+    server = MCPServer(WorkbenchContext(args.workspace, args.work, args.require_cwd_inside_workspace))
     return server.serve()
 
 

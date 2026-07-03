@@ -78,7 +78,7 @@ On Windows without bash:
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1 codex-plugin
 ```
 
-That writes the current release to `$CODEX_HOME/plugins/cache/personal/tyf/<version>` or `~/.codex/plugins/cache/personal/tyf/<version>` and removes older TYF personal plugin cache versions; restart Codex so it reloads the TYF plugin skills and hook manifest. A book repository still needs its local workspace context: run `tyf init` in the book folder, or `tyf init <workspace-name>` near it, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf start` rather than a title-gated setup.
+That writes the current release to `$CODEX_HOME/plugins/cache/personal/tyf/<version>` or `~/.codex/plugins/cache/personal/tyf/<version>` and removes older TYF personal plugin cache versions; restart Codex so it reloads the TYF plugin skills and hook manifest. A book repository still needs its local workspace context: run `tyf init` in the book folder, or `tyf init <workspace-name>` near it, then Codex will read the generated `AGENTS.md` and route new-book work through `tyf start` rather than a title-gated setup. For Workbench MCP, run `tyf workbench --codex-mcp-config` inside the initialized book workspace; TYF writes the ready Codex user config block to `$CODEX_HOME/config.toml` or `~/.codex/config.toml` with the current pack and workspace paths. The MCP server is workspace-bound and exposes no tools when Codex is launched outside that book folder.
 
 **Cursor** (agent chat):
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.2
+
+Release label: "Codex Workbench MCP".
+
+- Added `tyf workbench --codex-mcp-config` as the one-command Codex MCP setup path for a TYF book workspace.
+- The helper writes the Codex-recognized user config at `$CODEX_HOME/config.toml` or `~/.codex/config.toml`, not an invisible project-local config.
+- The Workbench MCP server is workspace-bound and exposes no tools when Codex is launched outside the bound book folder.
+- Expanded the helper smoke suite to 202 tests and development acceptance coverage to 178 scenarios with 178/178 direct RED proof.
+
 ## 0.6.1
 
 Release label: "Codex Install Path".

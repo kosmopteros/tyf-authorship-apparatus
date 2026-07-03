@@ -49,12 +49,13 @@ def private_context_tokens(include_cli_word=False):
     return tokens
 
 
-def run_tyf(args, cwd):
+def run_tyf(args, cwd, env=None):
     """Invoke the real CLI. Returns (returncode, combined_output)."""
+    command_env = ENV if env is None else env
     p = subprocess.run(
         [sys.executable, str(TYF), *args],
         cwd=str(cwd), capture_output=True, text=True, encoding="utf-8",
-        errors="replace", env=ENV,
+        errors="replace", env=command_env,
     )
     return p.returncode, (p.stdout + p.stderr)
 
@@ -329,6 +330,30 @@ class CLIBehaviour(unittest.TestCase):
         self.assertTrue((ws / "design" / "book-style.yaml").is_file())
         self.assertTrue((ws / "assets" / "images" / "index.jsonl").is_file())
         self.assertIn("TYF live Workbench", out)
+
+    def test_workbench_writes_ready_codex_mcp_config(self):
+        ws = self.ws()
+        codex_home = self.tmp / "codex-home"
+        env = {**ENV, "CODEX_HOME": str(codex_home)}
+        rc, out = run_tyf(["workbench", "--codex-mcp-config"], ws, env=env)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Codex MCP config", out)
+        self.assertIn("tyf_workbench", out)
+
+        config = codex_home / "config.toml"
+        self.assertTrue(config.is_file(), out)
+        text = config.read_text(encoding="utf-8")
+        self.assertIn("[mcp_servers.tyf_workbench]", text)
+        self.assertIn('command = "', text)
+        self.assertIn("tyf_workbench_mcp.py", text)
+        self.assertIn("--require-cwd-inside-workspace", text)
+        self.assertIn(str(ws).replace("\\", "\\\\"), text)
+        self.assertIn("get_active_workbench_context", text)
+        self.assertIn("prepare_gate_packet", text)
+        self.assertIn("default_tools_approval_mode = \"prompt\"", text)
+        self.assertNotIn("write_file", text)
+        self.assertFalse((ws / ".codex" / "config.toml").exists(), "Codex CLI does not read project-local MCP config")
+        self.assertFalse((ws / ".codex" / "AGENTS.md").exists(), "MCP config generation should not create author context")
 
     def test_workbench_draft_save_requires_matching_base_hash(self):
         ws = self.ws()

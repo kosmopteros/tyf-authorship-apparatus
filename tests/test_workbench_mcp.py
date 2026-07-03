@@ -66,6 +66,11 @@ class WorkbenchMCPTests(unittest.TestCase):
     def server(self):
         return mcp.MCPServer(mcp.WorkbenchContext(str(self.root), None))
 
+    def guarded_server(self, launch_cwd):
+        return mcp.MCPServer(
+            mcp.WorkbenchContext(str(self.root), None, require_cwd_inside_workspace=True, launch_cwd=str(launch_cwd))
+        )
+
     def call_tool(self, name, args=None):
         server = self.server()
         init = server.handle({"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {}})
@@ -83,6 +88,19 @@ class WorkbenchMCPTests(unittest.TestCase):
         self.assertIn("prepare_gate_packet", names)
         self.assertIn("record_codex_turn_status", names)
         self.assertNotIn("write_file", names)
+
+    def test_workspace_bound_server_exposes_no_tools_outside_workspace(self):
+        outside = self.root.parent / (self.root.name + "-coding-project")
+        outside.mkdir()
+        server = self.guarded_server(outside)
+        init = server.handle({"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {}})
+        self.assertIn("inactive outside", init["result"]["instructions"])
+
+        out = server.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
+        self.assertEqual(out["result"]["tools"], [])
+
+        call = server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_active_selection", "arguments": {}}})
+        self.assertTrue(call["result"]["isError"])
 
     def test_reads_active_context_and_selection(self):
         ctx = self.call_tool("get_active_workbench_context", {"include_text": True})

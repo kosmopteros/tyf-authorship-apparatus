@@ -1,15 +1,25 @@
 # Sample Codex MCP configuration for TYF Workbench.
 #
-# Put this in a trusted book workspace at `.codex/config.toml`, or adapt it for
-# `~/.codex/config.toml`. Use absolute paths when the TYF pack lives outside the
-# book workspace.
+# Preferred path from a TYF book workspace:
+#
+#   tyf workbench --codex-mcp-config
+#
+# That writes the ready `$CODEX_HOME/config.toml` or `~/.codex/config.toml`
+# block with the current pack path and book workspace path. Keep this file as
+# the readable manual template.
+#
+# Put this in `~/.codex/config.toml` if applying it by hand. Use absolute paths
+# when the TYF pack lives outside the book workspace. Keep
+# `--require-cwd-inside-workspace` so the global server exposes no tools when
+# Codex is launched outside this book folder.
 
 [mcp_servers.tyf_workbench]
 command = "python"
 args = [
   "/absolute/path/to/tyf-authorship-apparatus/scripts/tyf_workbench_mcp.py",
   "--workspace",
-  "/absolute/path/to/your-tyf-book-workspace"
+  "/absolute/path/to/your-tyf-book-workspace",
+  "--require-cwd-inside-workspace"
 ]
 startup_timeout_sec = 10
 tool_timeout_sec = 60

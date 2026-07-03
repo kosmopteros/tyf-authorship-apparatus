@@ -16,6 +16,7 @@
 - Shipped 0.6.0 Workbench Path on top of the local desk: `tyf workbench` is the single author-facing Workbench command, generated desk artifacts live under `.review/workbench/`, and draft editing remains conflict-protected while `manuscript/` stays Gate-only.
 - Shipped 0.6.1 Codex Install Path: `codex-plugin` refreshes the current personal Codex plugin cache and removes older TYF cache versions so Codex loads one current TYF plugin path after update.
 - Shipped 0.6.2 Codex Workbench MCP: `tyf workbench --codex-mcp-config` writes the Codex-recognized user MCP config for the current book workspace, and the Workbench MCP server exposes no tools outside that bound workspace.
+- Shipped 0.6.3 Release Acceptance Review: public release-readiness documentation now points to the evidence-led product disposition note and current local gate evidence without claiming unavailable CI evidence.
 - Keep improving the complete source-to-manuscript vertical slice: claim/example provenance, proposal generation from preserved evidence, audit, author review, author decision, and write record.
 - Promote the current canonical event journal from action history toward the authority for derived SQLite projections.
 - Windows PowerShell install and exported release-tree check/install now have local smoke tests; add macOS and Linux host validation for published archives next.

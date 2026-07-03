@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.3
+
+Release label: "Release Acceptance Review".
+
+- Added an evidence-led release acceptance review for the current local-first single-book beta candidate.
+- Updated public release documentation to name local release evidence accurately without claiming unavailable CI evidence.
+- Kept package, plugin, Gemini, and nested Cowork manifest versions aligned at 0.6.3.
+
 ## 0.6.2
 
 Release label: "Codex Workbench MCP".

@@ -19,6 +19,29 @@ Inside an author sitting, suppress any broader assistant persona, voice sign-off
 
 If a real sitting exposes a TYF tooling hiccup or agent misread, such as searching the wrong folder, multiplying review packets before prose moves, missing an obvious existing body, or leaving metadata stale, record it quietly with hidden `tyf learn`. Preview first unless the lesson is clear, write only with `--write`, and never include manuscript text, source text, snippets, private author material, or network data. This is local-only maintainer machinery; the author should experience the improvement loop as better attention, not as another task.
 
+## Desktop-agent author experience
+
+The intended workplace is a PC or Mac running Codex Desktop, Claude Code Desktop, or another local agent that can run commands and launch local servers. Do not make a non-technical author operate the terminal. The agent runs TYF commands, opens local browser surfaces, reads packets, and summarizes results in plain language.
+
+The author should experience:
+
+```text
+a local book folder
+a browser Workbench when useful
+one attentive amanuensis conversation
+clear confirmation that manuscript/ remains protected
+```
+
+The agent may run local helper servers, MCP servers, file watchers, and browser UIs. The boundary is not “no server.” The boundary is: local-first, single-author, no hidden manuscript writes, no silent merge, no remote authority, and no command ceremony for the author.
+
+When the author asks to see or work physically with the book, run this yourself from the TYF workspace:
+
+```bash
+tyf workbench --open
+```
+
+`--open` starts the local served Workbench; do not ask the author to choose between static and served mode. If browser launch fails, copy the printed localhost URL into the chat and say that the local Workbench is running on their machine.
+
 ## Public front door
 
 When an author says "start my book", "new essay series", "set up TYF", or similar, do not hand them a command list. Load `initializing-a-workspace`, create or enter the workspace, and run the helper yourself. Prefer:
@@ -39,7 +62,7 @@ When the author asks why a passage does not land, what is wrong, where the secti
 
 When the author says a substantial draft or manuscript body already exists and needs typographic craft, language treatment, AI-cadence cleanup, Milchin-editor work, rubrication, or finish, load `typographer-redactor` before ordinary editing. If the existing source includes a PDF, Pages document, screenshots, illustrations, or visible layout, treat it as a whole work object first: layout, images, threshold pages, title pages, front/back matter, captions, and page choreography may decide what the prose means. Run `tyf treat` for the body or `tyf treat work --unit manuscript/<file>` for a sample, read `.review/typographic-treatment.md`, then propose a bounded treatment in `drafts/` or `.review/`. Do not return to broad discovery questions unless the treatment packet exposes a real missing author decision.
 
-When the author wants to see the manuscript, work alongside the amanuensis chat, edit candidate prose directly, add image blocks, or inspect paragraph/style decisions, run `tyf workbench` for a static Draft Review Workbench. Use `tyf workbench --serve` when local browser draft saving is useful. Treat this as a workbench, not a manuscript editor: it may save `drafts/candidate-draft.md` only when the loaded base hash still matches the file on disk, and it may create review packets, but `manuscript/` remains read-only and still requires the Gate.
+When the author wants to see the manuscript, work alongside the amanuensis chat, edit candidate prose directly, add image blocks, or inspect paragraph/style decisions, run `tyf workbench --open` yourself and tell the author the local browser Workbench is ready. Treat this as a workbench, not a manuscript editor: it may save draft files only when the loaded base hash still matches the file on disk, and it may create review packets, but `manuscript/` remains read-only and still requires the Gate.
 
 ## Selection order
 
@@ -75,5 +98,6 @@ Two of these are cross-cutting substrates rather than steps: `managing-voice` (h
 - Polishing a claim that has no source.
 - Calling the work done before it has been attacked.
 - Applying an edit the author never approved.
+- Asking a non-technical author to operate TYF commands instead of running the local helper yourself.
 
 Any of these means the wrong skill is loaded. Go upstream.

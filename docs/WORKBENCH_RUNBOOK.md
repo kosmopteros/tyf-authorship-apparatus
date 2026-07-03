@@ -2,37 +2,35 @@
 
 Status: operator-facing runbook for testing and using the local browser Workbench.
 
-TYF Workbench has two modes. The distinction matters.
+TYF Workbench has two modes. The distinction matters. In Codex Desktop or Claude Code Desktop, the **agent runs these commands**. The non-technical author should experience the Workbench as a local browser desk, not as a terminal task.
 
 ## Editable browser mode
 
-Use this when you want to actually write, save drafts, create notes, prepare context packets, or create Gate/recovery packets.
+Use this when the author wants to actually write, save drafts, create notes, prepare context packets, or create Gate/recovery packets.
 
-From a TYF book workspace root:
-
-```bash
-tyf workbench --serve --open
-```
-
-If the browser does not open automatically, run:
-
-```bash
-tyf workbench --serve
-```
-
-Then copy the printed `http://127.0.0.1:.../` URL into your browser.
-
-`--open` implies `--serve`, so this also starts the editable local server:
+From a TYF book workspace root, the agent runs:
 
 ```bash
 tyf workbench --open
 ```
 
-Compatibility shortcut if the package entry points are installed:
+`--open` implies `--serve`, so the command starts the editable local server and opens the browser.
+
+If the browser does not open automatically, the agent runs:
 
 ```bash
-tyf-workbench --open
+tyf workbench --serve
 ```
+
+Then give the author the printed `http://127.0.0.1:.../` URL in plain language.
+
+The explicit form is still valid:
+
+```bash
+tyf workbench --serve --open
+```
+
+Do not ask a non-technical author to choose between static and served mode. Use served mode whenever the author wants to work in the browser.
 
 ## Static inspection mode
 
@@ -49,7 +47,7 @@ Outputs:
 .review/workbench/workbench-live-data.json
 ```
 
-The static HTML is useful for inspection, but a `file://` browser tab cannot save drafts or call Workbench APIs. For editable browser mode, use `--serve`.
+The static HTML is useful for inspection, but a `file://` browser tab cannot save drafts or call Workbench APIs. For editable browser mode, use `tyf workbench --open`.
 
 ## Safety model
 
@@ -72,14 +70,11 @@ Prefer saving a copy or preparing a packet before reloading disk text over brows
 
 ## Quick smoke test
 
-From a fresh or existing workspace:
+From a fresh or existing workspace, the agent runs:
 
 ```bash
-tyf rc-doctor
-# if using installed package shortcuts:
 tyf-rc-doctor
-
-tyf workbench --serve --open
+tyf workbench --open
 ```
 
 Then verify in the browser:
@@ -92,10 +87,24 @@ Then verify in the browser:
 
 ## Codex MCP setup
 
-To bind Codex to this book workspace:
+To bind Codex to this book workspace, the agent runs:
 
 ```bash
 tyf workbench --codex-mcp-config
 ```
 
 Then restart Codex or reload MCP servers from a Codex session opened inside this workspace.
+
+## Author-facing language
+
+Do not say:
+
+```text
+Run this in your terminal.
+```
+
+Say:
+
+```text
+I opened the local Workbench for this book. It is running on your machine, and manuscript files remain read-only there.
+```

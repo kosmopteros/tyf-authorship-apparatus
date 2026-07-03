@@ -11,12 +11,12 @@ class WorkbenchTestabilityTests(unittest.TestCase):
         self.assertIn("--open` implies `--serve", text)
         self.assertIn("file://", text)
         self.assertIn("cannot save drafts", text)
-        self.assertIn("tyf-workbench --open", text)
+        self.assertIn("agent runs", text.lower())
 
-    def test_pyproject_restores_workbench_alias(self):
+    def test_pyproject_keeps_single_public_workbench_surface(self):
         text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-        self.assertIn('tyf-workbench = "tyf_workbench_live:main"', text)
         self.assertIn('tyf = "tyf:main"', text)
+        self.assertNotIn('tyf-workbench =', text)
 
 
 if __name__ == "__main__":

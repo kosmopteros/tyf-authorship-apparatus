@@ -12,6 +12,18 @@ The setup succeeds when it lets the author produce one faithful next candidate, 
 
 This is the front door. Until the structure exists, the other passes have nowhere to write.
 
+## Desktop-agent promise
+
+In Codex Desktop or Claude Code Desktop, initialization is agent-operated. Do not ask a non-technical author to choose commands, manage work ids, decide static-vs-served mode, or debug the terminal. Ask for creative/material decisions only: where the book folder should live if it is not obvious, whether an arrival should be preserved, title/language only if they matter now, and one concrete source/scene/pressure when drafting can begin.
+
+The author-facing result should be plain language:
+
+```text
+I created the local book workspace, preserved the arrival, opened the writing runway, and manuscript/ is still untouched.
+```
+
+If the author wants to work visually, run `tyf workbench --open` yourself after setup and tell them the local browser Workbench is ready.
+
 ## The disciplined move
 
 Scaffold first, then elicit, then write the substrate. Do not invent the author's thesis or registers while setting up. Initialization produces empty, labelled structure plus whatever intake legitimately fills; when the author has supplied one preserved source or statement and one provisional voice cue, an exploratory passage in `drafts/` is allowed before the full structured substrate is complete.
@@ -33,6 +45,7 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 | "I will pick sensible default registers." | Default registers are your voice wearing the author's name. | Elicit at least one register in The author interview; never invent one. |
 | "One folder of notes is enough, no workspace needed." | A book folder needs visible source, draft, review, and manuscript boundaries. | Create the full tree once; TYF is workspace-aware without making the author manage multiple works. |
 | "I can fill ASSUMPTIONS later." | Unstated assumptions are where the project quietly drifts. | Write what you assumed during setup, and update it as the author corrects you. |
+| "The author can run the command." | Non-technical authors asked for an amanuensis, not terminal homework. | Run TYF yourself and summarize the result. |
 
 ## Red flags: stop if you catch yourself
 
@@ -40,6 +53,7 @@ Intake can pause and resume across days. If it does, leave `ASSUMPTIONS.md` and 
 - Choosing the thesis, structure, or registers for the author.
 - Leaving the workspace half-scaffolded with no state file.
 - Skipping the redactor canon and style sheet.
+- Asking the author to operate setup commands instead of running the helper yourself.
 
 ## Commands
 
@@ -51,11 +65,12 @@ tyf start --title "<title>" --language "<writing language>"
 tyf import <path>               # preserve existing material and create an orientation packet
 tyf resume                      # recover active work, return context, prompts, and next move
 tyf status                      # confirm what exists
+tyf workbench --open            # open the served local browser Workbench when visual work helps
 tyf reflexes                    # show hooks and git recovery behavior
 tyf snapshot -m "first session" # explicit git recovery point
 ```
 
-Do not present this block as the author's first task. In Codex or Cowork, run it for them when you have permission to work in the shared folder, then summarize the result in plain language.
+Do not present this block as the author's first task. In Codex Desktop, Claude Code Desktop, or Cowork, run it for them when you have permission to work in the shared folder, then summarize the result in plain language.
 
 ## Next
 

@@ -1014,6 +1014,10 @@ HTML_TEMPLATE = r"""<!doctype html>
         <div id="notesList"></div>
       </section>
       <section>
+        <strong>Book style</strong>
+        <pre id="bookStyle"></pre>
+      </section>
+      <section>
         <strong>Style sheet</strong>
         <pre id="styleSheet"></pre>
       </section>
@@ -1060,6 +1064,7 @@ HTML_TEMPLATE = r"""<!doctype html>
       draft.dataset.path = d ? d.path : '';
       const m = activeManuscript();
       document.getElementById('manuscriptText').innerHTML = m ? esc(m.text || '') : '<span class="empty">No approved manuscript unit mapped for this draft.</span>';
+      document.getElementById('bookStyle').textContent = (data.style && data.style.book_style) || '';
       document.getElementById('styleSheet').textContent = (data.style && data.style.style_sheet) || '';
       const assets = data.assets || {records:[], files:[]};
       const rows = (assets.records||[]).map(r => `<p>${esc(JSON.stringify(r))}</p>`).join('') + (assets.files||[]).map(f => `<p>${esc(f.file)} (${f.bytes} bytes)</p>`).join('');

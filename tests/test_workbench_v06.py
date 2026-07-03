@@ -151,6 +151,36 @@ class WorkbenchV06Tests(unittest.TestCase):
         self.assertIn("beforeunload", html)
         self.assertIn("Unsaved draft changes", html)
 
+    def test_static_html_shows_book_style_and_image_inventory(self):
+        work_id, work_root, workspace = self.resolved()
+        image_dir = work_root / "assets" / "images"
+        (image_dir / "plate-01.png").write_bytes(b"image placeholder")
+        (image_dir / "index.jsonl").write_text(
+            json.dumps(
+                {
+                    "id": "plate-01",
+                    "file": "plate-01.png",
+                    "caption": "threshold image",
+                    "placement": "chapter opening",
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        data = workbench.collect_data(work_id, work_root, workspace, token="test-token")
+        html = workbench.surface_html(data)
+
+        self.assertIn("Book style", html)
+        self.assertIn("bookStyle", html)
+        self.assertIn("Style sheet", html)
+        self.assertIn("Images", html)
+        self.assertIn("register: spare", html)
+        self.assertIn("threshold image", html)
+        self.assertEqual(data["assets"]["records"][0]["id"], "plate-01")
+        self.assertEqual(data["assets"]["files"][0]["file"], "assets/images/plate-01.png")
+
     def test_notes_footnotes_gate_packets_and_context_do_not_touch_manuscript(self):
         work_id, work_root, workspace = self.resolved()
         original_manuscript = (work_root / "manuscript" / "chapter-one.md").read_text(encoding="utf-8")

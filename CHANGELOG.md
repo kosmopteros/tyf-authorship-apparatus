@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.4
+
+Release label: "Workbench Style Surface".
+
+- Made the Workbench author surface show `design/book-style.yaml` alongside the running style sheet.
+- Added governed Workbench evidence that the generated surface exposes book-style text and image inventory records/files.
+- Expanded development acceptance coverage to 179 scenarios with 179/179 direct RED proof.
+- Kept package, plugin, Gemini, and nested Cowork manifest versions aligned at 0.6.4.
+
 ## 0.6.3
 
 Release label: "Release Acceptance Review".

@@ -38,9 +38,9 @@ imagined.
 ## Evidence-Green
 
 - `202` stdlib helper, documentation, installer, and packaging tests pass.
-- `240` aggregate pytest cases pass across the helper and Workbench modules.
-- `178/178` internal acceptance scenarios have current direct RED proof.
-- `fbs finish --version-impact "docs: add TYF 0.6.3 release acceptance review"` passes the release gate: prove-red, Be correspondence, release-check, and Be authorization are current.
+- `241` aggregate pytest cases pass across the helper and Workbench modules.
+- `179/179` internal acceptance scenarios have current direct RED proof.
+- `fbs finish --version-impact "patch: release TYF 0.6.4 Workbench Style Surface"` passes the release gate: prove-red, Be correspondence, release-check, and Be authorization are current.
 - `scripts/validate_codex_plugin.py` validates the Codex plugin and hook identity without relying on private host tooling.
 - GitHub CI is not the current evidence source when automation minutes are unavailable; rely on the local release checks above and rerun CI when minutes return.
 - Public TYF-visible surfaces do not require private development context.

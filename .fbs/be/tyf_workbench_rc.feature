@@ -15,6 +15,11 @@ Feature: TYF Workbench and continuity RC surfaces
     When Run "python -m pytest -q tests/test_workbench_v06.py::WorkbenchV06Tests::test_notes_footnotes_gate_packets_and_context_do_not_touch_manuscript tests/test_workbench_v06.py::WorkbenchV06Tests::test_gate_packet_rejects_selection_not_in_saved_draft"
     Then Exit code is 0
 
+  @covers:tyf-workbench-local-desk-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @bind-file:scripts/tyf_workbench_v06.py @bind-file:tests/test_workbench_v06.py @tool-check:cli
+  Scenario: Workbench shows book style and image inventory on the author surface
+    When Run "python -m pytest -q tests/test_workbench_v06.py::WorkbenchV06Tests::test_static_html_shows_book_style_and_image_inventory"
+    Then Exit code is 0
+
   @covers:tyf-workbench-local-desk-contract @criterion:bad-outcome @criterion:edge @criterion:boundary @criterion:integration @criterion:security @bind-file:scripts/tyf_workbench_v06.py @bind-file:tests/test_workbench_v06.py @tool-check:cli
   Scenario: Workbench creates new draft units only through the draft surface
     When Run "python -m pytest -q tests/test_workbench_v06.py::WorkbenchV06Tests::test_can_create_new_draft_unit"

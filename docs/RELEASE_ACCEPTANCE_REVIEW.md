@@ -1,14 +1,14 @@
-# TYF 0.6.3 Release Acceptance Review
+# TYF 0.6.4 Workbench Style Surface
 
 Date: 2026-07-03
 
-This note reviews whether TYF 0.6.3 satisfies the declared local-first
+This note reviews whether TYF 0.6.4 satisfies the declared local-first
 single-book beta promise. It is a product disposition aid, not a substitute for
 the maintainer's acceptance decision.
 
 ## Recommendation
 
-Accept TYF 0.6.3 as a product-ready local-first single-book beta release
+Accept TYF 0.6.4 as a product-ready local-first single-book beta release
 candidate.
 
 Do not score it as a mature mass-market product or as the complete long-term
@@ -19,12 +19,12 @@ into `manuscript/` through the Gate without TYF becoming the writer.
 
 ## Evidence Reviewed
 
-- `fbs finish --version-impact "docs: add TYF 0.6.3 release acceptance review"` passed.
-- `fbs prove-red` reported all `178` Be carry current bound RED proof.
-- `fbs test` executed `178` Be with `178` passing and no gaps.
-- `fbs release-check` reported package and plugin version `0.6.3`.
-- `fbs be auth status` reported `178/178` current authorized execution-sensitive Be.
-- `python -m pytest -q` passed `240` aggregate pytest cases.
+- `fbs finish --version-impact "patch: release TYF 0.6.4 Workbench Style Surface"` passed.
+- `fbs prove-red` reported all `179` Be carry current bound RED proof.
+- `fbs test` executed `179` Be with `179` passing and no gaps.
+- `fbs release-check` reported package and plugin version `0.6.4`.
+- `fbs be auth status` reported `179/179` current authorized execution-sensitive Be.
+- `python -m pytest -q` passed `241` aggregate pytest cases.
 - `python scripts/tyf.py check --strict` reported no documentation drift.
 - `python scripts/validate_codex_plugin.py .` passed.
 

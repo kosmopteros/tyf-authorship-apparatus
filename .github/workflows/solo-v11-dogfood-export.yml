@@ -1,15 +1,16 @@
 name: SOLO v1.1 external dogfood export
 
 on:
-  push:
+  pull_request:
     branches:
-      - tmp/solo-v11-dogfood
+      - main
 
 permissions:
   contents: read
 
 jobs:
   export:
+    if: github.head_ref == 'tmp/solo-v11-dogfood'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

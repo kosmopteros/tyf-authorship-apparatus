@@ -1,0 +1,47 @@
+name: CCIP complete roster first
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+    paths:
+      - ".github/workflows/ccip-roster-only.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  roster:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Restore scraper
+        run: |
+          base64 --decode ccip_research/scrape.py.gz.b64 | gunzip > ccip_research/scrape.py
+          python -m py_compile ccip_research/scrape.py
+      - name: Install dependencies
+        run: python -m pip install requests beautifulsoup4 lxml
+      - name: Capture full roster and CCIP detail fields
+        id: roster
+        continue-on-error: true
+        run: |
+          python ccip_research/scrape.py \
+            --output-dir roster-output \
+            --directory-workers 18 \
+            --detail-workers 24 \
+            --roster-only
+      - name: Upload roster and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-complete-roster-2026-08-17
+          path: roster-output/
+          if-no-files-found: warn
+          retention-days: 1
+      - if: steps.roster.outcome == 'failure'
+        run: exit 1

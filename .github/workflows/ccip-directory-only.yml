@@ -1,0 +1,95 @@
+name: CCIP directory-only completeness check
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+    paths:
+      - ".github/workflows/ccip-directory-only.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  directory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install requests beautifulsoup4 lxml
+      - name: Capture every directory row
+        run: |
+          mkdir -p directory-only
+          python - <<'PY'
+          import csv, json, math, re
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          from urllib.parse import urljoin, urlparse, urlunparse
+          import requests
+          from bs4 import BeautifulSoup
+          from requests.adapters import HTTPAdapter
+          from urllib3.util.retry import Retry
+
+          ROOT='https://www.ccip.pt/pt/associados/associados'
+          S=requests.Session()
+          S.headers['User-Agent']='Mozilla/5.0 Chrome/151 Safari/537.36'
+          S.mount('https://',HTTPAdapter(max_retries=Retry(total=5,backoff_factor=.5,status_forcelist=[408,429,500,502,503,504])))
+          def get(url):
+              r=S.get(url,timeout=30); r.raise_for_status(); return r.text,r.url
+          def canon(u):
+              p=urlparse(u); return urlunparse((p.scheme,p.netloc,p.path.rstrip('/'),'','',''))
+          def detail(u):
+              p=urlparse(u); path=p.path.rstrip('/').lower(); root=urlparse(ROOT).path.rstrip('/').lower()
+              if path.startswith(root+'/'):
+                  rest=[x for x in path[len(root)+1:].split('/') if x]
+                  return len(rest)>=2 and rest[0] not in {'all','page','category'}
+              if '/component/mtree/' in path:
+                  rest=[x for x in path.split('/component/mtree/',1)[1].split('/') if x]
+                  return len(rest)>=2 and rest[0] not in {'all','page','category'}
+              return False
+          first,_=get(ROOT)
+          text=' '.join(BeautifulSoup(first,'lxml').stripped_strings)
+          m=re.search(r'Resultados\s+\d+\s*[-–]\s*\d+\s+de\s+(\d+)',text,re.I)
+          assert m, 'Could not parse advertised total'
+          total=int(m.group(1)); pages=math.ceil(total/9)
+          def page(n):
+              urls=[ROOT if n==1 else f'{ROOT}/all/page{n}?id=0&view=category', ROOT if n==1 else f'{ROOT}?start={(n-1)*9}']
+              for url in urls:
+                  try:
+                      raw,final=get(url); soup=BeautifulSoup(raw,'lxml'); rows=[]; seen=set()
+                      nodes=soup.select('h1 a[href],h2 a[href],h3 a[href],h4 a[href],.mt-listing-title a[href],.listing-title a[href]') or soup.find_all('a',href=True)
+                      for a in nodes:
+                          name=' '.join(a.get_text(' ',strip=True).split()); href=canon(urljoin(final,a.get('href','')))
+                          if name and detail(href) and href not in seen:
+                              seen.add(href); rows.append((name,href,url,n))
+                      if rows: return n,rows,''
+                  except Exception as e: last=f'{type(e).__name__}: {e}'
+              return n,[],last if 'last' in locals() else 'no rows parsed'
+          got={}; errors=[]
+          with ThreadPoolExecutor(max_workers=20) as ex:
+              fs=[ex.submit(page,n) for n in range(1,pages+1)]
+              for f in as_completed(fs):
+                  n,rows,e=f.result(); got[n]=rows
+                  if e: errors.append({'page':n,'error':e})
+          rows=[]; seen=set()
+          for n in range(1,pages+1):
+              for name,href,source,pn in got.get(n,[]):
+                  if href not in seen:
+                      seen.add(href); rows.append({'directory_position':len(rows)+1,'entity':name,'detail_url':href,'directory_page':pn,'directory_source_url':source})
+          with open('directory-only/ccip_roster.csv','w',encoding='utf-8-sig',newline='') as f:
+              w=csv.DictWriter(f,fieldnames=['directory_position','entity','detail_url','directory_page','directory_source_url']); w.writeheader(); w.writerows(rows)
+          summary={'advertised_total':total,'pages':pages,'rows_captured':len(rows),'errors':errors}
+          open('directory-only/summary.json','w',encoding='utf-8').write(json.dumps(summary,ensure_ascii=False,indent=2))
+          print(json.dumps(summary,ensure_ascii=False,indent=2))
+          assert len(rows)>=total, f'Incomplete: {len(rows)} < {total}'
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-directory-only-2026-08-17
+          path: directory-only/
+          if-no-files-found: warn
+          retention-days: 1

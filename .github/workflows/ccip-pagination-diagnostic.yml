@@ -1,0 +1,76 @@
+name: CCIP pagination diagnostic
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+    paths:
+      - ".github/workflows/ccip-pagination-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install requests beautifulsoup4 lxml
+      - name: Inspect pagination, cookies and site maps slowly
+        run: |
+          python - <<'PY'
+          import time, requests
+          from bs4 import BeautifulSoup
+          from urllib.parse import urljoin
+          s=requests.Session()
+          s.headers.update({
+            'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
+            'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language':'pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Sec-Fetch-Dest':'document','Sec-Fetch-Mode':'navigate','Sec-Fetch-Site':'none','Upgrade-Insecure-Requests':'1'
+          })
+          root='https://www.ccip.pt/pt/associados/associados'
+          tests=[
+            root,
+            root+'/all/page2',
+            root+'/all/page2?id=0&view=category',
+            root+'?start=9',
+            'https://www.ccip.pt/pt/associados/associados/servicos',
+            'https://www.ccip.pt/pt/component/mtree/servicos',
+            'https://www.ccip.pt/robots.txt',
+            'https://www.ccip.pt/sitemap.xml',
+            'https://www.ccip.pt/component/osmap/?view=xml&id=1',
+          ]
+          referer='https://www.ccip.pt/'
+          for i,url in enumerate(tests):
+            if i: time.sleep(6)
+            try:
+              r=s.get(url,headers={'Referer':referer},timeout=45,allow_redirects=True)
+              print('\n===',url,'===')
+              print('status',r.status_code,'final',r.url,'bytes',len(r.content),'ctype',r.headers.get('content-type'))
+              print('cookies',s.cookies.get_dict())
+              print('title',BeautifulSoup(r.text,'lxml').title)
+              print('prefix',repr(r.text[:300]))
+              if url==root and r.status_code==200:
+                soup=BeautifulSoup(r.text,'lxml')
+                print('PAGINATION LINKS')
+                for a in soup.find_all('a',href=True):
+                  txt=' '.join(a.get_text(' ',strip=True).split())
+                  href=urljoin(r.url,a['href'])
+                  if txt in {'2','3','4','5','6','7','8','9','10','Seguinte','Fim'} or '/all/page' in href or 'start=' in href:
+                    print(repr(txt),href)
+                print('CATEGORY LINKS')
+                seen=set()
+                for a in soup.find_all('a',href=True):
+                  href=urljoin(r.url,a['href'])
+                  if href.startswith(root+'/') and '/all/page' not in href and href not in seen:
+                    seen.add(href); print(repr(' '.join(a.get_text(' ',strip=True).split())),href)
+              referer=r.url
+            except Exception as e:
+              print('\n===',url,'ERROR',type(e).__name__,str(e))
+          PY

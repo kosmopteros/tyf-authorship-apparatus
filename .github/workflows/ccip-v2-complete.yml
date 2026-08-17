@@ -1,0 +1,100 @@
+name: CCIP v2 complete roster and public contacts
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+    paths:
+      - ".github/workflows/ccip-v2-complete.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ccip-v2-complete
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Check out research branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore tested harvester
+        run: |
+          mkdir -p ccip-v2/ccip_research
+          base64 --decode ccip_research/v2/harvest_ccip.py.gz.b64 | gunzip > ccip-v2/ccip_research/harvest_ccip.py
+          touch ccip-v2/ccip_research/__init__.py
+          python -m py_compile ccip-v2/ccip_research/harvest_ccip.py
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests beautifulsoup4 lxml
+
+      - name: Capture all live CCIP members and enrich explicit public professional contacts
+        id: harvest
+        continue-on-error: true
+        working-directory: ccip-v2
+        run: |
+          python -m ccip_research.harvest_ccip \
+            --output-dir ../ccip-output \
+            --directory-delay 3.5 \
+            --website-workers 20 \
+            --website-pages 4
+
+      - name: Verify output integrity
+        id: verify
+        if: always()
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+
+          root = Path('ccip-output')
+          csv_path = root / 'ccip_members_full.csv'
+          summary_path = root / 'ccip_summary.json'
+          assert csv_path.exists(), 'Final CSV was not produced'
+          assert summary_path.exists(), 'Summary was not produced'
+
+          with csv_path.open('r', encoding='utf-8-sig', newline='') as handle:
+              rows = list(csv.DictReader(handle))
+          summary = json.loads(summary_path.read_text(encoding='utf-8'))
+          total = int(summary['advertised_total'])
+          assert len(rows) == total, f'CSV rows {len(rows)} != advertised total {total}'
+          assert [int(row['directory_position']) for row in rows] == list(range(1, total + 1)), 'Positions are not continuous'
+          details = [row['detail_url'].rstrip('/') for row in rows]
+          assert len(details) == len(set(details)), 'Duplicate detail URLs detected'
+          assert not summary.get('failed_directory_pages'), 'Directory contains failed pages'
+          for row in rows:
+              assert row['email_method'] == 'explicitly published; no inferred/generated addresses'
+          print(json.dumps({
+              'advertised_total': total,
+              'rows': len(rows),
+              'entity_emails': summary['entity_emails_found'],
+              'named_contacts': summary['named_contacts_found'],
+              'named_contact_emails': summary['named_contact_emails_found'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload CSV, checkpoint, evidence and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-complete-public-directory-2026-08-17
+          path: ccip-output/
+          if-no-files-found: warn
+          retention-days: 2
+
+      - name: Preserve failures after artifact upload
+        if: steps.harvest.outcome == 'failure' || steps.verify.outcome == 'failure'
+        run: exit 1

@@ -1,0 +1,40 @@
+name: Temporary CCIP email enrichment
+
+on:
+  push:
+    branches: [tmp-ccip-email-enrich-20260817]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crawl:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+      - name: Crawl official company websites
+        run: |
+          python tools/ccip_email_enrich.py \
+            --shard ${{ matrix.shard }} \
+            --shards 4 \
+            --workers 10 \
+            --output "email-output-${{ matrix.shard }}"
+      - name: Upload shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-email-shard-${{ matrix.shard }}
+          path: email-output-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 1

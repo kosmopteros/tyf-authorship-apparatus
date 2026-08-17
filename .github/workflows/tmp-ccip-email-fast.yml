@@ -1,0 +1,31 @@
+name: Temporary fast CCIP email crawl
+on:
+  push:
+    branches: [tmp-ccip-email-fast-20260817]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  crawl:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5,6,7]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests beautifulsoup4 lxml
+      - name: Crawl sites
+        run: python tools/ccip_email_fast.py --shard ${{ matrix.shard }} --shards 8 --workers 25 --output fast-${{ matrix.shard }}
+      - name: Upload shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-email-fast-${{ matrix.shard }}
+          path: fast-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 1

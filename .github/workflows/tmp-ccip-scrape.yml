@@ -1,0 +1,30 @@
+name: Temporary CCIP scrape
+on:
+  push:
+    branches: [tmp-ccip-scrape-20260817]
+  workflow_dispatch:
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Scrape CCIP
+        run: python tools/ccip_scrape.py
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-directory-scrape
+          path: |
+            ccip_members.csv
+            ccip_pages_failed.txt
+            ccip_debug.txt
+          if-no-files-found: warn

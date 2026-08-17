@@ -1,0 +1,62 @@
+name: CCIP HTML sample
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+    paths:
+      - ".github/workflows/ccip-html-sample.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install requests beautifulsoup4 lxml
+      - name: Save representative pages and inspect listing DOM
+        run: |
+          mkdir -p html-sample
+          python - <<'PY'
+          import time, requests
+          from bs4 import BeautifulSoup, Tag
+          from urllib.parse import urljoin, urlparse
+
+          root='https://www.ccip.pt/pt/associados/associados'
+          s=requests.Session()
+          s.headers.update({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','Accept-Language':'pt-PT,pt;q=0.9,en;q=0.8'})
+          for name,url in [('page1',root),('page2',root+'?start=9')]:
+              r=s.get(url,timeout=180); r.raise_for_status()
+              open(f'html-sample/{name}.html','w',encoding='utf-8').write(r.text)
+              soup=BeautifulSoup(r.text,'lxml')
+              found=[]
+              for h in soup.find_all(['h2','h3','h4']):
+                  a=h.find('a',href=True)
+                  if not a: continue
+                  href=urljoin(r.url,a['href'])
+                  p=urlparse(href).path
+                  if p.startswith('/pt/associados/associados/') and len([x for x in p.split('/') if x])>=5:
+                      found.append((h,a,href))
+              print(name,'status',r.status_code,'bytes',len(r.content),'headings',len(found))
+              if found:
+                  h,a,href=found[0]
+                  print('FIRST',a.get_text(' ',strip=True),href)
+                  node=h
+                  for level in range(5):
+                      if not isinstance(node,Tag): break
+                      print('LEVEL',level,'tag',node.name,'id',node.get('id'),'class',node.get('class'),'text',repr(' '.join(node.get_text(' ',strip=True).split())[:1000]))
+                      node=node.parent
+              if name=='page1': time.sleep(8)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ccip-html-sample
+          path: html-sample/
+          retention-days: 1

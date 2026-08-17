@@ -1,0 +1,32 @@
+name: Temporary CCIP no-query HTTP scrape
+on:
+  push:
+    branches: [tmp-ccip-http-en-20260817]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+      - name: Scrape canonical no-query pages
+        id: scrape
+        continue-on-error: true
+        run: python tools/ccip_http_en_scrape.py
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-http-en-output-2026-08-17
+          path: ccip-http-en-output/
+          if-no-files-found: warn
+          retention-days: 1
+      - if: steps.scrape.outcome == 'failure'
+        run: exit 1

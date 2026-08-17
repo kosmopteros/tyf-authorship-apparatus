@@ -1,0 +1,26 @@
+name: CCIP public-runner smoke test
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public runner and CCIP reachability
+        run: |
+          python - <<'PY'
+          import urllib.request
+          url = 'https://www.ccip.pt/pt/associados/associados'
+          with urllib.request.urlopen(url, timeout=30) as r:
+              data = r.read()
+          print('status=ok bytes=', len(data))
+          assert len(data) > 10000
+          PY

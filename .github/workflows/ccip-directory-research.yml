@@ -1,0 +1,60 @@
+name: CCIP complete directory research
+
+on:
+  push:
+    branches:
+      - research/ccip-2026-08-17
+    paths:
+      - "ccip_research/**"
+      - ".github/workflows/ccip-directory-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out research branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore and verify scraper
+        run: |
+          base64 --decode ccip_research/scrape.py.gz.b64 | gunzip > ccip_research/scrape.py
+          python -m py_compile ccip_research/scrape.py
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests beautifulsoup4 lxml
+
+      - name: Build complete roster and enrich public contacts
+        id: research
+        continue-on-error: true
+        run: |
+          python ccip_research/scrape.py \
+            --output-dir output \
+            --directory-workers 16 \
+            --detail-workers 20 \
+            --website-workers 28 \
+            --website-pages 5
+
+      - name: Upload CSV, checkpoint and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccip-member-directory-2026-08-17
+          path: output/
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Preserve research failure after artifact upload
+        if: steps.research.outcome == 'failure'
+        run: exit 1
